@@ -7,6 +7,10 @@ from googletrans import Translator
 import wiktionaryparser
 from translate_collins import translate_collins
 
+usegoogleforconjugations = True
+abbreviate = False
+maxnumrecursions = 3
+
 # Get 2-letter language code (ISO 639-1)
 def languagecode(language):
 	if language == 'french':
@@ -47,6 +51,18 @@ def removetranscription(string):
 # Get translation and word type(s)
 def translate(word, language):
 	remark = ""
+	recursions = 0
+	if language == 'russian':
+		usegoogleforconjugations = False
+		abbreviate = True
+
+	# If not first recursion
+	if type(word) == tuple:
+		recursions = word[1]
+		word = word[0]
+
+		if recursions >= maxnumrecursions:
+			return {'trans': '', 'wordtype' : '', 'remark' : '', 'etymology' : '', 'dictword' : ''}
 
 	# Collect translations
 	translations = []
@@ -227,15 +243,18 @@ def translate(word, language):
 					if endindex > 0:
 						lookupform = lookupform[:endindex]
 					if not lookupform.lower() == word.lower():
-						newtrans = translate(lookupform, language)
+						newtrans = translate((lookupform, recursions+1), language)
 					else:
 						newtrans = None
 					if newtrans:
-						translator = Translator()
-						google = translator.translate(word, src=languagecode(language), dest='en').text
 						newtranslation = newtrans['trans']
-						if not google == word:
-							translations[i] = google
+						if usegoogleforconjugations:
+							translator = Translator()
+							google = translator.translate(word, src=languagecode(language), dest='en').text
+							if not google == word:
+								translations[i] = google
+							else:
+								translations[i] = newtranslation
 						else:
 							translations[i] = newtranslation
 						if len(etymology) == 0: # Take etymology from dictionary word
@@ -301,16 +320,19 @@ def translate(word, language):
 					if endindex > 0:
 						dictword = dictword[:endindex]
 					if not dictword.lower() == word.lower():
-						newtrans = translate(dictword, language)
+						newtrans = translate((dictword, recursions+1), language)
 					else:
 						newtrans = None
-					translator = Translator()
-					google = translator.translate(word, src=languagecode(language), dest='en').text
 					newtranslation = newtrans['trans']
-					if not google == word:
-						translations[i] = google
+					if usegoogleforconjugations:
+						translator = Translator()
+						google = translator.translate(word, src=languagecode(language), dest='en').text
+						if not google == word:
+							translations[i] = google
+						else:
+							translations[i] = newtranslation
 					else:
-						translations[i] = newtranslation
+						translations[i] = newtrans['trans']
 					if language == 'russian':
 						extrainfo.append(tr)
 					if newtrans:
@@ -364,7 +386,7 @@ def translate(word, language):
 					if endindex > 0:
 						dictword = dictword[:endindex]
 					if not dictword.lower() == word.lower():
-						newtrans = translate(dictword, language)
+						newtrans = translate((dictword, recursions+1), language)
 						if len(etymology) == 0: # Take etymology from dictionary word
 							etymology = newtrans['etymology']
 						newtranstrans = newtrans['trans']
@@ -426,6 +448,8 @@ def translate(word, language):
 	if len(trans) == 0:
 		translator = Translator()
 		trans = translator.translate(word, src=languagecode(language), dest='en').text
+		if trans == word:
+			trans = ''
 
 	# Return a question mark if no translation is found
 	if len(trans) == 0:
@@ -448,6 +472,12 @@ def translate(word, language):
 				remark = etymology
 			else:
 				remark = remark + '\n\n' + etymology
+
+	if abbreviate:
+		abbreviations = {'singular': 'sing', 'plural': 'pl', 'nominative': 'nom', 'genitive': 'gen', 'dative': 'dat', 'accusative': 'acc', 
+		'instrumental': 'instr', 'prepositional': 'prep', 'masculine': 'masc', 'feminine': 'fem'}
+		for i, j in abbreviations.items():
+			trans = trans.replace(i,j)
 
 	return {'trans': trans, 'wordtype' : wordtype, 'remark' : remark, 'etymology' : etymology, 'dictword' : dictword}
 
