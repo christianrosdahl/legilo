@@ -7,10 +7,6 @@ from googletrans import Translator
 import wiktionaryparser
 from translate_collins import translate_collins
 
-usegoogleforconjugations = True
-abbreviate = False
-maxnumrecursions = 3
-
 # Get 2-letter language code (ISO 639-1)
 def languagecode(language):
 	if language == 'french':
@@ -50,16 +46,23 @@ def removetranscription(string):
 
 # Get translation and word type(s)
 def translate(word, language):
+	# Settings
+	usegoogleforconjugations = True
+	abbreviate = False
+	maxnumrecursions = 3
+
 	remark = ""
 	recursions = 0
-	if language == 'russian':
-		usegoogleforconjugations = False
-		abbreviate = True
 
 	# If not first recursion
 	if type(word) == tuple:
 		recursions = word[1]
 		word = word[0]
+
+	if language == 'russian':
+		abbreviate = True
+		if recursions > 0:
+			usegoogleforconjugations = False
 
 		if recursions >= maxnumrecursions:
 			return {'trans': '', 'wordtype' : '', 'remark' : '', 'etymology' : '', 'dictword' : ''}
