@@ -6,6 +6,7 @@ from googletrans import Translator
 #from wiktionaryparser import WiktionaryParser
 import wiktionaryparser
 from translate_collins import translate_collins
+import re # For removing characters not allowed
 
 # Get 2-letter language code (ISO 639-1)
 def languagecode(language):
@@ -135,6 +136,10 @@ def translate(word, language):
 	etymology = ''
 	if len(worddata) > 0:
 		etymology = worddata[0]['etymology']
+		# Remove characters not allowed by tkinter
+		re_pattern = re.compile(u'[^\u0000-\uFFFF]', re.UNICODE)
+		etymology = re_pattern.sub(u'\uFFFD', etymology)
+
 
 	# Initial collection of translations to string (will be replaced later)
 	for i in translations:
