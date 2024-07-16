@@ -203,7 +203,7 @@ def findoldexpression(tag):
 	line = int(lineandstartword[0][1:])
 	wordnum1 = int(lineandstartword[1])
 	expression = text.get(startindex,endindex)
-	expressionwords = expression.translate(str.maketrans("""'´’!"#$%&()*+,./:;<=>?@[]^_`{|}~«»“”""", "                                    "))
+	expressionwords = expression.translate(str.maketrans("""'´’!"#$%&()*+,./:;<=>?@[]^_`{|}~«»“”„""", "                                     "))
 	expressionwords = expressionwords.lower().split()
 	wordnum2 = wordnum1 + len(expressionwords)
 	firstword = expressionwords[0]
@@ -692,7 +692,7 @@ def getexpressioninfo():
 	sentence = removenewlineatend(sentence)
 	sentencetrans = removenewlineatend(sentencetrans)
 
-	expressionwords = expression.translate(str.maketrans("""'´’!"#$%&()*+,./:;<=>?@[]^_`{|}~«»“”""", "                                    "))
+	expressionwords = expression.translate(str.maketrans("""'´’!"#$%&()*+,./:;<=>?@[]^_`{|}~«»“”„""", "                                     "))
 	expressionwords = expressionwords.lower().split()
 
 	info = {'expressionwords': expressionwords, 'word' : expression, 'trans' : trans, 'wordtype' : 'expression', 'remark' : remark, 'sentence' : sentence, 'sentencetrans' : sentencetrans}
@@ -1232,6 +1232,24 @@ def opengoogle(event):
 		link = "https://www.google.com/search?q=" + expressionstr
 		openurlinoldtab(link)
 
+def opengoogleimages(event):
+	global active
+	global editing
+	if active and not editing:
+		word = active["word"]
+		link = "https://www.google.com/search?q=" + word + "&tbm=isch"
+		#link = urllib.parse.quote(link, safe='/:')
+		#webbrowser.get('chrome').open(link)
+		openurlinoldtab(link)
+	if activeexpression and not editing:
+		expressionwords = activeexpression['expressionwords']
+		expressionstr = ''
+		for word in expressionwords:
+			expressionstr = expressionstr + word + '+'
+		expressionstr = expressionstr[0:-1] # Remove last +
+		link = "https://www.google.com/search?q=" + expressionstr + "&tbm=isch"
+		openurlinoldtab(link)
+
 def openwikipedia(event):
 	global active
 	global editing
@@ -1596,8 +1614,8 @@ def start():
 	width = 1200
 	height = 700
 	if movewindow:
-		xdisplacement = 200#-1400
-		ydisplacement = 150
+		xdisplacement = 350#-1400
+		ydisplacement = 200
 		startwindow.geometry('%dx%d+%d+%d' % (width, height, xdisplacement, ydisplacement))
 	else:
 		startwindow.geometry(str(width) + "x" + str(height))
@@ -1735,8 +1753,8 @@ def createnew(language):
 	width = 1200
 	height = 700
 	if movewindow:
-		xdisplacement = 200
-		ydisplacement = 150
+		xdisplacement = 350
+		ydisplacement = 200
 		newwindow.geometry('%dx%d+%d+%d' % (width, height, xdisplacement, ydisplacement))
 	else:
 		newwindow.geometry(str(width) + "x" + str(height))
@@ -1824,7 +1842,7 @@ def confirmnew(event):
 	return 'break'
 
 def createfilename(filename):
-	charstoremove = """\n'´’!"#$%&()*+,./:;<=>?@[]^_`{|}~«»“”"""
+	charstoremove = """\n'´’!"#$%&()*+,./:;<=>?@[]^_`{|}~«»“”„"""
 	filename = filename.translate(str.maketrans(" ", "-", charstoremove))
 	# Add date:
 	filename = str(date.today()) + '-' + filename
@@ -1874,8 +1892,8 @@ def openold(language):
 	width = 1200
 	height = 700
 	if movewindow:
-		xdisplacement = 200
-		ydisplacement = 150
+		xdisplacement = 350
+		ydisplacement = 200
 		oldwindow.geometry('%dx%d+%d+%d' % (width, height, xdisplacement, ydisplacement))
 	else:
 		oldwindow.geometry(str(width) + "x" + str(height))
@@ -2068,8 +2086,8 @@ def run(language, textfile):
 	width = 1200
 	height = 1000
 	if movewindow:
-		xdisplacement = 200#-1400
-		ydisplacement = 0
+		xdisplacement = 350#-1400
+		ydisplacement = 200
 		w.geometry('%dx%d+%d+%d' % (width, height, xdisplacement, ydisplacement))
 	else:
 		w.geometry(str(width) + "x" + str(height))
@@ -2176,7 +2194,7 @@ def run(language, textfile):
 		line = line.lower()
 		restofline = line
 		charstoremove = "" #"""!"#$%&()*+,./:;<=>?@[]^_`{|}~"""
-		line = line.translate(str.maketrans("""'´’!"#$%&()*+,./:;<=>?@[]^_`{|}~«»“”""", "                                    ", charstoremove))
+		line = line.translate(str.maketrans("""'´’!"#$%&()*+,./:;<=>?@[]^_`{|}~«»“”„""", "                                     ", charstoremove))
 		restofline = line
 		linewords = line.split()
 		numlinewords = len(linewords)
@@ -2275,14 +2293,16 @@ def run(language, textfile):
 
 	w.bind("<space>", space)
 	w.bind("<Return>", enter)
-	w.bind("<q>", enter)
-	w.bind("<o>", ignore)
+	w.bind("<a>", enter)
+	w.bind("<k>", enter)
+	w.bind("<p>", ignore)
 	w.bind("<BackSpace>", ignore)
 	w.bind("<x>", known)
-	w.bind("<p>", pronounceactiveword)
-	w.bind("<j>", pronounceactiveword)
+	w.bind("<h>", pronounceactiveword)
+	w.bind("<.>", pronounceactiveword)
+	w.bind("<e>", space)
 	w.bind("<t>", changetranslation)
-	w.bind("<e>", changetype)
+	w.bind("<u>", changetype)
 	w.bind("<r>", changeremark)
 	w.bind("<b>", iteratelearningwords)
 	w.bind("<s>", addswedishtrans)
@@ -2291,6 +2311,7 @@ def run(language, textfile):
 	w.bind("<w>", openwiktionary)
 	w.bind("<c>", opencontextreverso)
 	w.bind("<g>", opengoogle)
+	w.bind("<i>", opengoogleimages)
 	w.bind("<l>", openwikipedia)
 	w.bind("<Meta_L>", activateexpressionmode)
 	w.bind("<KeyRelease-Meta_L>", deactivateexpressionmode)

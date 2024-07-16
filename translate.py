@@ -22,10 +22,10 @@ def languagecode(language):
 		return '?'
 
 def removetranscription(string):
-	newstring = string
+	newstring = string.replace('(по)', '[по]') # Solve problem with comparatives
 	indexcount = 0
 	moreparantheses = False
-	index = string.find(' (')
+	index = newstring.find(' (')
 	if index >= 0:
 		moreparantheses = True
 	while moreparantheses and indexcount < len(newstring):
