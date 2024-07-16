@@ -363,15 +363,15 @@ def mouseclick(event):
 
 # Mark words
 def markword(line, wordnum, status):
-	if status is 'new':
+	if status == 'new':
 		text.tag_config(str(line) + "." + str(wordnum), background=newcolor)
-	elif status is 'learning':
+	elif status == 'learning':
 		text.tag_config(str(line) + "." + str(wordnum), background=learningcolor)
-	elif status is 'known':
+	elif status == 'known':
 		text.tag_config(str(line) + "." + str(wordnum), background="white")
-	elif status is 'ignored':
+	elif status == 'ignored':
 		text.tag_config(str(line) + "." + str(wordnum), background="white")
-	elif status is 'active':
+	elif status == 'active':
 		text.tag_config(str(line) + "." + str(wordnum), background=activecolor)
 
 # Mark all instances of a word
@@ -399,19 +399,19 @@ def markexpression(line, startwordnum, status):
 	elif istitleline:
 		expressionfontsize = titlesize
 
-	if status is 'ordinary':
+	if status == 'ordinary':
 		if istitleline:
 			fontsettings = (font, expressionfontsize, "underline", "bold")
 		else:
 			fontsettings = (font, expressionfontsize, "underline")
 		text.tag_config("e" + str(line) + "." + str(startwordnum), font = fontsettings)
-	elif status is 'none':
+	elif status == 'none':
 		if istitleline:
 			fontsettings = (font, expressionfontsize, "bold")
 		else:
 			fontsettings = (font, expressionfontsize)
 		text.tag_config("e" + str(line) + "." + str(startwordnum), font = fontsettings)
-	elif status is 'active':
+	elif status == 'active':
 		if istitleline:
 			fontsettings = (font, expressionfontsize, "underline", "italic", "bold")
 		else:
