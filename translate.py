@@ -11,6 +11,8 @@ def languagecode(language):
 		return 'de'
 	elif language == 'italian':
 		return 'it'
+	elif language == 'croatian':
+		return 'hr'
 	elif language == 'russian':
 		return 'ru'
 	else:
@@ -79,7 +81,10 @@ def translate(word, language):
 		word2 = word2.replace('я́','я')
 		worddata = parser.fetch(word2,language)
 	else:
-		worddata = parser.fetch(word,language)
+		if language == 'croatian':
+			worddata = parser.fetch(word,'serbo-croatian')
+		else:
+			worddata = parser.fetch(word,language)
 		if language == 'german':
 			if len(word) > 1:
 				worddata2 = parser.fetch(word[0].upper()+word[1:],language)

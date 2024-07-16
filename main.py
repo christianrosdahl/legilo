@@ -11,7 +11,6 @@ from googletrans import Translator
 import webbrowser
 import urllib
 import pickle # For saving and loading data
-#from playsound import playsound
 import subprocess # Used for text-to speak with Mac OS
 import shlex # Used for text-to speak with Mac OS
 
@@ -1041,6 +1040,8 @@ def languagecode(language):
 		return 'de'
 	elif language == 'italian':
 		return 'it'
+	elif language == 'croatian':
+		return 'hr'
 	elif language == 'russian':
 		return 'ru'
 	else:
@@ -1660,6 +1661,7 @@ def start():
 	starttext.insert("end", "[F]rench\n")
 	starttext.insert("end", "[G]erman\n")
 	starttext.insert("end", "[I]talian\n")
+	starttext.insert("end", "[C]roatian\n")
 	starttext.insert("end", "[R]ussian\n")
 	starttext.insert("end", "\n")
 	starttext.insert("end", "[N]ew\n")
@@ -1669,6 +1671,7 @@ def start():
 	startwindow.bind("f", langchoice)
 	startwindow.bind("g", langchoice)
 	startwindow.bind("i", langchoice)
+	startwindow.bind("c", langchoice)
 	startwindow.bind("r", langchoice)
 	startwindow.bind("<n>", optionchoice)
 	startwindow.bind("<o>", optionchoice)
@@ -1689,6 +1692,8 @@ def langchoice(event):
 		language = 'german'
 	elif choice == 'i':
 		language = 'italian'
+	elif choice == 'c':
+		language = 'croatian'
 	elif choice == 'r':
 		language = 'russian'
 		macvoice = True
