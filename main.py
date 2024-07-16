@@ -31,6 +31,7 @@ knowncolor = 'lightgreen'
 textfieldwidth = 60 # Text field width in number of characters
 considerexpressions = True # Allow expressions to be considered
 savingon = True # Saves files when quitting
+usemessagebox = False # Uses message box to inform about saving, which has some bug on Mac OS
 printwordlistsatstart = False # Prints word lists in terminal for debugging
 newbrowsertab = True # Use a new browser tab the first time the browser is opened
 
@@ -144,7 +145,10 @@ def savelists(event):
 	global w
 	global text
 	saveall()
-	ans = messagebox.showinfo("Saved", "The wordlists were saved!")
+	if usemessagebox:
+		ans = messagebox.showinfo("Saved", "The wordlists were saved!")
+	else:
+		print("The wordlists were saved!")
 	deactivateexpressionmode(event)
 	text.focus()
 	unfocus()
@@ -154,7 +158,10 @@ def savelistsastxt(event):
 	global w
 	global text
 	saveallastxt()
-	ans = messagebox.showinfo("Saved", "The wordlists were saved as txt files!")
+	if usemessagebox:
+		ans = messagebox.showinfo("Saved", "The wordlists were saved as txt files!")
+	else:
+		print("The wordlists were saved as txt files!")
 	deactivateexpressionmode(event)
 	text.focus()
 	unfocus()
@@ -1322,15 +1329,17 @@ def addswedishtrans(event):
 		freezesidefield()
 
 def quitprogram():
-	if savingon:
-		ans = messagebox.askyesnocancel("Quit", "Do you want to save the changes?")
-	else:
-		ans = False
+	if usemessagebox:
+		if savingon:
+			ans = messagebox.askyesnocancel("Quit", "Do you want to save the changes?")
+		else:
+			ans = False
+	elif savingon:
+		ans = True
 	if ans is not None:
 		if ans:
-			#handleactivewordsatclick()
-			#handleactiveexpressionsatclick()
 			saveall()
+			print("The wordlists were saved!")
 		w.destroy()
 		start()
 
