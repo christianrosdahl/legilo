@@ -1357,6 +1357,7 @@ def wordfromindex(index):
 # If a word is clicked
 def clickedword(event):
 	if considerexpressions:
+		wordtags = text.tag_names(text.index(CURRENT))
 		# Choose tag for word, not for expression:
 		for tag in wordtags:
 			if 'e' not in tag and 'l' not in tag:
@@ -2126,7 +2127,7 @@ def run(language, textfile):
 
 	# Read text
 	with open(textfile) as file:
-	    lines = file.readlines()
+		lines = file.readlines()
 	nbrlines = len(lines)
 
 	# Show text
