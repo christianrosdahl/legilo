@@ -1,11 +1,6 @@
-import urllib
-from urllib import parse
-from bs4 import BeautifulSoup
-from urllib.request import Request, urlopen
 from googletrans import Translator
 #from wiktionaryparser import WiktionaryParser
 import wiktionaryparser
-from translate_collins import translate_collins
 import re # For removing characters not allowed
 
 # Get 2-letter language code (ISO 639-1)
@@ -223,10 +218,6 @@ def translate(word, language):
 						wordforms = wordforms + '; ' + newwordforms
 
 	if len(wordforms) > 0:
-		# if len(remark) == 0:
-		# 	remark = 'Word forms: ' + wordforms
-		# else:
-		# 	remark = remark + '\n\n' + 'Word forms: ' + wordforms
 		if len(remark) == 0:
 			remark = wordforms
 		else:
@@ -437,20 +428,6 @@ def translate(word, language):
 
 	# Remove temporary marker for conjugated verbs
 	remark = remark.replace('verbform ','')
-
-	# # Translate with Collins if translation not found
-	# if len(trans) == 0 and (language == 'french' or language == 'german' or language == 'italian'):
-	# 	ans = translate_collins(word, language)
-	# 	dictword2 = ans['dictword']
-	# 	if dictword2:
-	# 		if not dictword2 == word:
-	# 			ans2 = translate(dictword2, language)
-	# 			trans2 = ans2['trans']
-	# 			if len(trans2) > 0:
-	# 				if len(remark) == 0:
-	# 					remark = dictword2 + ' = ' + trans2
-	# 				elif newtrans not in remark:
-	# 					remark = dictword2 + ' = ' + trans2 + '\n\n' + remark
 
 	# Translate with Google if translation not found
 	if len(trans) == 0:
