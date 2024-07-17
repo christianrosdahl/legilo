@@ -53,7 +53,7 @@ side_field_fonts = {'title': (font, 14, 'italic', 'bold'),
 							'texttype': (font, 16, 'italic'),
 							'translation': (font, 16),
 							'remark': (font, 14),
-							'example': (font, 14),
+							'example': (font, 14, 'bold'),
 							'example translation': (font, 14, 'italic')}
 side_field_width = 30 # Side field width in number of characters
 side_field_padx = 5
@@ -596,11 +596,13 @@ def insertsentence(sentence, sentencetrans):
 # Insert formated translation into translation field
 def inserttranslation(info):
 	# Define tags for formatting
-	texttrans.tag_configure("word", font=(font, 16, "bold"))
-	texttrans.tag_configure("normal", font=(font, 16))
-	texttrans.tag_configure("parenthesis", font=(font, 16))
-	texttrans.tag_configure("type_and_gender", font=(font, 16, "italic"))
-	texttrans.tag_configure("definitions", font=(font, 16), lmargin1=20, spacing1=10)
+	(translation_font, translation_font_size) = side_field_fonts['translation']
+	texttrans.tag_configure("word", font=(translation_font, translation_font_size, "bold"))
+	texttrans.tag_configure("normal", font=(translation_font, translation_font_size))
+	texttrans.tag_configure("parenthesis", font=(translation_font, translation_font_size))
+	texttrans.tag_configure("type_and_gender", font=(translation_font, translation_font_size, "italic"))
+	texttrans.tag_configure("definitions", font=(translation_font, translation_font_size), lmargin1=20, spacing1=5)
+	texttrans.tag_configure("synonyms", font=(translation_font, translation_font_size-2, "bold"), lmargin1=40, spacing1=2)
 
 	for i, item in enumerate(info):
 		if 'word' in item:
@@ -616,6 +618,12 @@ def inserttranslation(info):
 				if 'definition' in definition:
 					def_def = definition['definition']
 					texttrans.insert(END, f'\n{j+1}. {def_def}', 'definitions')
+				if 'synonyms' in definition:
+					synonyms = definition['synonyms']
+					texttrans.insert(END, f'\n≈ {synonyms}', 'synonyms')
+				if 'antonyms' in definition:
+					antonyms = definition['antonyms']
+					texttrans.insert(END, f'\n≠ {antonyms}', 'synonyms')
 		if i < len(info)-1:
 			texttrans.insert(END, '\n\n', 'normal')
 
