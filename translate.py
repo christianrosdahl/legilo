@@ -204,6 +204,10 @@ class LegiloTranslator():
                 gender_tag = element.find('span', class_='gender')
                 if found_word and gender_tag:
                     results[-1]['gender'] = gender_tag.text.strip()
+                # Exctract qualifier if available
+                qualifier_tag = element.find('span', class_='qualifier-content')
+                if found_word and qualifier_tag:
+                    results[-1]['qualifier'] = qualifier_tag.text.strip()
             elif element.name == 'ol':
                 # Extract definitions
                 for li in element.find_all('li', recursive=False):
@@ -234,7 +238,6 @@ class LegiloTranslator():
             for lemma in lemmas:
                 results_for_lemmas = self.parse_from_wiktionary(lemma, lookup_wiktionary_lemmas=False)
                 results += results_for_lemmas
-
         return results
 
     def is_etymology(self, element):

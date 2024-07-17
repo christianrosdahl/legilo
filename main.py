@@ -613,6 +613,11 @@ def inserttranslation(info):
 			if 'gender' in item:
 				texttrans.insert(END, ' — ' + item['gender'], 'type_and_gender')
 			texttrans.insert(END, ')', 'parenthesis')
+			if 'qualifier' in item:
+				texttrans.insert(END, ' (', 'parenthesis')
+				texttrans.insert(END, item['qualifier'], 'type_and_gender')
+				texttrans.insert(END, ')', 'parenthesis')
+
 		if 'definitions' in item:
 			for j, definition in enumerate(item['definitions']):
 				if 'definition' in definition:
