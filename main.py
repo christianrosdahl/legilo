@@ -1387,6 +1387,11 @@ def quitprogram():
 		w.destroy()
 		start()
 
+def quitwithoutsaving(event):
+	w.destroy()
+	print('Quitted without saving progress.')
+	start()
+
 # Find word from index
 def wordfromindex(index):
 	lineandchar = index.split(".")
@@ -2380,6 +2385,7 @@ def run(language, textfile):
 	w.bind("<KeyRelease-Meta_L>", deactivateexpressionmode)
 	w.bind("<Command-Key-s>", savelists)
 	w.bind("<Command-Key-t>", savelistsastxt)
+	w.bind("<Command-Key-x>", quitwithoutsaving)
 	w.bind("<z>", pronouncenext)
 
 	texttype.bind("<Button-1>", changetype)
