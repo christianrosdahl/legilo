@@ -572,11 +572,11 @@ def insertsentence(sentence, sentencetrans):
 # Insert formated translation into translation field
 def inserttranslation(info):
 	# Define tags for formatting
-	texttrans.tag_configure("word", font=("Helvetica", 16, "bold"))
-	texttrans.tag_configure("normal", font=("Helvetica", 16))
-	texttrans.tag_configure("parenthesis", font=("Helvetica", 16))
-	texttrans.tag_configure("type_and_gender", font=("Helvetica", 16, "italic"))
-	texttrans.tag_configure("definitions", font=("Helvetica", 16), lmargin1=20, spacing1=10)
+	texttrans.tag_configure("word", font=(font, 16, "bold"))
+	texttrans.tag_configure("normal", font=(font, 16))
+	texttrans.tag_configure("parenthesis", font=(font, 16))
+	texttrans.tag_configure("type_and_gender", font=(font, 16, "italic"))
+	texttrans.tag_configure("definitions", font=(font, 16), lmargin1=20, spacing1=10)
 
 	for i, item in enumerate(info):
 		if 'word' in item:
