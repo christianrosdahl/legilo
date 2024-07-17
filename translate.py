@@ -45,7 +45,10 @@ class LegiloTranslator():
         if self.use_lemma:
             lemma = self.get_lemma(word)
             lemmas_from_wiktionary = self.get_lemmas_from_results(results)
-            if lemma != word and not lemma in lemmas_from_wiktionary:
+            lookup_words_from_result = self.get_lookup_words_from_results(results)
+            if (lemma != word and
+                not lemma in lemmas_from_wiktionary and
+                not lemma in lookup_words_from_result):
                 results = results + self.parse_from_wiktionary(lemma)
         
         if len(results) == 0:
