@@ -3,6 +3,7 @@ from datetime import date
 from tkinter import *
 from tkinter import messagebox
 import tkinter.scrolledtext as scrolledtextwindow
+from languagecode import *
 from translate import *
 from sentence import *
 from autoread import *
@@ -18,6 +19,7 @@ import shlex # Used for text-to speak with Mac OS
 soundon = True # Pronounce word when looked up
 macvoice = False # Use the text-to speak voice in Mac OS instead of Google
 includearticle = True # Write out and pronounce article for nouns
+uselemma = True # Use a lemmatizer to look up the lemma form of a word
 movewindow = True # Move window to second screen at start
 font = 'Avant Garde' #'Museo Sans Rounded', 'Bookman', 'Georgia', 'Helvetica', 'Avant Garde'
 fontsize = 18
@@ -129,6 +131,9 @@ def saveall():
 	if considerexpressions:
 		savelist(expressions, "expressions")
 	savelist(lastopenedfiles, 'lastopenedfiles')
+	if not usemessagebox:
+		print("The wordlists were saved!")
+		print(f"Number of known words: {len(knownwords)}")
 
 # Save all the word lists as txt files
 def saveallastxt():
@@ -146,8 +151,6 @@ def savelists(event):
 	saveall()
 	if usemessagebox:
 		ans = messagebox.showinfo("Saved", "The wordlists were saved!")
-	else:
-		print("The wordlists were saved!")
 	deactivateexpressionmode(event)
 	text.focus()
 	unfocus()
@@ -565,20 +568,46 @@ def insertsentence(sentence, sentencetrans):
 	textsentencetrans.tag_add("sentence", "1.0", "1." + str(len(sentence)))
 	textsentencetrans.tag_config("sentence", font = (font, 14, "bold"))
 
+# Insert formated translation into translation field
+def inserttranslation(info):
+	# Define tags for formatting
+	texttrans.tag_configure("word", font=("Helvetica", 16, "bold"))
+	texttrans.tag_configure("normal", font=("Helvetica", 16))
+	texttrans.tag_configure("parenthesis", font=("Helvetica", 16))
+	texttrans.tag_configure("type_and_gender", font=("Helvetica", 16, "italic"))
+	texttrans.tag_configure("definitions", font=("Helvetica", 16), lmargin1=20, spacing1=10)
+
+	for i, item in enumerate(info):
+		if 'word' in item:
+			texttrans.insert(END, item['word'], 'word')
+		if 'part_of_speech' in item:
+			texttrans.insert(END, ' (', 'parenthesis')
+			texttrans.insert(END, item['part_of_speech'], 'type_and_gender')
+			if 'gender' in item:
+				texttrans.insert(END, ' — ' + item['gender'], 'type_and_gender')
+			texttrans.insert(END, ')', 'parenthesis')
+		if 'definitions' in item:
+			for j, definition in enumerate(item['definitions']):
+				if 'definition' in definition:
+					def_def = definition['definition']
+					texttrans.insert(END, f'\n{j+1}. {def_def}', 'definitions')
+		if i < len(info)-1:
+			texttrans.insert(END, '\n\n', 'normal')
+
 # View in side field
 def sidefieldshow(word, info):
 	global language
-	global dictwordforshowedword
+	global infoforshowedword
+	infoforshowedword = info
 	trans = info['trans']
-	wordtype = info['wordtype']
-	remark = info['remark']
-	sentence = info['sentence']
-	sentencetrans = info['sentencetrans']
-	gender = getgender(wordtype)
+	wordtype = None
+	if 'wordtype' in info:
+		wordtype = info['wordtype']
 	if not wordtype == 'expression':
-		dictwordforshowedword = info['dictword']
-		equaltodictword = (dictwordforshowedword.lower() == word)
-	
+		equaltodictword = False
+		# The word is a variant of some other word if there are lemmas
+		word_is_variant = 'lemmas' in info
+
 	# Write german nouns with initial capital letter and article
 	if language == 'german' and 'noun' in wordtype and len(word) > 0:
 		if not 'verb' in wordtype:
@@ -586,33 +615,51 @@ def sidefieldshow(word, info):
 		else:
 			word = word[0].upper() + word[1:] + ', ' + word
 
+	has_unique_gender = False
+	if 'gender' in info:
+		gender = info['gender']
+		if len(gender) == 1:
+			has_unique_gender = True
+
 	if not wordtype == 'expression':
 		# Write nouns with article if in dictionary form
-		if includearticle and 'noun' in wordtype and len(word) > 0 and equaltodictword:
-			article = getarticle(word, gender, language)
-			if language == 'italian':
-				if len(article) > 0:
-					if not article == "un'":
+		if has_unique_gender:
+			if includearticle and len(word) > 0 and not word_is_variant:
+				article = getarticle(word, gender, language)
+				if language == 'italian':
+					if len(article) > 0:
+						if not article == "un'":
+							word = article + ' ' + word
+						else:
+							word = article + word
+				else:
+					if len(article) > 0:
 						word = article + ' ' + word
-					else:
-						word = article + word
-			else:
-				if len(article) > 0:
-					word = article + ' ' + word
 
 	editsidefield()
 	textword.insert("1.0", word)
-	gendercolor(gender)
-	texttype.insert("1.0", wordtype)
-	texttrans.insert("1.0", trans)
+	if has_unique_gender:
+		gendercolor(gender)
+	else:
+		textword.configure(fg="black")
+	if wordtype:
+		texttype.insert("1.0", wordtype)
+	if not wordtype == 'expression':
+		inserttranslation(trans)
+	else:
+		texttrans.insert("1.0", trans)
 	#texttrans.tag_add("translation", "1.0", "end")
 	#texttrans.tag_config("translation", background="orange")
 	texttrans.configure(bg=activecolor)
-	textremark.insert("1.0", remark)
-	textsentence.insert("1.0", "Example sentence: ")
-	textsentence.tag_add("translation", "1.0", "end")
-	textsentence.tag_config("translation", background="lightgray")
-	insertsentence(sentence, sentencetrans)
+	has_text_in_remark = False
+	if 'remark' in info:
+		textremark.insert(END, info['remark'])
+		has_text_in_remark = True
+	if 'sentence' in info and 'sentencetrans' in info:
+		textsentence.insert("1.0", "Example sentence: ")
+		textsentence.tag_add("translation", "1.0", "end")
+		textsentence.tag_config("translation", background="lightgray")
+		insertsentence(info['sentence'], info['sentencetrans'])
 	freezesidefield()
 
 	# Pronunciation
@@ -624,12 +671,12 @@ def lookup(word, status):
 	global textword
 	global activelookedup
 	if status == 'new' or status == 'ignored':
-		translation = translate(word, language)
+		info = legilotranslator.get_info(word)
 		sentence = ""
 		(sentence, sentencetrans) = getfirstsentence(word, language)
-		info = translation
-		info['sentence'] = sentence
-		info['sentencetrans'] = sentencetrans
+		if len(sentence) > 0:
+			info['sentence'] = sentence
+			info['sentencetrans'] = sentencetrans
 	elif status == 'learning':
 		info = learningwords[word]
 	else: # status == 'known'
@@ -662,24 +709,31 @@ def removenewlineatend(string):
 			string = string[:-1]
 	return string
 
-# Collect word info from side field and dictwordforshowedword variable
+# Collect word info from side field and infoforshowedword variable
 def getwordinfo():
-	global dictwordforshowedword
+	global infoforshowedword
 	editsidefield()
-	trans = texttrans.get("1.0",END)
-	wordtype = texttype.get("1.0",END)
+	wordtype = None
+	if 'wordtype' in infoforshowedword:
+		wordtype = infoforshowedword['wordtype']
+		wordtype = removenewlineatend(wordtype)
 	remark = textremark.get("1.0",END)
-	sentence = textsentencetrans.get("1.0","1.end")
-	sentencetrans = textsentencetrans.get("3.0","3.end")
-
-	# Remove newline at end
-	trans = removenewlineatend(trans)
-	wordtype = removenewlineatend(wordtype)
 	remark = removenewlineatend(remark)
+	sentence = textsentencetrans.get("1.0","1.end")
 	sentence = removenewlineatend(sentence)
+	sentencetrans = textsentencetrans.get("3.0","3.end")
 	sentencetrans = removenewlineatend(sentencetrans)
+	if wordtype == 'expression':
+		trans = texttrans.get("1.0",END)
+		trans = removenewlineatend(trans)
+		info = {'trans' : trans, 'wordtype' : wordtype, 'remark' : remark,
+		  		'sentence' : sentence, 'sentencetrans' : sentencetrans}
+	else:
+		info = infoforshowedword
+		info['remark'] = remark
+		info['sentence'] = sentence
+		info['sentencetrans'] = sentencetrans
 
-	info = {'trans' : trans, 'wordtype' : wordtype, 'remark' : remark, 'dictword': dictwordforshowedword, 'sentence' : sentence, 'sentencetrans' : sentencetrans}
 	freezesidefield()
 	return info
 
@@ -1032,21 +1086,6 @@ def iteratelearningwords(event):
 		for word in removefromremoved:
 			removedfromqueue.remove(word)
 
-# Get 2-letter language code (ISO 639-1)
-def languagecode(language):
-	if language == 'french':
-		return 'fr'
-	elif language == 'german':
-		return 'de'
-	elif language == 'italian':
-		return 'it'
-	elif language == 'croatian':
-		return 'hr'
-	elif language == 'russian':
-		return 'ru'
-	else:
-		return '?'
-
 def pronounce(word, language):
 	global active
 	global activelookedup
@@ -1063,6 +1102,8 @@ def pronounce(word, language):
 			voice = 'Petra'
 		elif language == 'italian':
 			voice = 'Alice'
+		elif language == 'croatian':
+			voice = 'Lana'
 		elif language == 'russian':
 			voice = 'Milena'
 		if active and activelookedup: # Pronounce nouns with article
@@ -1321,11 +1362,14 @@ def addswedishtrans(event):
 		else:
 			remarkwithoutswedish = textremark.get('1.0','end')
 			if len(remarkwithoutswedish) > 1:
-				removenewlineatend(remarkwithoutswedish)
-				removenewlineatend(remarkwithoutswedish)
+				remarkwithoutswedish = removenewlineatend(remarkwithoutswedish)
+				textremark.tag_configure('swedish_header', font=(font, 16, 'italic'))
+				textremark.insert('end', '\n' + 'Swedish translations:', 'swedish_header')
 				textremark.insert('end', '\n\n' + translatetoswedish(word, engtrans))
 			else:
-				textremark.insert('end', translatetoswedish(word, engtrans))
+				textremark.tag_configure('swedish_header', font=(font, 16, 'italic'))
+				textremark.insert('end', 'Swedish translations:', 'swedish_header')
+				textremark.insert('end', '\n\n' + translatetoswedish(word, engtrans))
 			lastwordtranslatedtoswedish = word
 		freezesidefield()
 
@@ -1340,7 +1384,6 @@ def quitprogram():
 	if ans is not None:
 		if ans:
 			saveall()
-			print("The wordlists were saved!")
 		w.destroy()
 		start()
 
@@ -1486,7 +1529,7 @@ def selectsentence(event):
 		freezesidefield()
 
 # Get Swedish translations from string of english translations
-includetransoforiginalword = False
+includetransoforiginalword = True
 def translatetoswedish(word, trans):
 	global includetransoforiginalword
 	translator = Translator()
@@ -1498,20 +1541,14 @@ def translatetoswedish(word, trans):
 	# Translate the original word directly to Swedish
 	if includetransoforiginalword:
 		swedishtrans = translator.translate(word, src=languagecode(language), dest='sv').text
-		translationstring = word + ' = ' + swedishtrans + ', '
+		translationstring = word + ' = ' + swedishtrans + '\n\n'
 	# Remove new line from end of translations string
 	if len(trans) > 0:
 		if trans[-1] == '\n':
 			trans = trans[:-1]
 	# Translate the English translations to Swedish
-	trans = trans.replace(';',',')
-	translations = trans.split(', ')
-	for t in translations:
-		swedishtrans = translator.translate(t, src='en', dest='sv').text
-		translationstring = translationstring + t + ' = ' + swedishtrans + ', '
-	if len(translationstring) > 2:
-		translationstring = translationstring[:-2]
-	translationstring = 'Swedish: ' + translationstring
+	translationstring += translator.translate(trans, src='en', dest='sv').text
+
 	return translationstring
 
 def activateexpressionmode(event):
@@ -1577,9 +1614,11 @@ def newexpression(wordtag1, wordtag2):
 
 		translator = Translator()
 		trans = translator.translate(expression, src=languagecode(language), dest='en').text
-		remark = ''
+		info = {'expressionwords': expressionwords, 'word' : expression, 'trans' : trans, 'wordtype' : 'expression'}
 		(sentence, sentencetrans) = getfirstsentence(expression, language)
-		info = {'expressionwords': expressionwords, 'word' : expression, 'trans' : trans, 'wordtype' : 'expression', 'remark' : remark, 'sentence' : sentence, 'sentencetrans' : sentencetrans}
+		if len(sentence) > 0:
+			info['sentence'] = sentence
+			info['sentencetrans'] = sentencetrans
 		active = False
 		activelookedup = False
 		activeexpression = {'expressionwords': expressionwords, 'line': line1, 'startwordnum': wordnum1, 'endwordnum': wordnum2, 'status': 'learning'}
@@ -1658,14 +1697,14 @@ def start():
 	starttext.tag_add("choice", "6.0", "6.end")
 	starttext.tag_configure("choice", font=(font, 20, 'italic'))
 	starttext.insert("end", "\n\n")
-	starttext.insert("end", "[F]rench\n")
-	starttext.insert("end", "[G]erman\n")
-	starttext.insert("end", "[I]talian\n")
-	starttext.insert("end", "[C]roatian\n")
-	starttext.insert("end", "[R]ussian\n")
+	starttext.insert("end", "🇫🇷 [F]rench\n")
+	starttext.insert("end", "🇩🇪 [G]erman\n")
+	starttext.insert("end", "🇮🇹 [I]talian\n")
+	starttext.insert("end", "🇭🇷 [C]roatian\n")
+	starttext.insert("end", "🇷🇺 [R]ussian\n")
 	starttext.insert("end", "\n")
-	starttext.insert("end", "[N]ew\n")
-	starttext.insert("end", "[O]pen\n")
+	starttext.insert("end", "📄 [N]ew\n")
+	starttext.insert("end", "📂 [O]pen\n")
 	starttext.configure(state="disabled")
 
 	startwindow.bind("f", langchoice)
@@ -2074,6 +2113,10 @@ def run(language, textfile):
 	global removedfromqueue
 	global textexpressions
 
+	global legilotranslator
+
+	legilotranslator = LegiloTranslator(language, use_lemma=uselemma)
+
 	# Word lists
 	knownwords = None
 	learningwords = None
@@ -2131,6 +2174,8 @@ def run(language, textfile):
 	    width  = textfieldwidth,      # characters
 	    height = 100,      # text lines
 	    bg='white',        # background color of edit area
+		highlightthickness=0,
+		borderwidth=0, 
 	    font=(font, fontsize)
 	)
 
@@ -2287,21 +2332,21 @@ def run(language, textfile):
 		markexpression(expression['line'], expression['startwordnum'], 'ordinary')
 
 	# Add text fields in side field
-	textstatus = Text(sideframe, width=30, height=1, wrap="word", font=(font,12,"bold"))
+	textstatus = Text(sideframe, width=30, height=1, wrap="word", highlightthickness=0, borderwidth=0, font=(font,12,"bold"))
 	textstatus.pack(fill="x")
-	textword = Text(sideframe, width=30, height=1, wrap="word", font=(font,20,"bold"))
+	textword = Text(sideframe, width=30, height=1, wrap="word", highlightthickness=0, borderwidth=0, font=(font,20,"bold"))
 	textword.pack(fill="x")
-	texttype = Text(sideframe, width=30, height=2, wrap="word", font=(font,16,"italic"))
+	texttype = Text(sideframe, width=30, height=2, wrap="word", highlightthickness=0, borderwidth=0, font=(font,16,"italic"))
 	texttype.pack(fill="x")
-	texttrans = Text(sideframe, width=30, height=3, wrap="word", font=(font,18,"bold"))
+	texttrans = Text(sideframe, width=30, height=20, wrap="word", highlightthickness=0, borderwidth=0, font=(font,16))
 	#texttrans.configure(fg='black', bg='orange')
 	texttrans.pack(fill="x")
 	#textremark = Text(sideframe, width=30, height=12, wrap="word", font=(font,16))
-	textremark = Text(sideframe, width=30, height=14, wrap="word", font=(font,16))
+	textremark = Text(sideframe, width=30, height=14, wrap="word", highlightthickness=0, borderwidth=0, font=(font,16))
 	textremark.pack(fill="x")
-	textsentence = Text(sideframe, width=30, height=1, wrap="word", font=(font,14,"italic","bold"))
+	textsentence = Text(sideframe, width=30, height=1, wrap="word", highlightthickness=0, borderwidth=0, font=(font,14,"italic","bold"))
 	textsentence.pack(fill="x")
-	textsentencetrans = Text(sideframe, width=30, height=50, wrap="word", font=(font,14))
+	textsentencetrans = Text(sideframe, width=30, height=50, wrap="word", highlightthickness=0, borderwidth=0, font=(font,14))
 	textsentencetrans.pack(fill="x")
 
 	w.protocol("WM_DELETE_WINDOW", quitprogram)

@@ -1,6 +1,7 @@
 import urllib
 from bs4 import BeautifulSoup
 from urllib.request import Request, urlopen
+from languagecode import *
 
 # Fix for urllib ---------
 import os, ssl
@@ -8,19 +9,6 @@ if (not os.environ.get('PYTHONHTTPSVERIFY', '') and
 getattr(ssl, '_create_unverified_context', None)):
 	ssl._create_default_https_context = ssl._create_unverified_context
 # ------------------------
-
-# Get 2-letter language code (ISO 639-1)
-def languagecode(language):
-	if language == 'french':
-		return 'fr'
-	elif language == 'german':
-		return 'de'
-	elif language == 'italian':
-		return 'it'
-	elif language == 'russian':
-		return 'ru'
-	else:
-		return '?'
 
 # Return n example sentences
 def getsentences(word, language, n):
