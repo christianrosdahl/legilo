@@ -1873,7 +1873,7 @@ def confirmnew(event):
 		editingnewtitle = False
 		title = newtitle.get('1.0','end')
 		if 'http://' in title or 'https://' in title:
-			(title, text) = autoread(language, title)
+			(title, text) = autoread(title)
 			# Remove strange space-like sign to not get new lines
 			title = title.replace(' ',' ')
 			text = text.replace(' ',' ')
