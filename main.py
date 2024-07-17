@@ -15,27 +15,51 @@ import pickle # For saving and loading data
 import subprocess # Used for text-to speak with Mac OS
 import shlex # Used for text-to speak with Mac OS
 
-# Settings
+# General settings
 soundon = True # Pronounce word when looked up
 macvoice = False # Use the text-to speak voice in Mac OS instead of Google
 includearticle = True # Write out and pronounce article for nouns
 uselemma = True # Use a lemmatizer to look up the lemma form of a word
 startwindowsize = {'width': 1200, 'height': 700} # Set size of start window
 mainwindowsize = {'width': 1200, 'height': 1000} # Set size of main window
-font = 'Avant Garde' #'Museo Sans Rounded', 'Bookman', 'Georgia', 'Helvetica', 'Avant Garde'
-fontsize = 18
-maintitlesize = 36
-titlesize = 20
-activecolor = 'orange'
-learningcolor = '#fde367' #'yellow' macyellow:'#facd5a'
-newcolor = '#cce6ff' #'#a3daf0'#'lightblue' macblue: '#69aff1'
-knowncolor = 'lightgreen'
-textfieldwidth = 60 # Text field width in number of characters
 considerexpressions = True # Allow expressions to be considered
 savingon = True # Saves files when quitting
 usemessagebox = False # Uses message box to inform about saving, which has some bug on Mac OS
 printwordlistsatstart = False # Prints word lists in terminal for debugging
 newbrowsertab = True # Use a new browser tab the first time the browser is opened
+
+# Fonts and colors
+activecolor = 'orange'
+learningcolor = '#fde367' #'yellow' macyellow:'#facd5a'
+newcolor = '#cce6ff' #'#a3daf0'#'lightblue' macblue: '#69aff1'
+knowncolor = 'lightgreen'
+
+# Font
+font = 'Avant Garde' #'Museo Sans Rounded', 'Bookman', 'Georgia', 'Helvetica', 'Avant Garde'
+
+# Main window text settings
+fontsize = 18
+maintitlesize = 36
+titlesize = 20
+text_field_width = 60 # Text field width in number of characters
+text_field_padx = 5
+text_field_pady = 5
+
+# Side field text settings
+side_field_fonts = {'title': (font, 14, 'italic', 'bold'),
+							'field title background': 'lightgray',
+							'word': (font, 20, 'bold'),
+							'status': (font, 12, 'bold'),
+							'texttype': (font, 16, 'italic'),
+							'translation': (font, 16),
+							'remark': (font, 14),
+							'example': (font, 14),
+							'example translation': (font, 14, 'italic')}
+side_field_width = 30 # Side field width in number of characters
+side_field_padx = 5
+side_field_pady = 5
+
+
 
 
 
@@ -563,11 +587,11 @@ def gendercolor(gender):
 
 # Insert example sentence
 def insertsentence(sentence, sentencetrans):
-	textsentencetrans.delete("1.0", "end")
-	textsentencetrans.insert("1.0", sentence + "\n")
-	textsentencetrans.insert("3.0", sentencetrans)
-	textsentencetrans.tag_add("sentence", "1.0", "1." + str(len(sentence)))
-	textsentencetrans.tag_config("sentence", font = (font, 14, "bold"))
+	textexample.delete("1.0", "end")
+	textexample.insert("1.0", sentence + "\n")
+	textexample.insert("3.0", sentencetrans)
+	textexample.tag_add("sentence", "1.0", "1." + str(len(sentence)))
+	textexample.tag_config("sentence", font = side_field_fonts['example'])
 
 # Insert formated translation into translation field
 def inserttranslation(info):
@@ -648,18 +672,16 @@ def sidefieldshow(word, info):
 	if not wordtype == 'expression':
 		inserttranslation(trans)
 	else:
-		texttrans.insert("1.0", trans)
-	#texttrans.tag_add("translation", "1.0", "end")
-	#texttrans.tag_config("translation", background="orange")
-	texttrans.configure(bg=activecolor)
+		texttrans.tag_configure("expression_trans", 
+						  font=(side_field_fonts['translation'][0],
+			  					side_field_fonts['translation'][1]+2))
+
+		texttrans.insert("1.0", trans, "expression_trans")
 	has_text_in_remark = False
 	if 'remark' in info:
 		textremark.insert(END, info['remark'])
 		has_text_in_remark = True
 	if 'sentence' in info and 'sentencetrans' in info:
-		textsentence.insert("1.0", "Example sentence: ")
-		textsentence.tag_add("translation", "1.0", "end")
-		textsentence.tag_config("translation", background="lightgray")
 		insertsentence(info['sentence'], info['sentencetrans'])
 	freezesidefield()
 
@@ -692,8 +714,7 @@ def editsidefield():
 	texttype.configure(state="normal")
 	texttrans.configure(state="normal")
 	textremark.configure(state="normal")
-	textsentence.configure(state="normal")
-	textsentencetrans.configure(state="normal")
+	textexample.configure(state="normal")
 
 # Disable input of text in sidebar
 def freezesidefield():
@@ -701,8 +722,7 @@ def freezesidefield():
 	texttype.configure(state="disabled")
 	texttrans.configure(state="disabled")
 	textremark.configure(state="disabled")
-	textsentence.configure(state="disabled")
-	textsentencetrans.configure(state="disabled")
+	textexample.configure(state="disabled")
 
 def removenewlineatend(string):
 	if len(string) > 0:
@@ -720,9 +740,9 @@ def getwordinfo():
 		wordtype = removenewlineatend(wordtype)
 	remark = textremark.get("1.0",END)
 	remark = removenewlineatend(remark)
-	sentence = textsentencetrans.get("1.0","1.end")
+	sentence = textexample.get("1.0","1.end")
 	sentence = removenewlineatend(sentence)
-	sentencetrans = textsentencetrans.get("3.0","3.end")
+	sentencetrans = textexample.get("2.0","2.end")
 	sentencetrans = removenewlineatend(sentencetrans)
 	if wordtype == 'expression':
 		trans = texttrans.get("1.0",END)
@@ -743,8 +763,8 @@ def getexpressioninfo():
 	expression = textword.get("1.0",END)
 	trans = texttrans.get("1.0",END)
 	remark = textremark.get("1.0",END)
-	sentence = '' #textsentencetrans.get("1.0","1.end")
-	sentencetrans = '' #textsentencetrans.get("3.0","3.end")
+	sentence = '' #textexample.get("1.0","1.end")
+	sentencetrans = '' #textexample.get("3.0","3.end")
 
 	# Remove newline at end
 	expression = removenewlineatend(expression)
@@ -802,8 +822,8 @@ def clearsidefield():
 	global texttype
 	global textremark
 	global texttrans
-	global textsentence
-	global textsentencetrans
+	global textexampletitle
+	global textexample
 
 	textstatus.configure(state="normal")
 	textstatus.delete("1.0", "end")
@@ -824,16 +844,11 @@ def clearsidefield():
 
 	texttrans.configure(state="normal")
 	texttrans.delete('1.0', "end")
-	texttrans.configure(bg="white")
 	texttrans.configure(state="disabled")
 
-	textsentence.configure(state="normal")
-	textsentence.delete('1.0', "end")
-	textsentence.configure(state="disabled")
-
-	textsentencetrans.configure(state="normal")
-	textsentencetrans.delete('1.0', "end")
-	textsentencetrans.configure(state="disabled")
+	textexample.configure(state="normal")
+	textexample.delete('1.0', "end")
+	textexample.configure(state="disabled")
 
 # Check if more words in the queue
 def moreinqueue():
@@ -1165,13 +1180,6 @@ def pronouncenext(event):
 	space(event)
 	pronounceactiveword(event)
 
-def changetranslation(event):
-	global editing
-	if not editing:
-		editing = True
-		texttrans.configure(state="normal")
-		texttrans.focus()
-
 def changetype(event):
 	global editing
 	if not editing:
@@ -1373,13 +1381,11 @@ def addswedishtrans(event):
 		# Otherwise, get the Swedish translation
 		else:
 			remarkwithoutswedish = textremark.get('1.0','end')
+			textremark.tag_configure('swedish_header', font=(font, side_field_fonts['remark'][1], 'italic'))
 			if len(remarkwithoutswedish) > 1:
-				remarkwithoutswedish = removenewlineatend(remarkwithoutswedish)
-				textremark.tag_configure('swedish_header', font=(font, 16, 'italic'))
-				textremark.insert('end', '\n' + 'Swedish translations:', 'swedish_header')
+				textremark.insert('end', '\n\n' + 'Swedish translations:', 'swedish_header')
 				textremark.insert('end', '\n\n' + translatetoswedish(word, engtrans))
 			else:
-				textremark.tag_configure('swedish_header', font=(font, 16, 'italic'))
 				textremark.insert('end', 'Swedish translations:', 'swedish_header')
 				textremark.insert('end', '\n\n' + translatetoswedish(word, engtrans))
 			lastwordtranslatedtoswedish = word
@@ -2097,8 +2103,8 @@ def run(language, textfile):
 	global texttype
 	global texttrans
 	global textremark
-	global textsentence
-	global textsentencetrans
+	global textexampletitle
+	global textexample
 
 	global knownwords
 	global learningwords
@@ -2166,10 +2172,12 @@ def run(language, textfile):
 
 	# Add text field
 	text = scrolledtextwindow.ScrolledText(
-	    master = mainframe,
-	    wrap   = 'word',  # wrap text at full words only
-	    width  = textfieldwidth,      # characters
-	    height = 100,      # text lines
+	    master=mainframe,
+		padx=text_field_padx,
+		pady=text_field_pady,
+	    wrap='word',  # wrap text at full words only
+	    width=text_field_width,      # characters
+	    height=100,      # text lines
 	    bg='white',        # background color of edit area
 		highlightthickness=0,
 		borderwidth=0, 
@@ -2329,22 +2337,37 @@ def run(language, textfile):
 		markexpression(expression['line'], expression['startwordnum'], 'ordinary')
 
 	# Add text fields in side field
-	textstatus = Text(sideframe, width=30, height=1, wrap="word", highlightthickness=0, borderwidth=0, font=(font,12,"bold"))
-	textstatus.pack(fill="x")
-	textword = Text(sideframe, width=30, height=1, wrap="word", highlightthickness=0, borderwidth=0, font=(font,20,"bold"))
-	textword.pack(fill="x")
-	texttype = Text(sideframe, width=30, height=2, wrap="word", highlightthickness=0, borderwidth=0, font=(font,16,"italic"))
-	texttype.pack(fill="x")
-	texttrans = Text(sideframe, width=30, height=20, wrap="word", highlightthickness=0, borderwidth=0, font=(font,16))
-	#texttrans.configure(fg='black', bg='orange')
-	texttrans.pack(fill="x")
-	#textremark = Text(sideframe, width=30, height=12, wrap="word", font=(font,16))
-	textremark = Text(sideframe, width=30, height=12, wrap="word", highlightthickness=0, borderwidth=0, font=(font,16))
-	textremark.pack(fill="x")
-	textsentence = Text(sideframe, width=30, height=1, wrap="word", highlightthickness=0, borderwidth=0, font=(font,14,"italic","bold"))
-	textsentence.pack(fill="x")
-	textsentencetrans = Text(sideframe, width=30, height=50, wrap="word", highlightthickness=0, borderwidth=0, font=(font,14))
-	textsentencetrans.pack(fill="x")
+	textstatus = Text(sideframe, width=side_field_width, height=1, padx=side_field_padx, pady=side_field_pady,
+				   wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['status'])
+	textstatus.pack(fill='x')
+	textword = Text(sideframe, width=side_field_width, height=1, padx=side_field_padx, pady=side_field_pady,
+				 wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['word'])
+	textword.pack(fill='x')
+	texttype = Text(sideframe, width=side_field_width, height=1, padx=side_field_padx, pady=side_field_pady,
+				 wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['texttype'])
+	texttype.pack(fill='x')
+	texttranstitle = Text(sideframe, width=side_field_width, height=1, padx=side_field_padx, pady=side_field_pady,
+					   wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['title'], background=side_field_fonts['field title background'])
+	texttranstitle.pack(fill='x')
+	texttranstitle.insert('1.0', 'Translations: ')
+	texttrans = Text(sideframe, width=side_field_width, height=20, padx=side_field_padx, pady=side_field_pady,
+				  wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['translation'])
+	texttrans.pack(fill='x')
+	textremarktitle = Text(sideframe, width=side_field_width, height=1, padx=side_field_padx, pady=side_field_pady,
+							 wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['title'], background=side_field_fonts['field title background'])
+	textremarktitle.pack(fill='x')
+	textremarktitle.insert('1.0', 'Notes & Remarks: ')
+	textremark = Text(sideframe, width=side_field_width, height=10, padx=side_field_padx, pady=side_field_pady,
+				   wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['remark'])
+	textremark.pack(fill='x')
+	textexampletitle = Text(sideframe, width=side_field_width, height=1, padx=side_field_padx, pady=side_field_pady,
+						 wrap='word', highlightthickness=0, borderwidth=0,
+						 font=side_field_fonts['title'], background=side_field_fonts['field title background'])
+	textexampletitle.pack(fill='x')
+	textexampletitle.insert('1.0', 'Example Sentence: ')
+	textexample = Text(sideframe, width=side_field_width, height=50, padx=side_field_padx, pady=side_field_pady,
+					wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['example translation'])
+	textexample.pack(fill='x')
 
 	w.protocol("WM_DELETE_WINDOW", quitprogram)
 
@@ -2361,7 +2384,6 @@ def run(language, textfile):
 	w.bind("<h>", pronounceactiveword)
 	w.bind("<.>", pronounceactiveword)
 	w.bind("<e>", space)
-	w.bind("<t>", changetranslation)
 	w.bind("<u>", changetype)
 	w.bind("<r>", changeremark)
 	w.bind("<b>", iteratelearningwords)
@@ -2381,7 +2403,6 @@ def run(language, textfile):
 	w.bind("<z>", pronouncenext)
 
 	texttype.bind("<Button-1>", changetype)
-	texttrans.bind("<Button-1>", changetranslation)
 	textremark.bind("<Button-1>", changeremark)
 
 	texttype.bind("<Return>", enterininfofield)
