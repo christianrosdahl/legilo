@@ -563,7 +563,7 @@ def gendercolor(gender):
 # Insert example sentence
 def insertsentence(sentence, sentencetrans):
 	textsentencetrans.delete("1.0", "end")
-	textsentencetrans.insert("1.0", sentence + "\n\n")
+	textsentencetrans.insert("1.0", sentence + "\n")
 	textsentencetrans.insert("3.0", sentencetrans)
 	textsentencetrans.tag_add("sentence", "1.0", "1." + str(len(sentence)))
 	textsentencetrans.tag_config("sentence", font = (font, 14, "bold"))
@@ -2347,7 +2347,7 @@ def run(language, textfile):
 	#texttrans.configure(fg='black', bg='orange')
 	texttrans.pack(fill="x")
 	#textremark = Text(sideframe, width=30, height=12, wrap="word", font=(font,16))
-	textremark = Text(sideframe, width=30, height=14, wrap="word", highlightthickness=0, borderwidth=0, font=(font,16))
+	textremark = Text(sideframe, width=30, height=12, wrap="word", highlightthickness=0, borderwidth=0, font=(font,16))
 	textremark.pack(fill="x")
 	textsentence = Text(sideframe, width=30, height=1, wrap="word", highlightthickness=0, borderwidth=0, font=(font,14,"italic","bold"))
 	textsentence.pack(fill="x")
