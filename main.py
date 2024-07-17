@@ -20,7 +20,8 @@ soundon = True # Pronounce word when looked up
 macvoice = False # Use the text-to speak voice in Mac OS instead of Google
 includearticle = True # Write out and pronounce article for nouns
 uselemma = True # Use a lemmatizer to look up the lemma form of a word
-movewindow = True # Move window to second screen at start
+startwindowsize = {'width': 1200, 'height': 700} # Set size of start window
+mainwindowsize = {'width': 1200, 'height': 1000} # Set size of main window
 font = 'Avant Garde' #'Museo Sans Rounded', 'Bookman', 'Georgia', 'Helvetica', 'Avant Garde'
 fontsize = 18
 maintitlesize = 36
@@ -902,6 +903,19 @@ def printstatus(status):
 		textstatus.configure(bg="white")
 	textstatus.configure(state="disabled")
 
+# Center window on the screen
+def center_window(window, width, height):
+	# Get the screen width and height
+	screen_width = window.winfo_screenwidth()
+	screen_height = window.winfo_screenheight()
+	
+	# Calculate the position to center the window
+	x = (screen_width // 2) - (width // 2)
+	y = (screen_height // 2) - (height // 2)
+	
+	# Set the position of the window
+	window.geometry(f'{width}x{height}+{x}+{y}')
+
 # When pressing space
 def space(event):
 	global active
@@ -943,8 +957,6 @@ def space(event):
 
 		if activeexpression:
 			handleactiveexpressionsatclick()
-
-
 
 def enter(event):
 	global active
@@ -1666,14 +1678,9 @@ def start():
 	global starttext
 	startwindow = Tk()
 	startwindow.title("Legilo")
-	width = 1200
-	height = 700
-	if movewindow:
-		xdisplacement = 350#-1400
-		ydisplacement = 200
-		startwindow.geometry('%dx%d+%d+%d' % (width, height, xdisplacement, ydisplacement))
-	else:
-		startwindow.geometry(str(width) + "x" + str(height))
+	width = startwindowsize['width']
+	height = startwindowsize['height']
+	center_window(startwindow, width, height)
 
 	# Create frames
 	leftframe = Frame(startwindow, width=450, height=height, background="black")
@@ -1809,14 +1816,9 @@ def createnew(language):
 
 	newwindow = Tk()
 	newwindow.title("Legilo")
-	width = 1200
-	height = 700
-	if movewindow:
-		xdisplacement = 350
-		ydisplacement = 200
-		newwindow.geometry('%dx%d+%d+%d' % (width, height, xdisplacement, ydisplacement))
-	else:
-		newwindow.geometry(str(width) + "x" + str(height))
+	width = startwindowsize['width']
+	height = startwindowsize['height']
+	center_window(newwindow, width, height)
 
 	# Create frames
 	topframe = Frame(newwindow, width=1200, height=50, background="lightgray")
@@ -1948,14 +1950,9 @@ def openold(language):
 
 	oldwindow = Tk()
 	oldwindow.title("Legilo")
-	width = 1200
-	height = 700
-	if movewindow:
-		xdisplacement = 350
-		ydisplacement = 200
-		oldwindow.geometry('%dx%d+%d+%d' % (width, height, xdisplacement, ydisplacement))
-	else:
-		oldwindow.geometry(str(width) + "x" + str(height))
+	width = startwindowsize['width']
+	height = startwindowsize['height']
+	center_window(oldwindow, width, height)
 
 	# Create frames
 	topframe = Frame(oldwindow, width=1200, height=50, background="lightgray")
@@ -2146,14 +2143,9 @@ def run(language, textfile):
 	# Create main window
 	w = Tk()
 	w.title("Legilo")
-	width = 1200
-	height = 1000
-	if movewindow:
-		xdisplacement = 350#-1400
-		ydisplacement = 200
-		w.geometry('%dx%d+%d+%d' % (width, height, xdisplacement, ydisplacement))
-	else:
-		w.geometry(str(width) + "x" + str(height))
+	width = mainwindowsize['width']
+	height = mainwindowsize['height']
+	center_window(w, width, height)
 
 	# Create frames
 	topframe = Frame(w, width=1200, height=50, background="lightgray")
