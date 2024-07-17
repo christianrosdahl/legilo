@@ -46,11 +46,11 @@ text_field_padx = 5
 text_field_pady = 5
 
 # Side field text settings
-side_field_fonts = {'title': (font, 14, 'italic', 'bold'),
-							'field title background': 'lightgray',
+side_field_fonts = {'title': (font, 14),
+							'field title background': 'darkgray',
+							'field title text color': 'white',
 							'word': (font, 20, 'bold'),
 							'status': (font, 12, 'bold'),
-							'texttype': (font, 16, 'italic'),
 							'translation': (font, 16),
 							'remark': (font, 14),
 							'example': (font, 14, 'bold'),
@@ -675,8 +675,6 @@ def sidefieldshow(word, info):
 		gendercolor(gender)
 	else:
 		textword.configure(fg="black")
-	if wordtype:
-		texttype.insert("1.0", wordtype)
 	if not wordtype == 'expression':
 		inserttranslation(trans)
 	else:
@@ -719,7 +717,6 @@ def lookup(word, status):
 # Enable input of text in sidebar
 def editsidefield():
 	textword.configure(state="normal")
-	texttype.configure(state="normal")
 	texttrans.configure(state="normal")
 	textremark.configure(state="normal")
 	textexample.configure(state="normal")
@@ -727,7 +724,6 @@ def editsidefield():
 # Disable input of text in sidebar
 def freezesidefield():
 	textword.configure(state="disabled")
-	texttype.configure(state="disabled")
 	texttrans.configure(state="disabled")
 	textremark.configure(state="disabled")
 	textexample.configure(state="disabled")
@@ -827,7 +823,6 @@ def addtoexpressions(expression, info):
 def clearsidefield():
 	global textstatus
 	global textword
-	global texttype
 	global textremark
 	global texttrans
 	global textexampletitle
@@ -841,10 +836,6 @@ def clearsidefield():
 	textword.configure(state="normal")
 	textword.delete('1.0', "end")
 	textword.configure(state="disabled")
-
-	texttype.configure(state="normal")
-	texttype.delete('1.0', "end")
-	texttype.configure(state="disabled")
 
 	textremark.configure(state="normal")
 	textremark.delete('1.0', "end")
@@ -1188,13 +1179,6 @@ def pronouncenext(event):
 	space(event)
 	pronounceactiveword(event)
 
-def changetype(event):
-	global editing
-	if not editing:
-		editing = True
-		texttype.configure(state="normal")
-		texttype.focus()
-
 def changeremark(event):
 	global editing
 	if not editing:
@@ -1457,26 +1441,15 @@ def enterininfofield(event):
 	unfocus()
 	editing = False
 	freezesidefield()
-	# Update word color according to gender
-	textword.configure(state="normal")
-	wordtype = texttype.get("1.0",END)
-	gender = getgender(wordtype)
-	gendercolor(gender)
-	textword.configure(state="disabled")
 	return 'break'
 
 # Pressing shift + enter in info field to get new line
 def newline1(event):
-	global texttype
-	index = texttype.index(INSERT)
-	texttype.insert(index,"\n")
-	return 'break'
-def newline2(event):
 	global texttrans
 	index = texttrans.index(INSERT)
 	texttrans.insert(index,"\n")
 	return 'break'
-def newline3(event):
+def newline2(event):
 	global textremark
 	index = textremark.index(INSERT)
 	textremark.insert(index,"\n")
@@ -2108,7 +2081,6 @@ def run(language, textfile):
 	global wordend
 	global textstatus
 	global textword
-	global texttype
 	global texttrans
 	global textremark
 	global textexampletitle
@@ -2351,26 +2323,28 @@ def run(language, textfile):
 	textword = Text(sideframe, width=side_field_width, height=1, padx=side_field_padx, pady=side_field_pady,
 				 wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['word'])
 	textword.pack(fill='x')
-	texttype = Text(sideframe, width=side_field_width, height=1, padx=side_field_padx, pady=side_field_pady,
-				 wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['texttype'])
-	texttype.pack(fill='x')
 	texttranstitle = Text(sideframe, width=side_field_width, height=1, padx=side_field_padx, pady=side_field_pady,
-					   wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['title'], background=side_field_fonts['field title background'])
+					   wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['title'],
+					   background=side_field_fonts['field title background'],
+					   foreground=side_field_fonts['field title text color'])
 	texttranstitle.pack(fill='x')
 	texttranstitle.insert('1.0', 'Translations: ')
 	texttrans = Text(sideframe, width=side_field_width, height=20, padx=side_field_padx, pady=side_field_pady,
 				  wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['translation'])
 	texttrans.pack(fill='x')
 	textremarktitle = Text(sideframe, width=side_field_width, height=1, padx=side_field_padx, pady=side_field_pady,
-							 wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['title'], background=side_field_fonts['field title background'])
+							 wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['title'],
+							 background=side_field_fonts['field title background'],
+							 foreground=side_field_fonts['field title text color'])
 	textremarktitle.pack(fill='x')
 	textremarktitle.insert('1.0', 'Notes & Remarks: ')
-	textremark = Text(sideframe, width=side_field_width, height=10, padx=side_field_padx, pady=side_field_pady,
+	textremark = Text(sideframe, width=side_field_width, height=12, padx=side_field_padx, pady=side_field_pady,
 				   wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['remark'])
 	textremark.pack(fill='x')
 	textexampletitle = Text(sideframe, width=side_field_width, height=1, padx=side_field_padx, pady=side_field_pady,
 						 wrap='word', highlightthickness=0, borderwidth=0,
-						 font=side_field_fonts['title'], background=side_field_fonts['field title background'])
+						 font=side_field_fonts['title'], background=side_field_fonts['field title background'],
+						 foreground=side_field_fonts['field title text color'])
 	textexampletitle.pack(fill='x')
 	textexampletitle.insert('1.0', 'Example Sentence: ')
 	textexample = Text(sideframe, width=side_field_width, height=50, padx=side_field_padx, pady=side_field_pady,
@@ -2392,7 +2366,6 @@ def run(language, textfile):
 	w.bind("<h>", pronounceactiveword)
 	w.bind("<.>", pronounceactiveword)
 	w.bind("<e>", space)
-	w.bind("<u>", changetype)
 	w.bind("<r>", changeremark)
 	w.bind("<b>", iteratelearningwords)
 	w.bind("<s>", addswedishtrans)
@@ -2410,16 +2383,13 @@ def run(language, textfile):
 	w.bind("<Command-Key-x>", quitwithoutsaving)
 	w.bind("<z>", pronouncenext)
 
-	texttype.bind("<Button-1>", changetype)
 	textremark.bind("<Button-1>", changeremark)
 
-	texttype.bind("<Return>", enterininfofield)
 	texttrans.bind("<Return>", enterininfofield)
 	textremark.bind("<Return>", enterininfofield)
 
-	texttype.bind("<Shift-Return>", newline1)
-	texttrans.bind("<Shift-Return>", newline2)
-	textremark.bind("<Shift-Return>", newline3)
+	texttrans.bind("<Shift-Return>", newline1)
+	textremark.bind("<Shift-Return>", newline2)
 
 	w.bind("1", selectsentence)
 	w.bind("2", selectsentence)
