@@ -1589,7 +1589,7 @@ def newexpression(wordtag1, wordtag2):
 	wordnum2 = lineandwordnum2[1]
 
 	# Sort words in right order
-	if wordnum1 > wordnum2:
+	if int(wordnum1) > int(wordnum2):
 		temp = lineandwordnum1
 		lineandwordnum1 = lineandwordnum2
 		lineandwordnum2 = temp
