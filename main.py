@@ -27,6 +27,7 @@ start_window_size = {'width': 1200, 'height': 700} # Set size of start window
 main_window_size = {'width': 1200, 'height': 1000} # Set size of main window
 consider_expressions = True # Allow expressions to be considered
 always_show_active = False # Always show active word in the side field (without translation)
+move_back_when_clicking_previous = True # Put back learning words after clicked word in queue
 saving_on = True # Saves word lists when quitting
 save_state_on = True # Saves the current state (marked word or next word in queue)
 use_message_box = False # Uses message box to inform about saving, which has some bug on Mac OS
@@ -345,6 +346,11 @@ def mouse_click(event):
 				break
 	else:
 		word_tag = text.tag_names(text.index(CURRENT))[0]
+
+	if move_back_when_clicking_previous:
+		handle_active_expressions()
+		handle_active_words()
+		go_to_start()
 
 	skip_to_word(word_tag)
 	look_up(active['word'], active['status'])
@@ -1112,8 +1118,12 @@ def known(event):
 	if active_expression and not editing:
 		ignore(event)
 
+# Repeat learning words from the beginning of the text
+def repeat_learning_words(event):
+	go_to_start()
+
 # Put back all learning words in the queue to go through them from start
-def iterate_learning_words(event):
+def go_to_start():
 	global word_queue
 	global removed_from_queue
 	global editing
@@ -2424,7 +2434,7 @@ def run(language, text_file):
 	w.bind("<.>", pronounce_active_word)
 	w.bind("<e>", space)
 	w.bind("<r>", change_remark)
-	w.bind("<b>", iterate_learning_words)
+	w.bind("<b>", repeat_learning_words)
 	w.bind("<s>", add_swedish_trans)
 	w.bind("<d>", open_dictionary)
 	w.bind("<v>", open_verb_conjugation)
