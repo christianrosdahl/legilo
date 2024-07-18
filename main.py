@@ -1742,21 +1742,25 @@ def start():
 	starttext.tag_add("choice", "6.0", "6.end")
 	starttext.tag_configure("choice", font=(font, 20, 'italic'))
 	starttext.insert("end", "\n\n")
+	starttext.insert("end", "🇭🇷 [C]roatian\n")
 	starttext.insert("end", "🇫🇷 [F]rench\n")
 	starttext.insert("end", "🇩🇪 [G]erman\n")
 	starttext.insert("end", "🇮🇹 [I]talian\n")
-	starttext.insert("end", "🇭🇷 [C]roatian\n")
 	starttext.insert("end", "🇷🇺 [R]ussian\n")
+	starttext.insert("end", "🇪🇸 [S]panish\n")
+	starttext.insert("end", "🇸🇪 S[w]edish\n")
 	starttext.insert("end", "\n")
 	starttext.insert("end", "📄 [N]ew\n")
 	starttext.insert("end", "📂 [O]pen\n")
 	starttext.configure(state="disabled")
 
+	startwindow.bind("c", langchoice)
 	startwindow.bind("f", langchoice)
 	startwindow.bind("g", langchoice)
 	startwindow.bind("i", langchoice)
-	startwindow.bind("c", langchoice)
 	startwindow.bind("r", langchoice)
+	startwindow.bind("s", langchoice)
+	startwindow.bind("w", langchoice)
 	startwindow.bind("<n>", optionchoice)
 	startwindow.bind("<o>", optionchoice)
 	startwindow.bind("<Return>", confirm)
@@ -1770,17 +1774,21 @@ def langchoice(event):
 	global starttext
 	global macvoice
 	choice = event.char
-	if choice == 'f':
+	if choice == 'c':
+		language = 'croatian'
+	elif choice == 'f':
 		language = 'french'
 	elif choice == 'g':
 		language = 'german'
 	elif choice == 'i':
 		language = 'italian'
-	elif choice == 'c':
-		language = 'croatian'
 	elif choice == 'r':
 		language = 'russian'
 		macvoice = True
+	elif choice == 's':
+		language = 'spanish'
+	elif choice == 'w':
+		language = 'swedish'
 
 	if language and option:
 		languagetext = language[0].upper() + language[1:]
