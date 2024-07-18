@@ -5,8 +5,8 @@ from tkinter import messagebox
 import tkinter.scrolledtext as scrolledtextwindow
 from language_code import get_language_code
 from translate import LegiloTranslator
-from sentence import *
-from autoread import *
+from sentence import get_first_sentence, get_sentences
+from autoread import autoread
 from google_speech import Speech
 from googletrans import Translator
 import webbrowser
@@ -1490,7 +1490,7 @@ def select_sentence(event):
 	if active and not editing:
 		# Get example sentences for word if not already downloaded
 		if not sentence_word == active['word']:
-			(sentence_list, sentence_trans_list) = getsentences(active['word'], language, 7)
+			(sentence_list, sentence_trans_list) = get_sentences(active['word'], language, 7)
 		if n > 0 and n < 8: # Choose example sentence from web
 			sentence = sentence_list[n-1]
 			sentence_trans = sentence_trans_list[n-1]
