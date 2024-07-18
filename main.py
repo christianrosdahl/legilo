@@ -222,25 +222,25 @@ def savelistsastxt(event):
 	text.focus()
 	unfocus()
 
-# Handles active word when another word is clicked
-def handleactivewordsatclick():
+# Handles active word when another word or expression is selected
+def handle_active_words():
 	global active
 	global activelookedup
 	global wordqueue
 	global removedfromqueue
-	if active and activelookedup:
-		info = getwordinfo()
-		addtolearning(active['word'], info)
-		active['status'] = 'learning'
-		removedfromqueue.append(active)
-		markallinstances(active['word'], 'learning')
-		unset_active_word()
-	elif active:
-		putbackinqueue(active)
+	if active:
+		if activelookedup:
+			info = getwordinfo()
+			addtolearning(active['word'], info)
+			active['status'] = 'learning'
+			removedfromqueue.append(active)
+			markallinstances(active['word'], 'learning')
+		else:
+			putbackinqueue(active)
 		unset_active_word()
 
-# Handles active expression when another word/expression is clicked
-def handleactiveexpressionsatclick():
+# Handles active expression when another word or expression is selected
+def handle_active_expressions():
 	global activeexpression
 	global expressions
 	if activeexpression:
@@ -248,7 +248,7 @@ def handleactiveexpressionsatclick():
 		addtoexpressions(activeexpression, info)
 		markexpression(activeexpression['line'], activeexpression['startwordnum'], 'ordinary')
 		markallexpressioninstances(activeexpression['expressionwords'], 'ordinary')
-		activeexpression = None
+		activeexpression = False
 		clearsidefield()
 
 # Find old expression from tag
@@ -299,16 +299,9 @@ def mouseclick(event):
 		if isoldexpression:
 			selectedexpressionwords = [] # Cancel selection of new expression
 			# Mark and save previous expression
-			if activeexpression:
-				handleactiveexpressionsatclick()
-				activeexpression = False
+			handle_active_expressions()
 			# Put back active word in queue and clear side field
-			if active:
-				if activelookedup:
-					handleactivewordsatclick()
-				else:
-					putbackinqueue(active)
-					unset_active_word()
+			handle_active_words()
 
 			# Show old expression
 			for tag in wordtags:
@@ -333,15 +326,8 @@ def mouseclick(event):
 			# If two words are selected so that a new expression can be created
 			if len(selectedexpressionwords) > 1:
 				# Mark and save previous expression
-				if activeexpression:
-					handleactiveexpressionsatclick()
-				activeexpression = False
-				if active:
-					if activelookedup:
-						handleactivewordsatclick()
-					else:
-						putbackinqueue(active)
-						unset_active_word()
+				handle_active_expressions()
+				handle_active_words()
 				newexpression(selectedexpressionwords[0], selectedexpressionwords[1])
 				selectedexpressionwords = [] # Restore selected expression words list
 		return
@@ -372,11 +358,9 @@ def skip_to_word(wordtag):
 	wordnum = int(lineandwordnum[1])
 	wordstoremove = []
 	# Handle active expression
-	if activeexpression:
-		handleactiveexpressionsatclick()
+	handle_active_expressions()
 	# Handle active word
-	if active:
-		handleactivewordsatclick()
+	handle_active_words()
 
 	# Mark all prev. new words as ignored and clicked word as active, 
 	# and remove all previous words from queue
@@ -500,6 +484,14 @@ def set_to_active(worddict):
 	if alwaysshowactive:
 		show_active_word_in_sidefield()
 
+# Set next word in the queue (if there are more words) to active
+def set_next_to_active():
+	global activelookedup
+	if moreinqueue():
+		new_active = nextword()
+		set_to_active(new_active)
+		activelookedup = False
+
 # Unset active word and remove the viewing of it from the side field
 def unset_active_word():
 	global active
@@ -508,6 +500,7 @@ def unset_active_word():
 	active = None
 	activelookedup = False
 	clearsidefield()
+
 
 # Remove possible focus on text fields
 def unfocus():
@@ -1003,34 +996,17 @@ def space(event):
 
 	if not editing:
 		unfocus()
-
-		if activeexpression:
-			handleactiveexpressionsatclick()
-
+		handle_active_expressions()
 		if active and not activelookedup:
 			if active['status'] == 'learning':
 				removedfromqueue.append(active)
 				unset_active_word()
-				if moreinqueue():
-					new_active = nextword()
-					set_to_active(new_active)
+				set_next_to_active()
 			else: # active['status'] == 'new'
 				ignore(event)
-		elif active:
-			info = getwordinfo()
-			active['status'] = 'learning'
-			addtolearning(active['word'], info)
-			removedfromqueue.append(active)
-			markallinstances(active['word'], 'learning')
-			unset_active_word()
-			if moreinqueue():
-				new_active = nextword()
-				set_to_active(new_active)
 		else:
-			if moreinqueue():
-				new_active = nextword()
-				set_to_active(new_active)
-				activelookedup = False
+			handle_active_words()
+			set_next_to_active()
 
 
 def enter(event):
@@ -1040,24 +1016,12 @@ def enter(event):
 	global removedfromqueue
 	global editing
 	if not editing:
-		if active and activelookedup:
-				info = getwordinfo()
-				active['status'] = 'learning'
-				addtolearning(active['word'], info)
-				removedfromqueue.append(active)
-				markallinstances(active['word'], 'learning')
-				unset_active_word()
-				if moreinqueue():
-					new_active = nextword()
-					set_to_active(new_active)
-		elif active:
+		if active and not activelookedup:
 			lookup(active['word'], active['status'])
 			printstatus(active['status'])
 		else:
-			if moreinqueue():
-				new_active = nextword()
-				set_to_active(new_active)
-				activelookedup = False
+			handle_active_words()
+			set_next_to_active()
 
 def ignore(event):
 	global active
@@ -1079,7 +1043,7 @@ def ignore(event):
 		elif status == 'learning':
 			del learningwords[word]
 
-		#Remove all instances of word in queue
+		# Remove all instances of word in queue
 		removedfromqueue.append(active)
 		wordstoremove = []
 		for worddict in wordqueue:
@@ -1092,10 +1056,7 @@ def ignore(event):
 
 		markallinstances(active['word'], 'ignored')
 		unset_active_word()
-		if moreinqueue():
-			new_active = nextword()
-			set_to_active(new_active)
-			activelookedup = False
+		set_next_to_active()
 
 	if activeexpression and not editing:
 		markallexpressioninstances(activeexpression['expressionwords'], 'none')
@@ -1139,10 +1100,7 @@ def known(event):
 
 			markallinstances(active['word'], 'known')
 			unset_active_word()
-			if moreinqueue():
-				new_active = nextword()
-				set_to_active(new_active)
-				activelookedup = False
+			set_next_to_active()
 
 	if activeexpression and not editing:
 		ignore(event)
@@ -1153,8 +1111,8 @@ def iteratelearningwords(event):
 	global removedfromqueue
 	global editing
 	if not editing:
-		handleactiveexpressionsatclick()
-		handleactivewordsatclick()
+		handle_active_expressions()
+		handle_active_words()
 		removefromremoved = []
 		for i, word in enumerate(removedfromqueue):
 			if word['status'] == 'learning':
