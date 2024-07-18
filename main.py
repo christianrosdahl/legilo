@@ -316,8 +316,7 @@ def mouse_click(event):
 
 			active_expression = {'expression_words' : info['expression_words'], 'line' : line, 'startword_num' : word_num1, 'endword_num' : word_num2}
 			mark_expression(active_expression['line'], active_expression['startword_num'], 'active')
-			side_field_show(expression, info)
-			print_status('learning expression')
+			side_field_show(expression, info, 'learning expression')
 
 		# If new expression
 		else: 
@@ -349,7 +348,6 @@ def mouse_click(event):
 
 	skip_to_word(word_tag)
 	look_up(active['word'], active['status'])
-	print_status(active['status'])
 
 # Skip to word with word tag `word_tag`
 def skip_to_word(word_tag, scroll_to_word=False):
@@ -683,7 +681,7 @@ def insert_translation(info):
 				text_trans.insert(END, '\n\n', 'normal')
 
 # View in side field
-def side_field_show(word, info):
+def side_field_show(word, info, status):
 	global language
 	global info_for_showed_word
 	info_for_showed_word = info
@@ -724,6 +722,7 @@ def side_field_show(word, info):
 						word = article + ' ' + word
 
 	edit_side_field()
+	print_status(status)
 	text_word.insert("1.0", word)
 	if has_unique_gender:
 		gender_color(gender)
@@ -747,7 +746,8 @@ def side_field_show(word, info):
 
 	# Pronunciation
 	if sound_on:
-		pronounce(word, language)
+		w.update_idletasks()
+		w.after(100, pronounce(word, language))
 
 # Show active word and its status in the side field, but no other information
 def show_active_word_in_sidefield():
@@ -775,7 +775,7 @@ def look_up(word, status):
 	else: # status == 'known'
 		info = known_words[word]
 
-	side_field_show(word, info)
+	side_field_show(word, info, status)
 	active_looked_up = True
 
 # Enable input of text in sidebar
@@ -1025,7 +1025,6 @@ def enter(event):
 	if not editing:
 		if active and not active_looked_up:
 			look_up(active['word'], active['status'])
-			print_status(active['status'])
 		else:
 			handle_active_expressions()
 			handle_active_words()
@@ -1647,8 +1646,7 @@ def new_expression(word_tag1, word_tag2):
 		text.tag_add('e' + str(line1) + "." + str(active_expression['startword_num']), expression_start, expression_end)
 		mark_expression(active_expression['line'], active_expression['startword_num'], 'active')
 
-		print_status('new expression')
-		side_field_show(expression, info)
+		side_field_show(expression, info, 'new expression')
 	else: 
 		expression_words = []
 	selected_expression_words = []
