@@ -30,6 +30,7 @@ save_state_on = True # Saves the current state (marked word or next word in queu
 use_message_box = False # Uses message box to inform about saving, which has some bug on Mac OS
 print_word_lists_at_start = False # Prints word lists in terminal for debugging
 new_browser_tab = True # Use a new browser tab the first time the browser is opened
+data_dir = 'data' # Directory where data (texts and word lists etc.) is saved
 
 # Fonts and colors
 active_color = 'orange'
@@ -99,16 +100,16 @@ def save_to_txt(title, text, file_name, directory):
 
 # Save word list
 def save_list(obj, name):
-	save(obj, name, language + '/' + 'wordlists')
+	save(obj, name, data_dir + '/' + language + '/' + 'wordlists')
 
 # Load word list
 def load_list(name):
-	obj = load(name, language + '/' + 'wordlists')
+	obj = load(name, data_dir + '/' + language + '/' + 'wordlists')
 	return obj
 
 # Save word list as txt file
 def save_list_as_txt(obj, name):
-	save_to_txt(name, str(obj), name + '.txt', language + '/' + 'txtwordlists')
+	save_to_txt(name, str(obj), name + '.txt', data_dir + '/' + language + '/' + 'txtwordlists')
 
 # Load all the word lists
 def load_all():
@@ -1907,7 +1908,7 @@ def confirm_new(event):
 		else:
 			text = new_text.get('1.0','end')
 		file_name = create_file_name(title) + '.txt'
-		directory = language + '/texts'
+		directory = data_dir + '/' + language + '/texts'
 		save_to_txt(title, text, file_name, directory)
 		new_window.destroy()
 		run(language, directory + '/' + file_name)
