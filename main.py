@@ -941,7 +941,7 @@ def put_back_in_queue(word):
 	word_queue.insert(0,word)
 
 # Put back a word in the word queue sorted according to word index
-def put_back_in_queuesorted(word):
+def put_back_in_queue_sorted(word):
 	global word_queue
 	insert_index = None
 	word_index = word['index']
@@ -1113,7 +1113,7 @@ def known(event):
 		ignore(event)
 
 # Put back all learning words in the queue to go through them from start
-def iteratelearning_words(event):
+def iterate_learning_words(event):
 	global word_queue
 	global removed_from_queue
 	global editing
@@ -1124,7 +1124,7 @@ def iteratelearning_words(event):
 		for i, word in enumerate(removed_from_queue):
 			if word['status'] == 'learning':
 				if not word_in_queue(word['index']):
-					put_back_in_queuesorted(word)
+					put_back_in_queue_sorted(word)
 				remove_from_removed.append(word)
 		for word in remove_from_removed:
 			removed_from_queue.remove(word)
@@ -2424,7 +2424,7 @@ def run(language, text_file):
 	w.bind("<.>", pronounce_active_word)
 	w.bind("<e>", space)
 	w.bind("<r>", change_remark)
-	w.bind("<b>", iteratelearning_words)
+	w.bind("<b>", iterate_learning_words)
 	w.bind("<s>", add_swedish_trans)
 	w.bind("<d>", open_dictionary)
 	w.bind("<v>", open_verb_conjugation)
