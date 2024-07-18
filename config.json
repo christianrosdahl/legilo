@@ -1,0 +1,33 @@
+{
+  "languages": {
+    "croatian": {
+        "menu_entry": "🇭🇷 [C]roatian",
+        "selection_key": "c"
+    },
+    "french": {
+        "menu_entry": "🇫🇷 [F]rench",
+        "selection_key": "f"
+    },
+    "german": {
+        "menu_entry": "🇩🇪 [G]erman",
+        "selection_key": "g"
+    },
+    "italian": {
+        "menu_entry": "🇮🇹 [I]talian",
+        "selection_key": "i"
+    },
+    "russian": {
+        "menu_entry": "🇷🇺 [R]ussian",
+        "selection_key": "r",
+        "text_to_speech_voice": "mac"
+    },
+    "spanish": {
+        "menu_entry": "🇪🇸 [S]panish",
+        "selection_key": "s"
+    },
+    "swedish": {
+        "menu_entry": "🇸🇪 S[w]edish",
+        "selection_key": "w"
+    }
+  }
+}

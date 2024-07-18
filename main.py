@@ -14,6 +14,7 @@ import urllib
 import pickle # For saving and loading data
 import subprocess # Used for text-to speak with Mac OS
 import shlex # Used for text-to speak with Mac OS
+import json # Used to read config file
 
 # General settings
 soundon = True # Pronounce word when looked up
@@ -1168,24 +1169,31 @@ def pronounce(word, language):
 	# Mac OS text-to-speak
 	if macvoice:
 		word = word.replace("'","´")
-		if language == 'french':
+		voice = None
+		if language == 'croatian':
+			voice = 'Lana'
+		elif language == 'french':
 			voice = 'Thomas'
 		elif language == 'german':
 			voice = 'Petra'
 		elif language == 'italian':
 			voice = 'Alice'
-		elif language == 'croatian':
-			voice = 'Lana'
 		elif language == 'russian':
 			voice = 'Milena'
-		if active and activelookedup: # Pronounce nouns with article
-			sidefieldword = textword.get('1.0','end')
-			sidefieldword = sidefieldword.split(',')
-			sidefieldword = sidefieldword[0]
-			sidefieldword = sidefieldword.replace("'","´")
-			subprocess.call(shlex.split('say -v ' + voice + ' ' + str(sidefieldword)))
-		else:
-			subprocess.call(shlex.split('say -v ' + voice + ' ' + str(word)))
+		elif language == 'spanish':
+			voice = 'Mónica'
+		elif language == 'swedish':
+			voice = 'Alva'
+		
+		if voice:
+			if active and activelookedup: # Pronounce nouns with article
+				sidefieldword = textword.get('1.0','end')
+				sidefieldword = sidefieldword.split(',')
+				sidefieldword = sidefieldword[0]
+				sidefieldword = sidefieldword.replace("'","´")
+				subprocess.call(shlex.split('say -v ' + voice + ' ' + str(sidefieldword)))
+			else:
+				subprocess.call(shlex.split('say -v ' + voice + ' ' + str(word)))
 		
 	# Google
 	else:
@@ -1707,8 +1715,21 @@ def removerussianaccents(oldstring):
 
 
 def start():
+	global config
 	global startwindow
 	global starttext
+	global selection_key_to_language
+	
+	# Load config file
+	config_file_path = 'config.json'
+	try:
+		with open(config_file_path, 'r') as file:
+			config = json.load(file)
+	except FileNotFoundError:
+		print(f"Error: The config file '{config_file_path}' was not found.")
+	except json.JSONDecodeError:
+		print(f"Error: The config file '{config_file_path}' contains invalid JSON.")
+
 	startwindow = Tk()
 	startwindow.title("Legilo")
 	width = startwindowsize['width']
@@ -1742,25 +1763,21 @@ def start():
 	starttext.tag_add("choice", "6.0", "6.end")
 	starttext.tag_configure("choice", font=(font, 20, 'italic'))
 	starttext.insert("end", "\n\n")
-	starttext.insert("end", "🇭🇷 [C]roatian\n")
-	starttext.insert("end", "🇫🇷 [F]rench\n")
-	starttext.insert("end", "🇩🇪 [G]erman\n")
-	starttext.insert("end", "🇮🇹 [I]talian\n")
-	starttext.insert("end", "🇷🇺 [R]ussian\n")
-	starttext.insert("end", "🇪🇸 [S]panish\n")
-	starttext.insert("end", "🇸🇪 S[w]edish\n")
+	selection_key_to_language = {}
+	if 'languages' in config:
+		for language in config['languages']:
+			lang_settings = config['languages'][language]
+			if 'menu_entry' in lang_settings and 'selection_key' in lang_settings:
+				menu_entry = lang_settings['menu_entry']
+				selection_key = lang_settings['selection_key']
+				selection_key_to_language[selection_key] = language
+				starttext.insert("end", menu_entry + '\n')
+				startwindow.bind(selection_key, langchoice)
 	starttext.insert("end", "\n")
 	starttext.insert("end", "📄 [N]ew\n")
 	starttext.insert("end", "📂 [O]pen\n")
 	starttext.configure(state="disabled")
 
-	startwindow.bind("c", langchoice)
-	startwindow.bind("f", langchoice)
-	startwindow.bind("g", langchoice)
-	startwindow.bind("i", langchoice)
-	startwindow.bind("r", langchoice)
-	startwindow.bind("s", langchoice)
-	startwindow.bind("w", langchoice)
 	startwindow.bind("<n>", optionchoice)
 	startwindow.bind("<o>", optionchoice)
 	startwindow.bind("<Return>", confirm)
@@ -1768,27 +1785,25 @@ def start():
 	startwindow.mainloop()
 
 def langchoice(event):
+	global config
+	global selection_key_to_language
 	global language
 	global option
 	global optionandlang
 	global starttext
 	global macvoice
+
 	choice = event.char
-	if choice == 'c':
-		language = 'croatian'
-	elif choice == 'f':
-		language = 'french'
-	elif choice == 'g':
-		language = 'german'
-	elif choice == 'i':
-		language = 'italian'
-	elif choice == 'r':
-		language = 'russian'
-		macvoice = True
-	elif choice == 's':
-		language = 'spanish'
-	elif choice == 'w':
-		language = 'swedish'
+	language = selection_key_to_language[choice]
+
+	# Set option for text to speech voice if specified
+	lang_config = config['languages'][language]
+	if 'text_to_speech_voice' in lang_config:
+		text_to_speech_voice = lang_config['text_to_speech_voice']
+		if text_to_speech_voice == 'mac':
+			macvoice = True
+		elif text_to_speech_voice == 'google':
+			macvoice = False
 
 	if language and option:
 		languagetext = language[0].upper() + language[1:]
