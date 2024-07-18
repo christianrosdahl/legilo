@@ -348,7 +348,7 @@ def mouse_click(event):
 	print_status(active['status'])
 
 # Skip to word with word tag `word_tag`
-def skip_to_word(word_tag):
+def skip_to_word(word_tag, scroll_to_word=False):
 	global active
 	global word_queue
 	global removed_from_queue
@@ -399,6 +399,10 @@ def skip_to_word(word_tag):
 	for word in words_to_remove:
 		removed_from_queue.append(word)
 		word_queue.remove(word)
+
+	if scroll_to_word and active:
+		active_word_tag = str(active['line']) + '.' + str(active['word_num'])
+		text.see(active_word_tag)
 
 # Mark words
 def mark_word(line, word_num, status):
@@ -2387,7 +2391,7 @@ def run(language, textfile):
 
 	# Set program to saved state
 	if state:
-		skip_to_word(state)
+		skip_to_word(state, scroll_to_word=True)
 
 	# Set what to de when closing window
 	w.protocol("WM_DELETE_WINDOW", quit_program)
