@@ -35,6 +35,7 @@ new_browser_tab = True # Use a new browser tab the first time the browser is ope
 data_dir = 'data' # Directory where data (texts and word lists etc.) is saved
 
 # Fonts and colors
+window_background_color = 'lightgray'
 active_color = 'orange'
 learning_color = '#fde367' #'yellow' macyellow:'#facd5a'
 new_color = '#cce6ff' #'#a3daf0'#'lightblue' macblue: '#69aff1'
@@ -1834,17 +1835,18 @@ def create_new(language):
 	width = start_window_size['width']
 	height = start_window_size['height']
 	center_window(new_window, width, height)
+	new_window.configure(bg=window_background_color)
 
 	# Create frames
-	top_frame = Frame(new_window, width=1200, height=50, background="lightgray")
+	top_frame = Frame(new_window, width=1200, height=50, background=window_background_color)
 	top_frame.pack(side=TOP)
 	top_frame.pack_propagate(0)
 
-	bottom_frame = Frame(new_window, width=1200, height=50, background="lightgray")
+	bottom_frame = Frame(new_window, width=1200, height=50, background=window_background_color)
 	bottom_frame.pack(side=BOTTOM)
 	bottom_frame.pack_propagate(0)
 
-	main_frame = Frame(new_window, width=1200, height=700, background="lightgray")
+	main_frame = Frame(new_window, width=1200, height=700, background=window_background_color)
 	main_frame.pack(side=LEFT)
 	main_frame.pack_propagate(0)
 
@@ -1968,17 +1970,18 @@ def open_old(language):
 	width = start_window_size['width']
 	height = start_window_size['height']
 	center_window(old_window, width, height)
+	old_window.configure(bg=window_background_color)
 
 	# Create frames
-	top_frame = Frame(old_window, width=1200, height=50, background="lightgray")
+	top_frame = Frame(old_window, width=1200, height=50, background=window_background_color)
 	top_frame.pack(side=TOP)
 	top_frame.pack_propagate(0)
 
-	bottom_frame = Frame(old_window, width=1200, height=50, background="lightgray")
+	bottom_frame = Frame(old_window, width=1200, height=50, background=window_background_color)
 	bottom_frame.pack(side=BOTTOM)
 	bottom_frame.pack_propagate(0)
 
-	main_frame = Frame(old_window, width=1200, height=700, background="lightgray")
+	main_frame = Frame(old_window, width=1200, height=700, background=window_background_color)
 	main_frame.pack(side=LEFT)
 	main_frame.pack_propagate(0)
 
@@ -1987,12 +1990,12 @@ def open_old(language):
 	text_title_field.insert('1.0','Open file')
 	text_title_field.tag_add("windowtitle", "1.0", "end")
 	text_title_field.tag_configure("windowtitle", font=(font,30), justify='center')
-	text_title_field.configure(state="disabled", background="lightgray", highlightbackground='lightgray')
+	text_title_field.configure(state="disabled", background=window_background_color, highlightbackground=window_background_color)
 
 	text_field1 = Text(main_frame, width=65, height=1, wrap='word', font=(font,20))
 	text_field1.pack(side=TOP)
 	text_field1.insert('1.0','Write file path: ')
-	text_field1.configure(state="disabled", background="lightgray", highlightbackground='lightgray')
+	text_field1.configure(state="disabled", background=window_background_color, highlightbackground=window_background_color)
 
 	old_path = Text(main_frame, width=65, height=1, wrap='word', font=(font,20))
 	old_path.pack(side=TOP)
@@ -2000,7 +2003,7 @@ def open_old(language):
 	text_field1 = Text(main_frame, width=65, height=1, wrap='word', font=(font,20))
 	text_field1.pack(side=TOP)
 	text_field1.insert('1.0','Choose one of the latest files: ')
-	text_field1.configure(state="disabled", background="lightgray", highlightbackground='lightgray')
+	text_field1.configure(state="disabled", background=window_background_color, highlightbackground=window_background_color)
 
 	old_text = Text(main_frame, width=65, height=50, wrap='word', font=(font,20))
 	old_text.pack(side=TOP)
@@ -2165,24 +2168,25 @@ def run(language, text_file):
 	# Create main window
 	w = Tk()
 	w.title("Legilo")
+	w.configure(bg=window_background_color)
 	width = main_window_size['width']
 	height = main_window_size['height']
 	center_window(w, width, height)
 
 	# Create frames
-	top_frame = Frame(w, width=1200, height=50, background="lightgray")
+	top_frame = Frame(w, width=1200, height=50, background=window_background_color)
 	top_frame.pack(side=TOP)
 	top_frame.pack_propagate(0)
 
-	bottom_frame = Frame(w, width=1200, height=50, background="lightgray")
+	bottom_frame = Frame(w, width=1200, height=50, background=window_background_color)
 	bottom_frame.pack(side=BOTTOM)
 	bottom_frame.pack_propagate(0)
 
-	main_frame = Frame(w, width=800, height=2000, background="lightgray")
+	main_frame = Frame(w, width=800, height=2000, background=window_background_color)
 	main_frame.pack(side=LEFT)
 	main_frame.pack_propagate(0)
 
-	side_frame = Frame(w, width=400, height=2000, background="lightgray")
+	side_frame = Frame(w, width=400, height=2000, background=window_background_color)
 	side_frame.pack(side=TOP)
 	side_frame.pack_propagate(0)
 
