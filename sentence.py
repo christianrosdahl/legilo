@@ -1,6 +1,6 @@
 import urllib
 from bs4 import BeautifulSoup
-from urllib.request import Request, urlopen
+from urllib.request import Request
 from language_code import get_language_code
 
 # Fix for urllib ---------
@@ -11,11 +11,11 @@ getattr(ssl, '_create_unverified_context', None)):
 # ------------------------
 
 # Return n example sentences
-def getsentences(word, language, n):
-	isword = True
+def get_sentences(word, language, n):
+	is_word = True
 	if ' ' in word:
-		isword = False
-	if language == 'french' or language == 'german' or language == 'italian' and isword:
+		is_word = False
+	if language in ['french', 'german', 'italian', 'russian', 'spanish'] and is_word:
 		link = "https://www.online-translator.com/samples/" + get_language_code(language) + "-en/" + word
 		link = urllib.parse.quote(link, safe='/:',)
 		link = Request(link, headers={'User-Agent': 'Mozilla/5.0'})
@@ -26,71 +26,67 @@ def getsentences(word, language, n):
 		html = BeautifulSoup(raw_html, 'html.parser')
 
 		sentences = [''] * n
-		sentencetrans = [''] * n
+		sentence_trans = [''] * n
 
 		count = 0
-		s = ''
-		strans = ''
 		for i in html.select('span'):
 			if 'class' in i.attrs:
 				#print(i['class'])
 				if 'samSource' in i['class']:
 					sentences[count] = i.text.strip()
 				elif 'samTranslation' in i['class']:
-					sentencetrans[count] = i.text.strip()
+					sentence_trans[count] = i.text.strip()
 					count += 1
 					if count >= n:
 						break
-	elif language == 'russian' and isword:
-		link = "https://context.reverso.net/translation/" + language + "-english/" + word
-		link = urllib.parse.quote(link, safe='/:',)
-		link = Request(link, headers={'User-Agent': 'Mozilla/5.0'})
+	# elif language == 'russian' and is_word:
+	# 	link = "https://context.reverso.net/translation/" + language + "-english/" + word
+	# 	link = urllib.parse.quote(link, safe='/:',)
+	# 	link = Request(link, headers={'User-Agent': 'Mozilla/5.0'})
 
-		# with urllib.request.urlopen(link) as url:
-		# 	raw_html = url.read()
-		try:
-			url = urllib.request.urlopen(link)
-			raw_html = url.read()
-		except:
-			raw_html = ''
+	# 	# with urllib.request.urlopen(link) as url:
+	# 	# 	raw_html = url.read()
+	# 	try:
+	# 		url = urllib.request.urlopen(link)
+	# 		raw_html = url.read()
+	# 	except:
+	# 		raw_html = ''
 
-		html = BeautifulSoup(raw_html, 'html.parser')
+	# 	html = BeautifulSoup(raw_html, 'html.parser')
 
-		sentences = [''] * n
-		sentencetrans = [''] * n
+	# 	sentences = [''] * n
+	# 	sentence_trans = [''] * n
 
-		count = 0
-		s = ''
-		strans = ''
-		for i in html.select('div'):
-			if 'class' in i.attrs:
-				if 'src' in i['class'] and 'ltr' in i['class']:
-					text = i.text
-					startswithspace = True
-					while len(text) > 0 and startswithspace:
-						if text[0] == ' ' or text[0] == '\n':
-							text = text[1:]
-						else:
-							startswithspace = False
-					sentences[count] = text.strip()
-				elif 'trg' in i['class'] and 'ltr' in i['class']:
-					text = i.text
-					startswithspace = True
-					while len(text) > 0 and startswithspace:
-						if text[0] == ' ' or text[0] == '\n':
-							text = text[1:]
-						else:
-							startswithspace = False
-						sentencetrans[count] = text.strip()
-					count += 1
-					if count >= n:
-						break
+	# 	count = 0
+	# 	for i in html.select('div'):
+	# 		if 'class' in i.attrs:
+	# 			if 'src' in i['class'] and 'ltr' in i['class']:
+	# 				text = i.text
+	# 				starts_with_space = True
+	# 				while len(text) > 0 and starts_with_space:
+	# 					if text[0] == ' ' or text[0] == '\n':
+	# 						text = text[1:]
+	# 					else:
+	# 						starts_with_space = False
+	# 				sentences[count] = text.strip()
+	# 			elif 'trg' in i['class'] and 'ltr' in i['class']:
+	# 				text = i.text
+	# 				starts_with_space = True
+	# 				while len(text) > 0 and starts_with_space:
+	# 					if text[0] == ' ' or text[0] == '\n':
+	# 						text = text[1:]
+	# 					else:
+	# 						starts_with_space = False
+	# 					sentence_trans[count] = text.strip()
+	# 				count += 1
+	# 				if count >= n:
+	# 					break
 	else:
 		sentences = [''] * n
-		sentencetrans = [''] * n
-	return (sentences, sentencetrans)
+		sentence_trans = [''] * n
+	return (sentences, sentence_trans)
 
 # Return the first example sentence
-def getfirstsentence(word, language):
-	(s, strans) = getsentences(word, language, 1)
-	return (s[0], strans[0])
+def get_first_sentence(word, language):
+	(s, s_trans) = get_sentences(word, language, 1)
+	return (s[0], s_trans[0])
