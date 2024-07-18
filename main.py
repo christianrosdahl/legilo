@@ -1813,11 +1813,11 @@ def confirm(event):
 	if option and language:
 		start_window.destroy()
 		if option == 'new':
-			createnew(language)
+			create_new(language)
 		elif option == 'open':
 			open_old(language)
 
-def createnew(language):
+def create_new(language):
 	global new_text
 	global new_title
 	global new_window
