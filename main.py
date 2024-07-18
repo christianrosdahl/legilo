@@ -2010,10 +2010,11 @@ def open_old(language):
 	except:
 		last_opened_files = []
 
+	remove_deleted_text_files(last_opened_files)
+
 	old_text.configure(state="normal")
 	for i, f in reversed(list(enumerate(last_opened_files))):
 		old_text.insert('end', '[' + str(len(last_opened_files)-i) + '] ' + f['title'])
-		file_name = f['file_name']
 	old_text.configure(state="disabled")
 
 	old_path.bind("<Return>", open_old_from_path)
@@ -2030,10 +2031,19 @@ def open_old(language):
 
 	old_window.mainloop()
 
+# Remove deleted files from list of recently opened files
+def remove_deleted_text_files(last_opened_files):
+	items_to_remove = []
+	for item in last_opened_files:
+		if not os.path.exists(item['file_name']):
+			items_to_remove.append(item)
+	for item in items_to_remove:
+		last_opened_files.remove(item)
+
 def open_old_from_path(event):
 	global old_path
 	if not editing:
-		#last_opened_files.append({'title': title, 'file_name': file_name})
+		#last_opened_files.append({'title': title, 'path': path})
 		file_name = old_path.get('1.0','end')
 		file_name = remove_new_line_at_end(file_name)
 		if len(file_name) < 4:
@@ -2061,7 +2071,6 @@ def open_old_from_number(event):
 		old_text.delete('1.0','end')
 		for i, f in reversed(list(enumerate(last_opened_files))):
 			old_text.insert('end', '[' + str(len(last_opened_files)-i) + '] ' + f['title'])
-			file_name = f['file_name']
 		old_text.configure(state="disabled")
 		editing = False
 
@@ -2078,7 +2087,6 @@ def remove_old_from_list(event):
 		old_text.insert('1.0','Remove from list: \nEnter number to remove or press [r] again to cancel.\n')
 		for i, f in reversed(list(enumerate(last_opened_files))):
 			old_text.insert('end', '[' + str(len(last_opened_files)-i) + '] ' + f['title'])
-			file_name = f['file_name']
 		old_text.configure(state="disabled")
 	else:
 		editing = False
@@ -2086,7 +2094,6 @@ def remove_old_from_list(event):
 		old_text.delete('1.0','end')
 		for i, f in reversed(list(enumerate(last_opened_files))):
 			old_text.insert('end', '[' + str(len(last_opened_files)-i) + '] ' + f['title'])
-			file_name = f['file_name']
 		old_text.configure(state="disabled")
 
 
@@ -2098,7 +2105,7 @@ def remove_old_from_list(event):
 
 
 # Main window
-def run(language, textfile):
+def run(language, text_file):
 	global w
 	global text
 	global last_opened_files
@@ -2197,8 +2204,8 @@ def run(language, textfile):
 	#text.grid(row=0, column=0)
 
 	# Read text
-	opened_text_path = textfile
-	with open(textfile) as file:
+	opened_text_path = text_file
+	with open(text_file) as file:
 		lines = file.readlines()
 
 	# Get saved state and remove state info from text
@@ -2262,10 +2269,10 @@ def run(language, textfile):
 	# Delete in last opened files
 	title = None
 	for i, file in enumerate(last_opened_files):
-		if textfile == file['file_name']:
+		if text_file == file['file_name']:
 			title = file['title']
 			del last_opened_files[i]
-	last_opened_files.append({'title': title_of_text, 'file_name': textfile})
+	last_opened_files.append({'title': title_of_text, 'file_name': text_file})
 	if len(last_opened_files) > 9:
 		last_opened_files.pop(0)
 
