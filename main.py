@@ -52,6 +52,7 @@ side_field_fonts = {'title': (font, 14),
 							'word': (font, 20, 'bold'),
 							'status': (font, 12, 'bold'),
 							'translation': (font, 16),
+							'google translate background': 'orange',
 							'remark': (font, 14),
 							'example': (font, 14, 'bold'),
 							'example translation': (font, 14, 'italic')}
@@ -601,36 +602,46 @@ def inserttranslation(info):
 	texttrans.tag_configure("normal", font=(translation_font, translation_font_size))
 	texttrans.tag_configure("parenthesis", font=(translation_font, translation_font_size))
 	texttrans.tag_configure("type_and_gender", font=(translation_font, translation_font_size, "italic"))
+	texttrans.tag_configure("google_translate", font=(translation_font, translation_font_size),
+						 background=side_field_fonts['google translate background'])
 	texttrans.tag_configure("definitions", font=(translation_font, translation_font_size), lmargin1=20, spacing1=5)
 	texttrans.tag_configure("synonyms", font=(translation_font, translation_font_size-2, "bold"), lmargin1=40, spacing1=2)
 
 	for i, item in enumerate(info):
-		if 'word' in item:
-			texttrans.insert(END, item['word'], 'word')
-		if 'part_of_speech' in item:
-			texttrans.insert(END, ' (', 'parenthesis')
-			texttrans.insert(END, item['part_of_speech'], 'type_and_gender')
-			if 'gender' in item:
-				texttrans.insert(END, ' — ' + item['gender'], 'type_and_gender')
-			texttrans.insert(END, ')', 'parenthesis')
-			if 'qualifier' in item:
-				texttrans.insert(END, ' (', 'parenthesis')
-				texttrans.insert(END, item['qualifier'], 'type_and_gender')
-				texttrans.insert(END, ')', 'parenthesis')
-
-		if 'definitions' in item:
-			for j, definition in enumerate(item['definitions']):
+		if 'source' in item and item['source'] == 'Google Translate':
+			if 'definitions' in item:
+				definition = item['definitions'][0]
 				if 'definition' in definition:
-					def_def = definition['definition']
-					texttrans.insert(END, f'\n{j+1}. {def_def}', 'definitions')
-				if 'synonyms' in definition:
-					synonyms = definition['synonyms']
-					texttrans.insert(END, f'\n≈ {synonyms}', 'synonyms')
-				if 'antonyms' in definition:
-					antonyms = definition['antonyms']
-					texttrans.insert(END, f'\n≠ {antonyms}', 'synonyms')
-		if i < len(info)-1:
-			texttrans.insert(END, '\n\n', 'normal')
+					def_def = definition['definition'] 
+					texttrans.insert(END, def_def, 'google_translate')
+					texttrans.insert(END, '\n\n', 'normal')
+		else: # If source is Wiktionary
+			if 'word' in item:
+				texttrans.insert(END, item['word'], 'word')
+			if 'part_of_speech' in item:
+				texttrans.insert(END, ' (', 'parenthesis')
+				texttrans.insert(END, item['part_of_speech'], 'type_and_gender')
+				if 'gender' in item:
+					texttrans.insert(END, ' — ' + item['gender'], 'type_and_gender')
+				texttrans.insert(END, ')', 'parenthesis')
+				if 'qualifier' in item:
+					texttrans.insert(END, ' (', 'parenthesis')
+					texttrans.insert(END, item['qualifier'], 'type_and_gender')
+					texttrans.insert(END, ')', 'parenthesis')
+
+			if 'definitions' in item:
+				for j, definition in enumerate(item['definitions']):
+					if 'definition' in definition:
+						def_def = definition['definition']
+						texttrans.insert(END, f'\n{j+1}. {def_def}', 'definitions')
+					if 'synonyms' in definition:
+						synonyms = definition['synonyms']
+						texttrans.insert(END, f'\n≈ {synonyms}', 'synonyms')
+					if 'antonyms' in definition:
+						antonyms = definition['antonyms']
+						texttrans.insert(END, f'\n≠ {antonyms}', 'synonyms')
+			if i < len(info)-1:
+				texttrans.insert(END, '\n\n', 'normal')
 
 # View in side field
 def sidefieldshow(word, info):
@@ -683,9 +694,9 @@ def sidefieldshow(word, info):
 	if not wordtype == 'expression':
 		inserttranslation(trans)
 	else:
-		texttrans.tag_configure("expression_trans", 
-						  font=(side_field_fonts['translation'][0],
-			  					side_field_fonts['translation'][1]+2))
+		texttrans.tag_configure("expression_trans",
+						  font=side_field_fonts['translation'],
+						  background=side_field_fonts['google translate background'])
 
 		texttrans.insert("1.0", trans, "expression_trans")
 	has_text_in_remark = False
