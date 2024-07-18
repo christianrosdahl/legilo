@@ -1024,6 +1024,7 @@ def enter(event):
 			look_up(active['word'], active['status'])
 			print_status(active['status'])
 		else:
+			handle_active_expressions()
 			handle_active_words()
 			set_next_to_active()
 
