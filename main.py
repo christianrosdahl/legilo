@@ -23,7 +23,8 @@ uselemma = True # Use a lemmatizer to look up the lemma form of a word
 startwindowsize = {'width': 1200, 'height': 700} # Set size of start window
 mainwindowsize = {'width': 1200, 'height': 1000} # Set size of main window
 considerexpressions = True # Allow expressions to be considered
-savingon = True # Saves files when quitting
+savingon = True # Saves word lists when quitting
+savestateon = True # Saves the current state (marked word or next word in queue)
 usemessagebox = False # Uses message box to inform about saving, which has some bug on Mac OS
 printwordlistsatstart = False # Prints word lists in terminal for debugging
 newbrowsertab = True # Use a new browser tab the first time the browser is opened
@@ -70,7 +71,7 @@ side_field_pady = 5
 
 # General function for saving files
 def save(obj, name, directory):
-	# Create director if it doesn't exist
+	# Create directory if it doesn't exist
 	if not os.path.exists(directory):
 		os.makedirs(directory)
 
@@ -84,7 +85,7 @@ def load(name, directory):
 
 # Save to .txt file
 def savetotxt(title, text, filename, directory):
-	# Create director if it doesn't exist
+	# Create directory if it doesn't exist
 	if not os.path.exists(directory):
 		os.makedirs(directory)
 
@@ -149,14 +150,17 @@ def loadall():
 		except:
 			expressions = {}
 
-# Save all the word lists
+# Save all the word lists and current state
 def saveall():
+	global savestateon
 	savelist(knownwords, "knownwords")
 	savelist(learningwords, "learningwords")
 	savelist(ignoredwords, "ignoredwords")
 	if considerexpressions:
 		savelist(expressions, "expressions")
 	savelist(lastopenedfiles, 'lastopenedfiles')
+	if savestateon:
+		savestate()
 	if not usemessagebox:
 		print("The wordlists were saved!")
 		print(f"Number of known words: {len(knownwords)}")
@@ -169,6 +173,28 @@ def saveallastxt():
 	savelistastxt(learningwords.keys(), "learningwordlist")
 	if considerexpressions:
 		savelistastxt(expressions, "expressions")
+
+# Save current state, i.e., current marked word or first word in queue
+def savestate():
+	global active
+	global openedtextpath
+	state = None
+	wordinfo = None
+	if active:
+		wordinfo = active
+	elif moreinqueue():
+		wordinfo = nextword()
+
+	if wordinfo:
+		state = str(wordinfo['line']) + '.' + str(wordinfo['wordnum'])
+
+		with open(openedtextpath) as file:
+			lines = file.readlines()
+
+		with open(openedtextpath, "w") as file:
+			file.write('#state ' + state + '\n')
+			for line in lines:
+				file.write(line)
 
 # Invoke saveall
 def savelists(event):
@@ -263,11 +289,8 @@ def mouseclick(event):
 	global active
 	global activelookedup
 	global activeexpression
-	global wordqueue
-	global removedfromqueue
 	global expressionmode
 	global selectedexpressionwords
-	global clickedoldexpression
 	# For expression mode:
 	if expressionmode:
 		wordtags = text.tag_names(text.index(CURRENT))
@@ -332,16 +355,27 @@ def mouseclick(event):
 				selectedexpressionwords = [] # Restore selected expression words list
 		return
 
+	# If not in expression mode:
 	if considerexpressions:
 		wordtags = text.tag_names(text.index(CURRENT))
 		# Choose tag for word, not for expression:
 		for tag in wordtags:
 			if 'e' not in tag and 'l' not in tag:
 				wordtag = tag
+				break
 	else:
 		wordtag = text.tag_names(text.index(CURRENT))[0]
 
-	# If not in expression mode:
+	skip_to_word(wordtag)
+	lookup(active['word'], active['status'])
+	printstatus(active['status'])
+
+# Skip to word with word tag `wordtag`
+def skip_to_word(wordtag):
+	global active
+	global wordqueue
+	global removedfromqueue
+
 	lineandwordnum = wordtag.split(".")
 	line = int(lineandwordnum[0])
 	wordnum = int(lineandwordnum[1])
@@ -379,8 +413,6 @@ def mouseclick(event):
 			active = worddict
 			wordstoremove.append(worddict)
 			markword(active['line'], active['wordnum'], 'active')
-			lookup(active['word'], active['status'])
-			printstatus(active['status'])
 			break
 
 	if not clickedwordinqueue:
@@ -388,8 +420,6 @@ def mouseclick(event):
 			if worddict['line'] == line and worddict['wordnum'] == wordnum:
 				active = worddict
 				markword(active['line'], active['wordnum'], 'active')
-				lookup(active['word'], active['status'])
-				printstatus(active['status'])
 				break
 
 	for word in wordstoremove:
@@ -2102,6 +2132,7 @@ def run(language, textfile):
 	global textexampletitle
 	global textexample
 
+	global openedtextpath
 	global knownwords
 	global learningwords
 	global ignoredwords
@@ -2186,8 +2217,21 @@ def run(language, textfile):
 	#text.grid(row=0, column=0)
 
 	# Read text
+	openedtextpath = textfile
 	with open(textfile) as file:
 		lines = file.readlines()
+
+	# Get saved state and remove state info from text
+	state = None
+	if len(lines) > 0 and '#state' in lines[0]:
+		stateinfo = lines[0].split(' ')
+		if len(stateinfo) > 1:
+			state = stateinfo[1]
+		lines = lines[1:]
+		with open(openedtextpath, "w") as file:
+			for line in lines:
+				file.write(line)
+
 	nbrlines = len(lines)
 
 	# Show text
@@ -2367,8 +2411,14 @@ def run(language, textfile):
 					wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['example translation'])
 	textexample.pack(fill='x')
 
+	# Set program to saved state
+	if state:
+		skip_to_word(state)
+
+	# Set what to de when closing window
 	w.protocol("WM_DELETE_WINDOW", quitprogram)
 
+	# Add key bindings
 	w.bind("<space>", space)
 	w.bind("<Return>", enter)
 	w.bind("<Right>", space)
