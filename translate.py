@@ -5,7 +5,7 @@ import stanza
 import re
 import unicodedata
 from googletrans import Translator
-from languagecode import *
+from language_code import get_language_code
 
 # Define parts of speech
 PARTS_OF_SPEECH = [
@@ -26,7 +26,7 @@ class LegiloTranslator():
         self.use_lemma = use_lemma
         if use_lemma:
             print('Loading models for finding dictionary forms of words to look up...')
-            self.nlp = stanza.Pipeline(languagecode(language), download_method=stanza.DownloadMethod.REUSE_RESOURCES)
+            self.nlp = stanza.Pipeline(get_language_code(language), download_method=stanza.DownloadMethod.REUSE_RESOURCES)
             print('The models were loaded.')
         else:
             self.nlp = None
@@ -139,7 +139,7 @@ class LegiloTranslator():
 
     def get_google_translation(self, word):
         translator = Translator()
-        trans = translator.translate(word, src=languagecode(self.language), dest='en').text
+        trans = translator.translate(word, src=get_language_code(self.language), dest='en').text
         if trans == word:
             trans = '?'
         results = [{'word': word, 'definitions': [{'definition': trans}], 'source': 'Google Translate'}]

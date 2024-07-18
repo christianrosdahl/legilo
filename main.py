@@ -3,7 +3,7 @@ from datetime import date
 from tkinter import *
 from tkinter import messagebox
 import tkinter.scrolledtext as scrolledtextwindow
-from languagecode import *
+from language_code import get_language_code
 from translate import *
 from sentence import *
 from autoread import *
@@ -1196,19 +1196,19 @@ def pronounce(word, language):
 				sidefieldword = textword.get('1.0','end')
 				sidefieldword = sidefieldword.split(',')
 				sidefieldword = sidefieldword[0]
-				sound = Speech(sidefieldword, languagecode(language))
+				sound = Speech(sidefieldword, get_language_code(language))
 				lastpronounced = {'word': word, 'sound': sound}
 			else:
-				sound = Speech(word, languagecode(language))
+				sound = Speech(word, get_language_code(language))
 		else:
 			if active and activelookedup:
 				sidefieldword = textword.get('1.0','end')
 				sidefieldword = sidefieldword.split(',')
 				sidefieldword = sidefieldword[0]
-				sound = Speech(sidefieldword, languagecode(language))
+				sound = Speech(sidefieldword, get_language_code(language))
 				lastpronounced = {'word': word, 'sound': sound}
 			else:
-				sound = Speech(word, languagecode(language))
+				sound = Speech(word, get_language_code(language))
 		sound.play()
 
 def pronounceactiveword(event):
@@ -1569,7 +1569,7 @@ def selectsentence(event):
 			# Get translation from Google
 			if n == 8:
 				translator = Translator()
-				sentencetrans = translator.translate(sentence, src=languagecode(language), dest='en').text
+				sentencetrans = translator.translate(sentence, src=get_language_code(language), dest='en').text
 			# Don't use a translation
 			else: # n == 9
 				sentencetrans = ""
@@ -1590,7 +1590,7 @@ def translatetoswedish(word, trans):
 	translationstring = ""
 	# Translate the original word directly to Swedish
 	if includetransoforiginalword:
-		swedishtrans = translator.translate(word, src=languagecode(language), dest='sv').text
+		swedishtrans = translator.translate(word, src=get_language_code(language), dest='sv').text
 		translationstring = word + ' = ' + swedishtrans + '\n\n'
 	# Remove new line from end of translations string
 	if len(trans) > 0:
@@ -1663,7 +1663,7 @@ def newexpression(wordtag1, wordtag2):
 			expressionwords.append(linewords[wordnum])
 
 		translator = Translator()
-		trans = translator.translate(expression, src=languagecode(language), dest='en').text
+		trans = translator.translate(expression, src=get_language_code(language), dest='en').text
 		info = {'expressionwords': expressionwords, 'word' : expression, 'trans' : trans, 'wordtype' : 'expression'}
 		(sentence, sentencetrans) = getfirstsentence(expression, language)
 		if len(sentence) > 0:

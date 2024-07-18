@@ -1,7 +1,7 @@
 import urllib
 from bs4 import BeautifulSoup
 from urllib.request import Request, urlopen
-from languagecode import *
+from language_code import get_language_code
 
 # Fix for urllib ---------
 import os, ssl
@@ -16,7 +16,7 @@ def getsentences(word, language, n):
 	if ' ' in word:
 		isword = False
 	if language == 'french' or language == 'german' or language == 'italian' and isword:
-		link = "https://www.online-translator.com/samples/" + languagecode(language) + "-en/" + word
+		link = "https://www.online-translator.com/samples/" + get_language_code(language) + "-en/" + word
 		link = urllib.parse.quote(link, safe='/:',)
 		link = Request(link, headers={'User-Agent': 'Mozilla/5.0'})
 
