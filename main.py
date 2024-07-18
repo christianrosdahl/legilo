@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 from datetime import date
 from tkinter import *
@@ -2466,6 +2468,5 @@ def run(language, text_file):
 
 
 
-
-# Open start window and get options
-start()
+if __name__ == "__main__":
+	start() # Open start window and get options
