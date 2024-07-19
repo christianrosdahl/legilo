@@ -228,7 +228,7 @@ def save_listsastxt(event):
 	unfocus()
 
 # Handles active word when another word or expression is selected
-def handle_active_words():
+def handle_active_words(unqueue_looked_up=True):
 	global active
 	global active_looked_up
 	global word_queue
@@ -238,7 +238,10 @@ def handle_active_words():
 			info = getword_info()
 			add_to_learning(active['word'], info)
 			active['status'] = 'learning'
-			removed_from_queue.append(active)
+			if unqueue_looked_up:
+				removed_from_queue.append(active)
+			else:
+				put_back_in_queue(active)
 			mark_all_instances(active['word'], 'learning')
 		else:
 			put_back_in_queue(active)
@@ -1121,6 +1124,10 @@ def known(event):
 # Repeat learning words from the beginning of the text
 def repeat_learning_words(event):
 	go_to_start()
+	set_next_to_active()
+	if active:
+		active_word_tag = str(active['line']) + '.' + str(active['word_num'])
+		text.see(active_word_tag)
 
 # Put back all learning words in the queue to go through them from start
 def go_to_start():
@@ -1131,13 +1138,37 @@ def go_to_start():
 		handle_active_expressions()
 		handle_active_words()
 		remove_from_removed = []
-		for i, word in enumerate(removed_from_queue):
+		for word in removed_from_queue:
 			if word['status'] == 'learning':
 				if not word_in_queue(word['index']):
 					put_back_in_queue_sorted(word)
 				remove_from_removed.append(word)
 		for word in remove_from_removed:
 			removed_from_queue.remove(word)
+
+def go_to_previous_learning_word(event):
+	global word_queue
+	global removed_from_queue
+	global editing
+	global active_looked_up
+	if not editing:
+		if active:
+			current_index = active['index']
+			closest_index = -1
+			previous_word = None
+			for word in removed_from_queue:
+				word_index = word['index']
+				if (word_index < current_index and
+					word_index > closest_index and
+					word['status'] == 'learning'):
+					closest_index = word_index
+					previous_word = word
+			if previous_word:
+				handle_active_expressions()
+				handle_active_words(unqueue_looked_up=False)
+				put_back_in_queue_sorted(previous_word)
+				removed_from_queue.remove(previous_word)
+				set_next_to_active()
 
 def pronounce(word, language):
 	global active
@@ -2425,7 +2456,7 @@ def run(language, text_file):
 	w.bind("<Right>", space)
 	w.bind("<Up>", enter)
 	w.bind("<Down>", known)
-	w.bind("<Left>", pronounce_active_word)
+	w.bind("<Left>", go_to_previous_learning_word)
 	w.bind("<a>", enter)
 	w.bind("<k>", known)
 	w.bind("<p>", ignore)
