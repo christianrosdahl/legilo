@@ -235,7 +235,7 @@ def handle_active_words(unqueue_looked_up=True):
 	global removed_from_queue
 	if active:
 		if active_looked_up:
-			info = getword_info()
+			info = get_word_info()
 			add_to_learning(active['word'], info)
 			active['status'] = 'learning'
 			if unqueue_looked_up:
@@ -772,16 +772,16 @@ def show_active_word_in_sidefield():
 def look_up(word, status):
 	global text_word
 	global active_looked_up
-	if status == 'new' or status == 'ignored':
+	known_without_info = (status == 'known' and not known_words[word])
+	if status in ['new', 'ignored'] or known_without_info:
 		info = legilo_translator.get_info(word)
-		sentence = ""
 		(sentence, sentence_trans) = get_first_sentence(word, language)
 		if len(sentence) > 0:
 			info['sentence'] = sentence
 			info['sentence_trans'] = sentence_trans
 	elif status == 'learning':
 		info = learning_words[word]
-	else: # status == 'known'
+	else: # status == 'known' and word has info
 		info = known_words[word]
 
 	side_field_show(word, info, status)
@@ -808,7 +808,7 @@ def remove_new_line_at_end(string):
 	return string
 
 # Collect word info from side field and info_for_showed_word variable
-def getword_info():
+def get_word_info():
 	global info_for_showed_word
 	edit_side_field()
 	word_type = None
@@ -1095,28 +1095,27 @@ def known(event):
 	global removed_from_queue
 
 	if active and not editing:
-		status = active['status']
-		# Allow only words that have been looked up (now or before) to become known
-		if status == 'learning' or active_looked_up:
-			word = active['word']
-			info = getword_info()
-			active['status'] = 'known'
-			add_to_known(word, info)
+		word = active['word']
+		info = None
+		if active_looked_up:
+			info = get_word_info()
+		active['status'] = 'known'
+		add_to_known(word, info)
 
-			#Remove all instances of word in queue
-			removed_from_queue.append(active)
-			words_to_remove = []
-			for word_dict in word_queue:
-				if word_dict['word'] == word:
-					words_to_remove.append(word_dict)
+		#Remove all instances of word in queue
+		removed_from_queue.append(active)
+		words_to_remove = []
+		for word_dict in word_queue:
+			if word_dict['word'] == word:
+				words_to_remove.append(word_dict)
 
-			for word in words_to_remove:
-				removed_from_queue.append(word)
-				word_queue.remove(word)
+		for word in words_to_remove:
+			removed_from_queue.append(word)
+			word_queue.remove(word)
 
-			mark_all_instances(active['word'], 'known')
-			unset_active_word()
-			set_next_to_active()
+		mark_all_instances(active['word'], 'known')
+		unset_active_word()
+		set_next_to_active()
 
 	if active_expression and not editing:
 		ignore(event)
