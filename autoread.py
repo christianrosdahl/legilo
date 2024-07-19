@@ -32,10 +32,9 @@ def autoread(url):
         if tag.name == 'h1':
             last_h1_before_first_p = tag
     
-    headline = last_h1_before_first_p.get_text() if last_h1_before_first_p else "No headline found"
+    headline = last_h1_before_first_p.get_text().strip() if last_h1_before_first_p else "No headline found"
     
     # Combine headline and article text
-    article_text = "\n\n".join(article_elements)
-    full_text = f"{headline}\n\n{article_text}"
+    article_text = "\n\n".join(article_elements).strip()
     
     return headline, article_text
