@@ -373,19 +373,14 @@ def skip_to_word(word_tag, scroll_to_word=False):
 	# Handle active word
 	handle_active_words()
 
-	# Mark all prev. new words as ignored and clicked word as active, 
+	# Mark all prev. new words as known and clicked word as active, 
 	# and remove all previous words from queue
 	clicked_word_in_queue = False
 	for word_dict in word_queue:
 		if word_dict['line'] < line or (word_dict['line'] == line and word_dict['word_num'] < word_num):
 			if word_dict['status'] == 'new':
-				word_dict['status'] = 'ignored'
-				add_to_ignored(word_dict['word'])
-				mark_all_instances(word_dict['word'],'ignored')
-				words_to_remove.append(word_dict)
-			elif word_dict['status'] == 'known':
-				word_dict['status'] = 'ignored'
-				add_to_ignored(word_dict['word'])
+				word_dict['status'] = 'known'
+				add_to_known(word_dict['word'], None)
 				mark_all_instances(word_dict['word'],'known')
 				words_to_remove.append(word_dict)
 			elif word_dict['status'] == 'ignored':
