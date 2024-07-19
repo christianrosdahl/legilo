@@ -2453,7 +2453,7 @@ def run(language, text_file):
 	w.bind("<Left>", go_to_previous_learning_word)
 	w.bind("<a>", enter)
 	w.bind("<k>", known)
-	w.bind("<p>", ignore)
+	w.bind("<x>", ignore)
 	w.bind("<BackSpace>", ignore)
 	w.bind("<h>", pronounce_active_word)
 	w.bind("<.>", pronounce_active_word)
