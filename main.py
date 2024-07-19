@@ -2274,7 +2274,8 @@ def run(language, text_file):
 			text.tag_add('l' + str(i+1), str(i+1) + '.' + str(0), str(i+1) + '.' + 'end')
 			text.tag_config('l' + str(i+1), font=(font, main_title_size, "bold"))
 		# Other titles
-		if not last_line_char in '.?!:,])}*-' and previous_line_empty and len(line) < 200 and i < nbr_lines-1:
+		if (not last_line_char in '.?!:,])}*-;"' and previous_line_empty
+	  		and len(line) < 200 and i < nbr_lines-1 and not '.' in line):
 			has_titles = True
 			text.tag_add('l' + str(i+1), str(i+1) + '.' + str(0), str(i+1) + '.' + 'end')
 			text.tag_config('l' + str(i+1), font=(font, title_size, "bold"))
