@@ -1001,7 +1001,7 @@ def space(event):
 				unset_active_word()
 				set_next_to_active()
 			else: # active['status'] == 'new'
-				ignore(event)
+				known(event)
 		else:
 			handle_active_words()
 			set_next_to_active()
