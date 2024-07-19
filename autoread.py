@@ -1,4 +1,5 @@
 import requests
+import re
 from bs4 import BeautifulSoup
 
 def autoread(url):
@@ -36,5 +37,7 @@ def autoread(url):
     
     # Combine headline and article text
     article_text = "\n\n".join(article_elements).strip()
+    # Replace instances of more than two newlines with exactly two newlines
+    article_text = re.sub(r'\n{3,}', '\n\n', article_text)
     
     return headline, article_text
