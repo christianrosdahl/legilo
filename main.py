@@ -516,21 +516,6 @@ def unset_active_word():
 def unfocus():
 	w.focus()
 
-# Get gender of noun from word type info
-def get_gender(word_type):
-	global language
-	gender = ""
-	if 'noun' in word_type:
-		if language == 'french' or language == 'italian' or language == 'german' or language == 'russian':
-			if 'masculine' in word_type:
-				gender = gender + 'm'
-			if 'feminine' in word_type:
-				gender = gender + 'f'
-		if language == 'german' or language == 'russian':
-			if 'neuter' in word_type:
-				gender = gender + 'n'
-	return gender
-
 # Returns the article of a word (or an empty string if article is not unique)
 def get_article(word, gender, language):
 	if language == 'french':
@@ -558,6 +543,20 @@ def get_article(word, gender, language):
 			return 'die'
 		elif gender == 'n':
 			return 'das'
+		else:
+			return ''
+	elif language == 'spanish':
+		if gender == 'm':
+			return 'el'
+		elif gender == 'f':
+			return 'la'
+		else:
+			return ''
+	elif language == 'swedish':
+		if gender in ['c', 'm', 'f']:
+			return 'en'
+		elif gender == 'n':
+			return 'ett'
 		else:
 			return ''
 	elif language == 'italian': # Remains to be implemented
@@ -591,40 +590,28 @@ def get_article(word, gender, language):
 def gender_color(gender):
 	global language
 	global text_word
-	if language == 'french' or language == 'italian':
-		if 'm' in gender and 'f' not in gender:
-			text_word.configure(fg="blue")
-		elif 'f' in gender and 'm' not in gender:
-			text_word.configure(fg="red")
-		else:
-			text_word.configure(fg="black")
-	if language == 'german' or language == 'russian':
+
+	gender_colors = {'m': 'blue', 'f': 'red', 'n': 'green', 'c': 'purple'}
+	# Only set gender color if gender is unique and gender_color is defined
+	if not gender in gender_colors:
+		text_word.configure(fg='black')
+		return
+
+	if language in ['croatian', 'french', 'italian', 'spanish', 'swedish', 'russian']:
+		text_word.configure(fg=gender_colors[gender])
+	if language in ['german']:
 		verb = False
 		word = text_word.get('1.0','end')
 		if ',' in word:
 			verb = True
 		if not verb:
-			if 'm' in gender and 'f' not in gender and 'n' not in gender:
-				text_word.configure(fg="blue")
-			elif 'f' in gender and 'm' not in gender and 'n' not in gender:
-				text_word.configure(fg="red")
-			elif 'n' in gender and 'm' not in gender and 'f' not in gender:
-				text_word.configure(fg="green")
-			else:
-				text_word.configure(fg="black")
+			text_word.configure(fg=gender_colors[gender])
 		else:
 			nounandverb = word.split(',')
 			nounlength = len(nounandverb[0])
-			text_word.configure(fg="black")
-			text_word.tag_add("noun", "1.0", "1." + str(nounlength))
-			if 'm' in gender and 'f' not in gender and 'n' not in gender:
-				text_word.tag_configure("noun", foreground="blue")
-			elif 'f' in gender and 'm' not in gender and 'n' not in gender:
-				text_word.tag_configure("noun", foreground="red")
-			elif 'n' in gender and 'm' not in gender and 'f' not in gender:
-				text_word.tag_configure("noun", foreground="green")
-			else:
-				text_word.tag_configure("noun", foreground="black")
+			text_word.configure(fg='black')
+			text_word.tag_add('noun', '1.0', '1.' + str(nounlength))
+			text_word.tag_configure('noun', fg=gender_colors[gender])
 			
 
 # Insert example sentence
