@@ -24,6 +24,7 @@ class LegiloTranslator():
         if self.language == 'Croatian':
             self.language = 'Serbo-Croatian'
         self.use_lemma = use_lemma
+        self.google_translator = Translator()
         if use_lemma:
             print('Loading models for finding dictionary forms of words to look up...')
             self.nlp = stanza.Pipeline(get_language_code(language), download_method=stanza.DownloadMethod.REUSE_RESOURCES)
@@ -138,8 +139,7 @@ class LegiloTranslator():
         return words
 
     def get_google_translation(self, word):
-        translator = Translator()
-        trans = translator.translate(word, src=get_language_code(self.language), dest='en').text
+        trans = self.google_translator.translate(word, src=get_language_code(self.language), dest='en').text
         if trans == word:
             trans = '?'
         results = [{'word': word, 'definitions': [{'definition': trans}], 'source': 'Google Translate'}]
