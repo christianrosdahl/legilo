@@ -62,7 +62,7 @@ class LegiloTranslator():
         return results
     
     # Get word info, including translation, on the format used in Legilo
-    def get_info(self, word, include_etymology=True):
+    def get_info(self, word, include_word_info=True, include_etymology=True):
         translation = self.translate(word)
         wordtypes = set()
         genders = set()
@@ -84,8 +84,11 @@ class LegiloTranslator():
                     genders.add('c')
             if 'lemma' in item:
                 lemmas.add(item['lemma'])
-            if 'word_info' in item:
-                remarks.append(item['word_info'])
+            if 'word_info' in item and include_word_info:
+                if 'word' in item:
+                    remarks.append(item['word'] + ': ' + item['word_info'])
+                else:                    
+                    remarks.append(item['word_info'])
             if 'etymology' in item:
                 etymologies.append(f'Etymology {i+1}: ' + item['etymology'])
         info = {'dictword' : word, 'trans': translation}
