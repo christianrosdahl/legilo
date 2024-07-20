@@ -770,6 +770,15 @@ def look_up(word, status):
 	side_field_show(word, info, status)
 	active_looked_up = True
 
+def update_translation_for_showed_word(trans):
+	global info_for_showed_word
+	if active and active_looked_up:
+		info_for_showed_word['trans'] = trans
+		clear_translation_field()
+		edit_side_field()
+		insert_translation(trans)
+		freeze_side_field()
+
 # Enable input of text in sidebar
 def edit_side_field():
 	text_word.configure(state="normal")
@@ -907,6 +916,13 @@ def clear_side_field():
 	text_example.configure(state="normal")
 	text_example.delete('1.0', "end")
 	text_example.configure(state="disabled")
+
+# Empty the translation field
+def clear_translation_field():
+	global text_trans
+	text_trans.configure(state="normal")
+	text_trans.delete('1.0', "end")
+	text_trans.configure(state="disabled")
 
 # Check if more words in the queue
 def more_in_queue():
@@ -1435,6 +1451,24 @@ def add_swedish_trans(event):
 				text_remark.insert('end', '\n' + translate_to_swedish(word, trans))
 			last_word_translated_to_swedish = word
 		freeze_side_field()
+
+# Add a Google translation to the definitions of the word and show in the side field.
+# Reverse if Google translation already is added.
+def add_google_trans(event):
+	global info_for_showed_word
+	if active and active_looked_up:
+		trans = info_for_showed_word['trans']
+		has_google_trans = False
+		for item in trans:
+			if 'source' in item and item['source'] == 'Google Translate':
+				has_google_trans = True
+				break
+
+		if not has_google_trans:
+			new_trans = legilo_translator.translate(active['word'], always_google_trans=True)
+		else:
+			new_trans = legilo_translator.translate(active['word'])
+		update_translation_for_showed_word(new_trans)
 
 def quit_program():
 	if use_message_box:
@@ -2478,6 +2512,7 @@ def run(language, text_file):
 	w.bind("<r>", change_remark)
 	w.bind("<b>", repeat_learning_words)
 	w.bind("<s>", add_swedish_trans)
+	w.bind("<t>", add_google_trans)
 	w.bind("<d>", open_dictionary)
 	w.bind("<v>", open_verb_conjugation)
 	w.bind("<w>", open_wiktionary)

@@ -32,7 +32,7 @@ class LegiloTranslator():
         else:
             self.nlp = None
 
-    def translate(self, word):
+    def translate(self, word, always_google_trans=False):
         results = self.parse_from_wiktionary(word)
         
         # Handle that nouns must be looked up with capital letter in German
@@ -55,8 +55,10 @@ class LegiloTranslator():
         if len(results) == 0:
             results = self.get_google_translation(word)
 
-        # If the specific form wasn't found in Wiktionary, add traslation of this first
-        if self.remove_accents(word) not in self.get_lookup_words_from_results(results):
+        # If the specific form wasn't found in Wiktionary, add traslation of this first.
+        # If 'always_google_trans' is True, this is done anyway.
+        if (self.remove_accents(word) not in self.get_lookup_words_from_results(results)
+            or always_google_trans):
             results = self.get_google_translation(word) + results
         
         return results
