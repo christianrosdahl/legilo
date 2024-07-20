@@ -63,6 +63,7 @@ class LegiloTranslator():
     
     # Get word info, including translation, on the format used in Legilo
     def get_info(self, word, include_word_info=True, include_etymology=True):
+        remark_line_marker = '\u2022 '
         translation = self.translate(word)
         wordtypes = set()
         genders = set()
@@ -86,11 +87,13 @@ class LegiloTranslator():
                 lemmas.add(item['lemma'])
             if 'word_info' in item and include_word_info:
                 if 'word' in item:
-                    remarks.append(item['word'] + ': ' + item['word_info'])
+                    remark_line = remark_line_marker + item['word'] + ': ' + item['word_info']
+                    if not remark_line in remarks: # Avoid duplicates
+                        remarks.append(remark_line)
                 else:                    
-                    remarks.append(item['word_info'])
+                    remarks.append(remark_line_marker + item['word_info'])
             if 'etymology' in item:
-                etymologies.append(f'Etymology {i+1}: ' + item['etymology'])
+                etymologies.append(remark_line_marker + f'Etymology {i+1}: ' + item['etymology'])
         info = {'dictword' : word, 'trans': translation}
         if len(wordtypes) > 0:
             info['wordtype'] = ', '.join(wordtypes)
@@ -101,7 +104,7 @@ class LegiloTranslator():
         if include_etymology and len(etymologies) > 0:
             remarks += etymologies
         if len(remarks) > 0:
-            info['remark'] = '\n\n'.join(remarks)
+            info['remark'] = '\n'.join(remarks)
         return info
     
     def get_lemma(self, word):
