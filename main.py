@@ -26,7 +26,7 @@ include_article = True # Write out and pronounce article for nouns
 use_lemma = True # Use a lemmatizer to look up the lemma form of a word
 start_window_size = {'width': 1200, 'height': 700} # Set size of start window
 main_window_size = {'width': 1200, 'height': 1000} # Set size of main window
-consider_expressions = True # Allow expressions to be considered
+consider_phrases = True # Allow phrases to be considered
 always_show_active = False # Always show active word in the side field (without translation)
 move_back_when_clicking_previous = True # Put back learning words after clicked word in queue
 saving_on = True # Saves word lists when quitting
@@ -121,7 +121,7 @@ def load_all():
 	global known_words
 	global learning_words
 	global ignored_words
-	global expressions
+	global phrases
 	global last_opened_files
 
 	try:
@@ -148,15 +148,15 @@ def load_all():
 			print(ignored_words)
 	except:
 		ignored_words = []
-	if consider_expressions:
+	if consider_phrases:
 		try:
-			expressions = load_list("expressions")
+			phrases = load_list("phrases")
 			if print_word_lists_at_start:
 				print('')
-				print('expressions:')
-				print(expressions)
+				print('phrases:')
+				print(phrases)
 		except:
-			expressions = {}
+			phrases = {}
 
 # Save all the word lists and current state
 def save_all():
@@ -164,8 +164,8 @@ def save_all():
 	save_list(known_words, "known_words")
 	save_list(learning_words, "learning_words")
 	save_list(ignored_words, "ignored_words")
-	if consider_expressions:
-		save_list(expressions, "expressions")
+	if consider_phrases:
+		save_list(phrases, "phrases")
 	save_list(last_opened_files, 'last_opened_files')
 	if save_state_on:
 		save_state()
@@ -179,8 +179,8 @@ def save_all_as_txt():
 	save_list_as_txt(learning_words, "learning_words")
 	save_list_as_txt(ignored_words, "ignored_words")
 	save_list_as_txt(learning_words.keys(), "learningwordlist")
-	if consider_expressions:
-		save_list_as_txt(expressions, "expressions")
+	if consider_phrases:
+		save_list_as_txt(phrases, "phrases")
 
 # Save current state, i.e., current marked word or first word in queue
 def save_state():
@@ -211,7 +211,7 @@ def save_lists(event):
 	save_all()
 	if use_message_box:
 		ans = messagebox.showinfo("Saved", "The wordlists were saved!")
-	deactivate_expression_mode(event)
+	deactivate_phrase_mode(event)
 	text.focus()
 	unfocus()
 
@@ -224,11 +224,11 @@ def save_listsastxt(event):
 		ans = messagebox.showinfo("Saved", "The wordlists were saved as txt files!")
 	else:
 		print("The wordlists were saved as txt files!")
-	deactivate_expression_mode(event)
+	deactivate_phrase_mode(event)
 	text.focus()
 	unfocus()
 
-# Handles active word when another word or expression is selected
+# Handles active word when another word or phrase is selected
 def handle_active_words(unqueue_looked_up=True):
 	global active
 	global active_looked_up
@@ -248,102 +248,102 @@ def handle_active_words(unqueue_looked_up=True):
 			put_back_in_queue(active)
 		unset_active_word()
 
-# Handles active expression when another word or expression is selected
-def handle_active_expressions():
-	global active_expression
-	global expressions
-	if active_expression:
-		info = get_expression_info()
-		add_to_expressions(active_expression, info)
-		mark_expression(active_expression['line'], active_expression['startword_num'], 'ordinary')
-		mark_all_expression_instances(active_expression['expression_words'], 'ordinary')
-		active_expression = False
+# Handles active phrase when another word or phrase is selected
+def handle_active_phrases():
+	global active_phrase
+	global phrases
+	if active_phrase:
+		info = get_phrase_info()
+		add_to_phrases(active_phrase, info)
+		mark_phrase(active_phrase['line'], active_phrase['startword_num'], 'ordinary')
+		mark_all_phrase_instances(active_phrase['phrase_words'], 'ordinary')
+		active_phrase = False
 		clear_side_field()
 
-# Find old expression from tag
-def find_old_expression(tag):
-	global expressions
+# Find old phrase from tag
+def find_old_phrase(tag):
+	global phrases
 	start_index = text.tag_ranges(tag)[0]
 	end_index = text.tag_ranges(tag)[1]
 	line_and_start_word = tag.split('.')
 
 	line = int(line_and_start_word[0][1:])
 	word_num1 = int(line_and_start_word[1])
-	expression = text.get(start_index,end_index)
-	expression_words = expression.translate(str.maketrans("""'´’!"#$%&()*+,./:;<=>?@[]^_`{|}~«»“”„""", "                                     "))
-	expression_words = expression_words.lower().split()
-	word_num2 = word_num1 + len(expression_words)
-	first_word = expression_words[0]
+	phrase = text.get(start_index,end_index)
+	phrase_words = phrase.translate(str.maketrans("""'´’!"#$%&()*+,./:;<=>?@[]^_`{|}~«»“”„""", "                                     "))
+	phrase_words = phrase_words.lower().split()
+	word_num2 = word_num1 + len(phrase_words)
+	first_word = phrase_words[0]
 
 	info = None
 
-	# Search for expression
-	if first_word in expressions:
-		expressions_list = expressions[first_word]
+	# Search for phrase
+	if first_word in phrases:
+		phrases_list = phrases[first_word]
 
-		for expnum, exp in enumerate(expressions_list):
-			expression_words2 = exp['expression_words']
-			if len(expression_words) == len(expression_words2):
-				if str(expression_words) == str(expression_words2):
-					# Expressions are matching
-					info = expressions_list[expnum]
+		for expnum, exp in enumerate(phrases_list):
+			phrase_words2 = exp['phrase_words']
+			if len(phrase_words) == len(phrase_words2):
+				if str(phrase_words) == str(phrase_words2):
+					# phrases are matching
+					info = phrases_list[expnum]
 					break
-	return (expression, info, line, word_num1, word_num2)
+	return (phrase, info, line, word_num1, word_num2)
 
 # Handle mouse click in text field
 def mouse_click(event):
 	global active
 	global active_looked_up
-	global active_expression
-	global expression_mode
-	global selected_expression_words
-	# For expression mode:
-	if expression_mode:
+	global active_phrase
+	global phrase_mode
+	global selected_phrase_words
+	# For phrase mode:
+	if phrase_mode:
 		word_tags = text.tag_names(text.index(CURRENT))
-		is_old_expression = False
+		is_old_phrase = False
 		for tag in word_tags:
 			if 'e' in tag:
-				is_old_expression = True
-		# If old expression
-		if is_old_expression:
-			selected_expression_words = [] # Cancel selection of new expression
-			# Mark and save previous expression
-			handle_active_expressions()
+				is_old_phrase = True
+		# If old phrase
+		if is_old_phrase:
+			selected_phrase_words = [] # Cancel selection of new phrase
+			# Mark and save previous phrase
+			handle_active_phrases()
 			# Put back active word in queue and clear side field
 			handle_active_words()
 
-			# Show old expression
+			# Show old phrase
 			for tag in word_tags:
 				if 'e' in tag:
-					expression_tag = tag
+					phrase_tag = tag
 
-			(expression, info, line, word_num1, word_num2) = find_old_expression(expression_tag)
+			(phrase, info, line, word_num1, word_num2) = find_old_phrase(phrase_tag)
 
-			active_expression = {'expression_words' : info['expression_words'], 'line' : line, 'startword_num' : word_num1, 'endword_num' : word_num2}
-			mark_expression(active_expression['line'], active_expression['startword_num'], 'active')
-			side_field_show(expression, info, 'learning expression')
+			active_phrase = {'phrase_words' : info['phrase_words'], 'line' : line, 'startword_num' : word_num1, 'endword_num' : word_num2}
+			mark_phrase(active_phrase['line'], active_phrase['startword_num'], 'active')
+			side_field_show(phrase, info, 'learning phrase')
 
-		# If new expression
+		# If new phrase
 		else: 
-			# Choose tag for word, not for expression:
+			# Choose tag for word, not for phrase:
 			for tag in word_tags:
 				if 'e' not in tag and 'l' not in tag:
 					word_tag = tag
 
-			selected_expression_words.append(word_tag)
-			# If two words are selected so that a new expression can be created
-			if len(selected_expression_words) > 1:
-				# Mark and save previous expression
-				handle_active_expressions()
+			selected_phrase_words.append(word_tag)
+			# If two words are selected so that a new phrase can be created
+			if len(selected_phrase_words) > 1:
+				# Mark and save previous phrase
+				handle_active_phrases()
 				handle_active_words()
-				new_expression(selected_expression_words[0], selected_expression_words[1])
-				selected_expression_words = [] # Restore selected expression words list
+				new_phrase(selected_phrase_words[0], selected_phrase_words[1])
+				selected_phrase_words = [] # Restore selected phrase words list
 		return
 
-	# If not in expression mode:
-	if consider_expressions:
+	# If not in phrase mode:
+	if consider_phrases:
 		word_tags = text.tag_names(text.index(CURRENT))
-		# Choose tag for word, not for expression:
+		# Choose tag for word, not for phrase:
 		for tag in word_tags:
 			if 'e' not in tag and 'l' not in tag:
 				word_tag = tag
@@ -352,7 +352,7 @@ def mouse_click(event):
 		word_tag = text.tag_names(text.index(CURRENT))[0]
 
 	if move_back_when_clicking_previous:
-		handle_active_expressions()
+		handle_active_phrases()
 		handle_active_words()
 		go_to_start()
 
@@ -369,8 +369,8 @@ def skip_to_word(word_tag, scroll_to_word=False):
 	line = int(line_and_word_num[0])
 	word_num = int(line_and_word_num[1])
 	words_to_remove = []
-	# Handle active expression
-	handle_active_expressions()
+	# Handle active phrase
+	handle_active_phrases()
 	# Handle active word
 	handle_active_words()
 
@@ -434,8 +434,8 @@ def mark_all_instances(word, status):
 			word_num = word_dict['word_num']
 			mark_word(line, word_num, status)
 
-# Mark expression
-def mark_expression(line, startword_num, status):
+# Mark phrase
+def mark_phrase(line, startword_num, status):
 	global text
 
 	is_title_line = False
@@ -443,48 +443,48 @@ def mark_expression(line, startword_num, status):
 	for tag in line_tags:
 		if 'l' in tag:
 			is_title_line = True
-	expressionfont_size = font_size
+	phrasefont_size = font_size
 	if line == 1 and is_title_line:
-		expressionfont_size = main_title_size
+		phrasefont_size = main_title_size
 	elif is_title_line:
-		expressionfont_size = title_size
+		phrasefont_size = title_size
 
 	if status == 'ordinary':
 		if is_title_line:
-			font_settings = (font, expressionfont_size, "underline", "bold")
+			font_settings = (font, phrasefont_size, "underline", "bold")
 		else:
-			font_settings = (font, expressionfont_size, "underline")
+			font_settings = (font, phrasefont_size, "underline")
 		text.tag_config("e" + str(line) + "." + str(startword_num), font = font_settings)
 	elif status == 'none':
 		if is_title_line:
-			font_settings = (font, expressionfont_size, "bold")
+			font_settings = (font, phrasefont_size, "bold")
 		else:
-			font_settings = (font, expressionfont_size)
+			font_settings = (font, phrasefont_size)
 		text.tag_config("e" + str(line) + "." + str(startword_num), font = font_settings)
 	elif status == 'active':
 		if is_title_line:
-			font_settings = (font, expressionfont_size, "underline", "italic", "bold")
+			font_settings = (font, phrasefont_size, "underline", "italic", "bold")
 		else:
-			font_settings = (font, expressionfont_size, "underline", "italic")
+			font_settings = (font, phrasefont_size, "underline", "italic")
 		text.tag_config("e" + str(line) + "." + str(startword_num), font = font_settings)
 
-# Mark all instances of an expression
-def mark_all_expression_instances(expression_words, status):
+# Mark all instances of an phrase
+def mark_all_phrase_instances(phrase_words, status):
 	global text_words
 	global text
 
-	first_word = expression_words[0]
+	first_word = phrase_words[0]
 	for i in range(len(text_words)):
 		line_words = text_words[i]
 		for j, word in enumerate(line_words):
-			if first_word == word and len(expression_words) <= len(line_words)-j:
-				if str(line_words[j:j+len(expression_words)]) == str(expression_words):
+			if first_word == word and len(phrase_words) <= len(line_words)-j:
+				if str(line_words[j:j+len(phrase_words)]) == str(phrase_words):
 					if status == 'none':
 						text.tag_delete("e" + str(i+1) + "." + str(j))
-						mark_expression(i+1, j, 'none')
+						mark_phrase(i+1, j, 'none')
 					elif status == 'ordinary':
-						text.tag_add('e' + str(i+1) + "." + str(j), word_start[i][j], word_end[i][j+len(expression_words)-1])
-						mark_expression(i+1, j, 'ordinary')
+						text.tag_add('e' + str(i+1) + "." + str(j), word_start[i][j], word_end[i][j+len(phrase_words)-1])
+						mark_phrase(i+1, j, 'ordinary')
 
 # Set word referred to by `word_dict` as `active` and mark it
 def set_to_active(word_dict):
@@ -681,7 +681,7 @@ def side_field_show(word, info, status):
 	word_type = None
 	if 'word_type' in info:
 		word_type = info['word_type']
-	if not word_type == 'expression':
+	if not word_type == 'phrase':
 		# The word is a variant of some other word if there are lemmas
 		word_is_variant = 'lemmas' in info
 
@@ -698,7 +698,7 @@ def side_field_show(word, info, status):
 		if len(gender) == 1:
 			has_unique_gender = True
 
-	if not word_type == 'expression':
+	if not word_type == 'phrase':
 		# Write nouns with article if in dictionary form
 		if has_unique_gender:
 			if include_article and len(word) > 0 and not word_is_variant:
@@ -720,14 +720,14 @@ def side_field_show(word, info, status):
 		gender_color(gender)
 	else:
 		text_word.configure(fg="black")
-	if not word_type == 'expression':
+	if not word_type == 'phrase':
 		insert_translation(trans)
 	else:
-		text_trans.tag_configure("expression_trans",
+		text_trans.tag_configure("phrase_trans",
 						  font=side_field_fonts['translation'],
 						  background=side_field_fonts['google_translate_background'])
 
-		text_trans.insert("1.0", trans, "expression_trans")
+		text_trans.insert("1.0", trans, "phrase_trans")
 	has_text_in_remark = False
 	if 'remark' in info:
 		text_remark.insert(END, info['remark'])
@@ -804,7 +804,7 @@ def get_word_info():
 	sentence = remove_new_line_at_end(sentence)
 	sentence_trans = text_example.get("2.0","2.end")
 	sentence_trans = remove_new_line_at_end(sentence_trans)
-	if word_type == 'expression':
+	if word_type == 'phrase':
 		trans = text_trans.get("1.0",END)
 		trans = remove_new_line_at_end(trans)
 		info = {'trans' : trans, 'word_type' : word_type, 'remark' : remark,
@@ -818,25 +818,25 @@ def get_word_info():
 	freeze_side_field()
 	return info
 
-def get_expression_info():
+def get_phrase_info():
 	edit_side_field()
-	expression = text_word.get("1.0",END)
+	phrase = text_word.get("1.0",END)
 	trans = text_trans.get("1.0",END)
 	remark = text_remark.get("1.0",END)
 	sentence = '' #text_example.get("1.0","1.end")
 	sentence_trans = '' #text_example.get("3.0","3.end")
 
 	# Remove newline at end
-	expression = remove_new_line_at_end(expression)
+	phrase = remove_new_line_at_end(phrase)
 	trans = remove_new_line_at_end(trans)
 	remark = remove_new_line_at_end(remark)
 	sentence = remove_new_line_at_end(sentence)
 	sentence_trans = remove_new_line_at_end(sentence_trans)
 
-	expression_words = expression.translate(str.maketrans("""'´’!"#$%&()*+,./:;<=>?@[]^_`{|}~«»“”„""", "                                     "))
-	expression_words = expression_words.lower().split()
+	phrase_words = phrase.translate(str.maketrans("""'´’!"#$%&()*+,./:;<=>?@[]^_`{|}~«»“”„""", "                                     "))
+	phrase_words = phrase_words.lower().split()
 
-	info = {'expression_words': expression_words, 'word' : expression, 'trans' : trans, 'word_type' : 'expression', 'remark' : remark, 'sentence' : sentence, 'sentence_trans' : sentence_trans}
+	info = {'phrase_words': phrase_words, 'word' : phrase, 'trans' : trans, 'word_type' : 'phrase', 'remark' : remark, 'sentence' : sentence, 'sentence_trans' : sentence_trans}
 	freeze_side_field()
 	return info
 
@@ -862,18 +862,18 @@ def add_to_known(word, info):
 		del learning_words[word]
 	known_words[word] = info
 
-# Add expression to expressions
-def add_to_expressions(expression, info):
-	i = expression['line']-1
-	word_num1 = expression['startword_num']
-	expression_words = []
+# Add phrase to phrases
+def add_to_phrases(phrase, info):
+	i = phrase['line']-1
+	word_num1 = phrase['startword_num']
+	phrase_words = []
 	first_word = text_words[i][word_num1]
 
-	# Add expression to expressions
-	if first_word in expressions:
-		expressions[first_word].append(info)
+	# Add phrase to phrases
+	if first_word in phrases:
+		phrases[first_word].append(info)
 	else:
-		expressions[first_word] = [info]
+		phrases[first_word] = [info]
 
 # Empty the side field
 def clear_side_field():
@@ -968,9 +968,9 @@ def print_status(status):
 		text_status.configure(bg=learning_color)
 	elif status == 'known':
 		text_status.configure(bg=known_color)
-	elif status == 'learning expression':
+	elif status == 'learning phrase':
 		text_status.configure(bg=learning_color)
-	elif status == 'new expression':
+	elif status == 'new phrase':
 		text_status.configure(bg=new_color)
 	else:
 		text_status.configure(bg="white")
@@ -998,7 +998,7 @@ def space(event):
 
 	if not editing:
 		unfocus()
-		handle_active_expressions()
+		handle_active_phrases()
 		if active and not active_looked_up:
 			if active['status'] == 'learning':
 				removed_from_queue.append(active)
@@ -1021,7 +1021,7 @@ def enter(event):
 		if active and not active_looked_up:
 			look_up(active['word'], active['status'])
 		else:
-			handle_active_expressions()
+			handle_active_phrases()
 			handle_active_words()
 			set_next_to_active()
 
@@ -1030,8 +1030,8 @@ def ignore(event):
 	global active_looked_up
 	global word_queue
 	global removed_from_queue
-	global active_expression
-	global expressions
+	global active_phrase
+	global phrases
 
 	if active and not editing:
 		word = active['word']
@@ -1060,18 +1060,18 @@ def ignore(event):
 		unset_active_word()
 		set_next_to_active()
 
-	if active_expression and not editing:
-		mark_all_expression_instances(active_expression['expression_words'], 'none')
-		expression_words = active_expression['expression_words']
-		first_word = expression_words[0]
-		if first_word in expressions:
-			expressionswithsamefirst_word = expressions[first_word]
-			for expnum, exp in enumerate(expressionswithsamefirst_word):
-				if str(exp['expression_words']) == str(expression_words):
-					del expressionswithsamefirst_word[expnum]
-					if len(expressionswithsamefirst_word) == 0:
-						expressions.pop(first_word)
-		active_expression = False
+	if active_phrase and not editing:
+		mark_all_phrase_instances(active_phrase['phrase_words'], 'none')
+		phrase_words = active_phrase['phrase_words']
+		first_word = phrase_words[0]
+		if first_word in phrases:
+			phraseswithsamefirst_word = phrases[first_word]
+			for expnum, exp in enumerate(phraseswithsamefirst_word):
+				if str(exp['phrase_words']) == str(phrase_words):
+					del phraseswithsamefirst_word[expnum]
+					if len(phraseswithsamefirst_word) == 0:
+						phrases.pop(first_word)
+		active_phrase = False
 		clear_side_field()
 
 def known(event):
@@ -1103,7 +1103,7 @@ def known(event):
 		unset_active_word()
 		set_next_to_active()
 
-	if active_expression and not editing:
+	if active_phrase and not editing:
 		ignore(event)
 
 # Repeat learning words from the beginning of the text
@@ -1120,7 +1120,7 @@ def go_to_start():
 	global removed_from_queue
 	global editing
 	if not editing:
-		handle_active_expressions()
+		handle_active_phrases()
 		handle_active_words()
 		remove_from_removed = []
 		for word in removed_from_queue:
@@ -1149,7 +1149,7 @@ def go_to_previous_learning_word(event):
 					closest_index = word_index
 					previous_word = word
 			if previous_word:
-				handle_active_expressions()
+				handle_active_phrases()
 				handle_active_words(unqueue_looked_up=False)
 				put_back_in_queue_sorted(previous_word)
 				removed_from_queue.remove(previous_word)
@@ -1222,7 +1222,7 @@ def pronounce_active_word(event):
 	if active and not editing:
 		pronounce(active['word'], language)
 
-	if active_expression and not editing:
+	if active_phrase and not editing:
 		pronounce(text_word.get('1.0','end'), language)
 
 def pronounce_next(event):
@@ -1260,13 +1260,13 @@ def open_dictionary(event):
 			link = "https://en.openrussian.org/ru/" + word
 			link = urllib.parse.quote(link, safe='/:')
 			open_url_in_old_tab(link)
-	if active_expression and not editing:
-		expression_words = active_expression['expression_words']
-		expression_str = ''
-		for word in expression_words:
-			expression_str = expression_str + word + '-'
-		expression_str = expression_str[0:-1] # Remove last +
-		link = "https://www.collinsdictionary.com/dictionary/" + language + "-english/" + expression_str
+	if active_phrase and not editing:
+		phrase_words = active_phrase['phrase_words']
+		phrase_str = ''
+		for word in phrase_words:
+			phrase_str = phrase_str + word + '-'
+		phrase_str = phrase_str[0:-1] # Remove last +
+		link = "https://www.collinsdictionary.com/dictionary/" + language + "-english/" + phrase_str
 		open_url_in_old_tab(link)
 
 def open_verb_conjugation(event):
@@ -1300,13 +1300,13 @@ def open_wiktionary(event):
 		#link = urllib.parse.quote(link, safe='/:')
 		#webbrowser.get('chrome').open(link)
 		open_url_in_old_tab(link)
-	if active_expression and not editing:
-		expression_words = active_expression['expression_words']
-		expression_str = ''
-		for word in expression_words:
-			expression_str = expression_str + word + '_'
-		expression_str = expression_str[0:-1] # Remove last +
-		link = "https://en.wiktionary.org/wiki/" + expression_str + "#" + language[0].upper() + language[1:]
+	if active_phrase and not editing:
+		phrase_words = active_phrase['phrase_words']
+		phrase_str = ''
+		for word in phrase_words:
+			phrase_str = phrase_str + word + '_'
+		phrase_str = phrase_str[0:-1] # Remove last +
+		link = "https://en.wiktionary.org/wiki/" + phrase_str + "#" + language[0].upper() + language[1:]
 		open_url_in_old_tab(link)
 
 def open_context_reverso(event):
@@ -1316,13 +1316,13 @@ def open_context_reverso(event):
 		word = active["word"]
 		link = "https://context.reverso.net/translation/" + language + "-english/" + word
 		open_url_in_old_tab(link)
-	if active_expression and not editing:
-		expression_words = active_expression['expression_words']
-		expression_str = ''
-		for word in expression_words:
-			expression_str = expression_str + word + '+'
-		expression_str = expression_str[0:-1] # Remove last +
-		link = "https://context.reverso.net/translation/" + language + "-english/" + expression_str
+	if active_phrase and not editing:
+		phrase_words = active_phrase['phrase_words']
+		phrase_str = ''
+		for word in phrase_words:
+			phrase_str = phrase_str + word + '+'
+		phrase_str = phrase_str[0:-1] # Remove last +
+		link = "https://context.reverso.net/translation/" + language + "-english/" + phrase_str
 		open_url_in_old_tab(link)
 
 def open_google(event):
@@ -1334,13 +1334,13 @@ def open_google(event):
 		#link = urllib.parse.quote(link, safe='/:')
 		#webbrowser.get('chrome').open(link)
 		open_url_in_old_tab(link)
-	if active_expression and not editing:
-		expression_words = active_expression['expression_words']
-		expression_str = ''
-		for word in expression_words:
-			expression_str = expression_str + word + '+'
-		expression_str = expression_str[0:-1] # Remove last +
-		link = "https://www.google.com/search?q=" + expression_str
+	if active_phrase and not editing:
+		phrase_words = active_phrase['phrase_words']
+		phrase_str = ''
+		for word in phrase_words:
+			phrase_str = phrase_str + word + '+'
+		phrase_str = phrase_str[0:-1] # Remove last +
+		link = "https://www.google.com/search?q=" + phrase_str
 		open_url_in_old_tab(link)
 
 def open_google_images(event):
@@ -1352,13 +1352,13 @@ def open_google_images(event):
 		#link = urllib.parse.quote(link, safe='/:')
 		#webbrowser.get('chrome').open(link)
 		open_url_in_old_tab(link)
-	if active_expression and not editing:
-		expression_words = active_expression['expression_words']
-		expression_str = ''
-		for word in expression_words:
-			expression_str = expression_str + word + '+'
-		expression_str = expression_str[0:-1] # Remove last +
-		link = "https://www.google.com/search?q=" + expression_str + "&tbm=isch"
+	if active_phrase and not editing:
+		phrase_words = active_phrase['phrase_words']
+		phrase_str = ''
+		for word in phrase_words:
+			phrase_str = phrase_str + word + '+'
+		phrase_str = phrase_str[0:-1] # Remove last +
+		link = "https://www.google.com/search?q=" + phrase_str + "&tbm=isch"
 		open_url_in_old_tab(link)
 
 def open_wikipedia(event):
@@ -1370,13 +1370,13 @@ def open_wikipedia(event):
 		#link = urllib.parse.quote(link, safe='/:')
 		#webbrowser.get('chrome').open(link)
 		open_url_in_old_tab(link)
-	if active_expression and not editing:
-		expression_words = active_expression['expression_words']
-		expression_str = ''
-		for word in expression_words:
-			expression_str = expression_str + word + '_'
-		expression_str = expression_str[0:-1] # Remove last +
-		link = "https://en.wikipedia.org/wiki/" + expression_str
+	if active_phrase and not editing:
+		phrase_words = active_phrase['phrase_words']
+		phrase_str = ''
+		for word in phrase_words:
+			phrase_str = phrase_str + word + '_'
+		phrase_str = phrase_str[0:-1] # Remove last +
+		link = "https://en.wikipedia.org/wiki/" + phrase_str
 		open_url_in_old_tab(link)
 
 def open_url_in_old_tab(url):
@@ -1409,11 +1409,11 @@ def add_swedish_trans(event):
 	global last_word_translated_to_swedish
 	global active
 	global active_looked_up
-	global active_expression
+	global active_phrase
 	global editing
 	global info_for_showed_word
 
-	if ((active and active_looked_up) or active_expression) and not editing:
+	if ((active and active_looked_up) or active_phrase) and not editing:
 		word = active['word']
 		trans = info_for_showed_word['trans']
 		edit_side_field()
@@ -1619,38 +1619,38 @@ def definitions_to_list(translations):
 	return def_strings
 
 
-def activate_expression_mode(event):
+def activate_phrase_mode(event):
 	global editing
 	global text
-	global expression_mode
-	global considerexpression_mode
-	global expression_click_binding
-	global selected_expression_words
+	global phrase_mode
+	global considerphrase_mode
+	global phrase_click_binding
+	global selected_phrase_words
 
-	if consider_expressions and not editing:
-		global expression_mode
-		expression_mode = True
+	if consider_phrases and not editing:
+		global phrase_mode
+		phrase_mode = True
 		text.config(cursor='dot')
-		selected_expression_words = []
+		selected_phrase_words = []
 
-def deactivate_expression_mode(event):
+def deactivate_phrase_mode(event):
 	global editing
 	global text
-	global expression_mode
-	global considerexpression_mode
-	global expression_click_binding
-	global selected_expression_words
+	global phrase_mode
+	global considerphrase_mode
+	global phrase_click_binding
+	global selected_phrase_words
 
-	if consider_expressions and not editing:
-		global expression_mode
+	if consider_phrases and not editing:
+		global phrase_mode
 		text.config(cursor='arrow')
-		selected_expression_words = []
-		expression_mode = False
+		selected_phrase_words = []
+		phrase_mode = False
 
-def new_expression(word_tag1, word_tag2):
+def new_phrase(word_tag1, word_tag2):
 	global active
 	global active_looked_up
-	global active_expression
+	global active_phrase
 
 	lineandword_num1 = word_tag1.split(".")
 	lineandword_num2 = word_tag2.split(".")
@@ -1668,7 +1668,7 @@ def new_expression(word_tag1, word_tag2):
 
 	first_word_start = str(text.tag_ranges(word_tag1)[0])
 	lastword_end = str(text.tag_ranges(word_tag2)[1])
-	expression = text.get(first_word_start, lastword_end)
+	phrase = text.get(first_word_start, lastword_end)
 
 	line1 = int(lineandword_num1[0])
 	word_num1 = int(lineandword_num1[1])
@@ -1676,31 +1676,31 @@ def new_expression(word_tag1, word_tag2):
 	word_num2 = int(lineandword_num2[1])
 	if line1 == line2:
 		line_words = text_words[line1-1]
-		expression_words = []
+		phrase_words = []
 		for word_num in range(min(word_num1, word_num2), max(word_num1, word_num2)+1):
-			expression_words.append(line_words[word_num])
+			phrase_words.append(line_words[word_num])
 
 		translator = Translator()
-		trans = translator.translate(expression, src=get_language_code(language), dest='en').text
-		info = {'expression_words': expression_words, 'word' : expression, 'trans' : trans, 'word_type' : 'expression'}
-		(sentence, sentence_trans) = get_first_sentence(expression, language)
+		trans = translator.translate(phrase, src=get_language_code(language), dest='en').text
+		info = {'phrase_words': phrase_words, 'word' : phrase, 'trans' : trans, 'word_type' : 'phrase'}
+		(sentence, sentence_trans) = get_first_sentence(phrase, language)
 		if len(sentence) > 0:
 			info['sentence'] = sentence
 			info['sentence_trans'] = sentence_trans
 		active = None
 		active_looked_up = False
-		active_expression = {'expression_words': expression_words, 'line': line1, 'startword_num': word_num1, 'endword_num': word_num2, 'status': 'learning'}
+		active_phrase = {'phrase_words': phrase_words, 'line': line1, 'startword_num': word_num1, 'endword_num': word_num2, 'status': 'learning'}
 
-		# Add tag to new expression
-		expression_start = word_start[active_expression['line']-1][active_expression['startword_num']]
-		expression_end = word_end[active_expression['line']-1][active_expression['endword_num']]
-		text.tag_add('e' + str(line1) + "." + str(active_expression['startword_num']), expression_start, expression_end)
-		mark_expression(active_expression['line'], active_expression['startword_num'], 'active')
+		# Add tag to new phrase
+		phrase_start = word_start[active_phrase['line']-1][active_phrase['startword_num']]
+		phrase_end = word_end[active_phrase['line']-1][active_phrase['endword_num']]
+		text.tag_add('e' + str(line1) + "." + str(active_phrase['startword_num']), phrase_start, phrase_end)
+		mark_phrase(active_phrase['line'], active_phrase['startword_num'], 'active')
 
-		side_field_show(expression, info, 'new expression')
+		side_field_show(phrase, info, 'new phrase')
 	else: 
-		expression_words = []
-	selected_expression_words = []
+		phrase_words = []
+	selected_phrase_words = []
 
 def remove_russian_accents(old_string):
 	new_string = old_string.replace('а́','а')
@@ -2177,17 +2177,17 @@ def run(language, text_file):
 	global known_words
 	global learning_words
 	global ignored_words
-	global expressions
+	global phrases
 	global active
 	global active_looked_up
-	global active_expression
+	global active_phrase
 	global last_pronounced
 	global editing
-	global expression_mode
-	global selected_expression_words
+	global phrase_mode
+	global selected_phrase_words
 	global word_queue
 	global removed_from_queue
-	global text_expressions
+	global text_phrases
 
 	global legilo_translator
 
@@ -2197,19 +2197,19 @@ def run(language, text_file):
 	known_words = None
 	learning_words = None
 	ignored_words = None
-	expressions = None
+	phrases = None
 
 	active = None # Current active word
 	active_looked_up = False # Gives whether the active word has been looked up
-	active_expression = False # Current active expression
+	active_phrase = False # Current active phrase
 	last_pronounced = False # Last pronounced word
 	editing = False # Editing text fields
-	expression_mode = False # Expression mode active
-	selected_expression_words = [] # List of selected expression words
+	phrase_mode = False # phrase mode active
+	selected_phrase_words = [] # List of selected phrase words
 
 	word_queue = [] # Word queue
 	removed_from_queue = [] # Words removed from queue
-	text_expressions = [] # Expressions in text
+	text_phrases = [] # phrases in text
 
 	# Load word lists from file
 	load_all()
@@ -2350,7 +2350,7 @@ def run(language, text_file):
 		word_start[i] = [None]*numline_words
 		word_end[i] = [None]*numline_words
 		char_count = 0
-		lineexpressions = []
+		linephrases = []
 		for j, word in enumerate(line_words):
 			index = rest_of_line.find(word)
 			rest_of_line = rest_of_line[index+len(word):]
@@ -2363,33 +2363,33 @@ def run(language, text_file):
 			text.tag_add(str(i+1) + "." + str(j), word_start[i][j], word_end[i][j])
 			text.tag_bind(str(i+1) + "." + str(j), "<Button-1>", mouse_click)
 
-			# If word is in start of an expression:
-			if consider_expressions:
-				if word in expressions:
-					expressions_list = expressions[word]
-					for expression in expressions_list:
-						expression_words = expression['expression_words']
-						if len(expression_words) <= numline_words - j:
-							for k, exp_word in enumerate(expression_words):
+			# If word is in start of an phrase:
+			if consider_phrases:
+				if word in phrases:
+					phrases_list = phrases[word]
+					for phrase in phrases_list:
+						phrase_words = phrase['phrase_words']
+						if len(phrase_words) <= numline_words - j:
+							for k, exp_word in enumerate(phrase_words):
 								if exp_word == line_words[j+k]:
-									matching_expressions = True
+									matching_phrases = True
 								else:
-									matching_expressions = False
+									matching_phrases = False
 									break
-							if matching_expressions:
-								text_expressions.append({'expression_words' : expression_words, 'line' : i+1,
-								'startword_num' : j, 'endword_num' : j+len(expression_words)-1})
-								lineexpressions.append({'expression_words' : expression_words, 'line' : i+1,
-								'startword_num' : j, 'endword_num' : j+len(expression_words)-1})
+							if matching_phrases:
+								text_phrases.append({'phrase_words' : phrase_words, 'line' : i+1,
+								'startword_num' : j, 'endword_num' : j+len(phrase_words)-1})
+								linephrases.append({'phrase_words' : phrase_words, 'line' : i+1,
+								'startword_num' : j, 'endword_num' : j+len(phrase_words)-1})
 								break
 			word_count += 1
 
-		# Add tags to expressions on the line
-		if consider_expressions:
-			for expression in lineexpressions:
-				expression_start = word_start[i][expression['startword_num']]
-				expression_end = word_end[i][expression['endword_num']]
-				text.tag_add('e' + str(i+1) + "." + str(expression['startword_num']), expression_start, expression_end)
+		# Add tags to phrases on the line
+		if consider_phrases:
+			for phrase in linephrases:
+				phrase_start = word_start[i][phrase['startword_num']]
+				phrase_end = word_end[i][phrase['endword_num']]
+				text.tag_add('e' + str(i+1) + "." + str(phrase['startword_num']), phrase_start, phrase_end)
 
 	# Set word status
 	words_to_remove = []
@@ -2415,9 +2415,9 @@ def run(language, text_file):
 	for word in word_queue:
 		mark_word(word['line'], word['word_num'] , word['status'])
 
-	# Mark expressions in text
-	for expression in text_expressions:
-		mark_expression(expression['line'], expression['startword_num'], 'ordinary')
+	# Mark phrases in text
+	for phrase in text_phrases:
+		mark_phrase(phrase['line'], phrase['startword_num'], 'ordinary')
 
 	# Add text fields in side field
 	text_status = Text(side_frame, width=side_field_width, height=1, padx=side_field_padx, pady=side_field_pady,
@@ -2485,8 +2485,8 @@ def run(language, text_file):
 	w.bind("<g>", open_google)
 	w.bind("<i>", open_google_images)
 	w.bind("<l>", open_wikipedia)
-	w.bind("<Meta_L>", activate_expression_mode)
-	w.bind("<KeyRelease-Meta_L>", deactivate_expression_mode)
+	w.bind("<Meta_L>", activate_phrase_mode)
+	w.bind("<KeyRelease-Meta_L>", deactivate_phrase_mode)
 	w.bind("<Command-Key-s>", save_lists)
 	w.bind("<Command-Key-t>", save_listsastxt)
 	w.bind("<Command-Key-x>", quit_without_saving)
