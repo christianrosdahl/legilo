@@ -1407,13 +1407,14 @@ def add_swedish_trans(event):
 	global active_expression
 	global editing
 
-	if (active or active_expression) and not editing:
+	if ((active and active_looked_up) or active_expression) and not editing:
 		engtrans = text_trans.get('1.0','end')
 		word = text_word.get('1.0','end')
 		edit_side_field()
 		# Remove translation if already added
 		if remark_without_swedish and word == last_word_translated_to_swedish:
 			text_remark.delete('1.0','end')
+			remark_without_swedish = remove_new_line_at_end(remark_without_swedish)
 			text_remark.insert('1.0',remark_without_swedish)
 			remark_without_swedish = False
 		# Otherwise, get the Swedish translation
