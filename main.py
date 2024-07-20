@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import re
 from datetime import date
 from tkinter import *
 from tkinter import messagebox
@@ -876,12 +877,15 @@ def add_to_expressions(expression, info):
 
 # Empty the side field
 def clear_side_field():
+	global info_for_showed_word
 	global text_status
 	global text_word
 	global text_remark
 	global text_trans
 	global text_example_title
 	global text_example
+
+	info_for_showed_word = None
 
 	text_status.configure(state="normal")
 	text_status.delete("1.0", "end")
@@ -1404,12 +1408,14 @@ def add_swedish_trans(event):
 	global remark_without_swedish
 	global last_word_translated_to_swedish
 	global active
+	global active_looked_up
 	global active_expression
 	global editing
+	global info_for_showed_word
 
 	if ((active and active_looked_up) or active_expression) and not editing:
-		engtrans = text_trans.get('1.0','end')
-		word = text_word.get('1.0','end')
+		word = active['word']
+		trans = info_for_showed_word['trans']
 		edit_side_field()
 		# Remove translation if already added
 		if remark_without_swedish and word == last_word_translated_to_swedish:
@@ -1422,11 +1428,11 @@ def add_swedish_trans(event):
 			remark_without_swedish = text_remark.get('1.0','end')
 			text_remark.tag_configure('swedish_header', font=(font, side_field_fonts['remark'][1], 'italic'))
 			if len(remark_without_swedish) > 1:
-				text_remark.insert('end', '\n\n' + 'Swedish translations:', 'swedish_header')
-				text_remark.insert('end', '\n\n' + translate_to_swedish(word, engtrans))
+				text_remark.insert('end', '\n\n' + 'Swedish translations: ', 'swedish_header')
+				text_remark.insert('end', '\n' + translate_to_swedish(word, trans))
 			else:
-				text_remark.insert('end', 'Swedish translations:', 'swedish_header')
-				text_remark.insert('end', '\n\n' + translate_to_swedish(word, engtrans))
+				text_remark.insert('end', 'Swedish translations: ', 'swedish_header')
+				text_remark.insert('end', '\n' + translate_to_swedish(word, trans))
 			last_word_translated_to_swedish = word
 		freeze_side_field()
 
@@ -1573,23 +1579,45 @@ include_trans_of_original_word = True
 def translate_to_swedish(word, trans):
 	global include_trans_of_original_word
 	translator = Translator()
-	# Remove new line from end of word
-	if len(word) > 0:
-		if word[-1] == '\n':
-			word = word[:-1]
-	translation_string = ""
+	translations = []
+	
 	# Translate the original word directly to Swedish
 	if include_trans_of_original_word:
 		swedish_trans = translator.translate(word, src=get_language_code(language), dest='sv').text
-		translation_string = word + ' = ' + swedish_trans + '\n\n'
-	# Remove new line from end of translations string
-	if len(trans) > 0:
-		if trans[-1] == '\n':
-			trans = trans[:-1]
+		translations.append(word + ' = ' + swedish_trans)
+	
 	# Translate the English translations to Swedish
-	translation_string += translator.translate(trans, src='en', dest='sv').text
+	definitions = definitions_to_list(trans)
+	for definition in definitions:
+		swedish_trans = translator.translate(definition, src='en', dest='sv').text
+		translations.append(definition + ' = ' + swedish_trans)
 
-	return translation_string
+	if len(translations) == 0:
+		return ''
+	
+	return ', '.join(translations)
+
+# Get definitions as a list with only definition strings
+# Skips definitions that have several lines
+def definitions_to_list(translations):
+	def_strings = []
+	for translation in translations:
+		if 'definitions' in translation:
+			for definition_entry in translation['definitions']:
+				if 'definition' in definition_entry:
+					definition = definition_entry['definition']
+					# Don't use multiple-line definitions and skip definitions
+					# of type "masculine plural of ..."
+					if not definition.count('\n') > 1 and not ' of ' in definition:
+						# Remove words in parentheses
+						definition = re.sub(r'\([^)]*\)', '', definition)
+						definition = definition.replace(';',',')
+						definition_parts = definition.split(', ')
+						for part in definition_parts:
+							def_strings.append(part.strip())
+	
+	return def_strings
+
 
 def activate_expression_mode(event):
 	global editing
