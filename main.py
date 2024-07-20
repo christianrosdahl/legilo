@@ -24,6 +24,7 @@ sound_on = True # Pronounce word when looked up
 mac_voice = False # Use the text-to speak voice in Mac OS instead of Google
 include_article = True # Write out and pronounce article for nouns
 use_lemma = True # Use a lemmatizer to look up the lemma form of a word
+third_lang = 'swedish' # Third language (e.g. native language) for extra translations
 start_window_size = {'width': 1200, 'height': 700} # Set size of start window
 main_window_size = {'width': 1200, 'height': 1000} # Set size of main window
 consider_phrases = True # Allow phrases to be considered
@@ -1415,41 +1416,44 @@ def open_url_in_old_tab(url):
 		webbrowser.get('chrome').open(url)
 		new_browser_tab = False
 
-remark_without_swedish = False
-last_word_translated_to_swedish = ''
-def add_swedish_trans(event):
+remark_without_third_lang = False
+last_word_translated_to_third_lang = ''
+def add_third_lang_trans(event):
 	global text_word
 	global text_trans
 	global text_remark
-	global remark_without_swedish
-	global last_word_translated_to_swedish
+	global remark_without_third_lang
+	global last_word_translated_to_third_lang
 	global active
 	global active_looked_up
 	global active_phrase
 	global editing
 	global info_for_showed_word
 
+
 	if ((active and active_looked_up) or active_phrase) and not editing:
 		word = active['word']
 		trans = info_for_showed_word['trans']
 		edit_side_field()
 		# Remove translation if already added
-		if remark_without_swedish and word == last_word_translated_to_swedish:
+		if remark_without_third_lang and word == last_word_translated_to_third_lang:
 			text_remark.delete('1.0','end')
-			remark_without_swedish = remove_new_line_at_end(remark_without_swedish)
-			text_remark.insert('1.0',remark_without_swedish)
-			remark_without_swedish = False
-		# Otherwise, get the Swedish translation
+			remark_without_third_lang = remove_new_line_at_end(remark_without_third_lang)
+			text_remark.insert('1.0',remark_without_third_lang)
+			remark_without_third_lang = False
+		# Otherwise, get the third_lang translation
 		else:
-			remark_without_swedish = text_remark.get('1.0','end')
-			text_remark.tag_configure('swedish_header', font=(font, side_field_fonts['remark'][1], 'italic'))
-			if len(remark_without_swedish) > 1:
-				text_remark.insert('end', '\n\n' + 'Swedish translations: ', 'swedish_header')
-				text_remark.insert('end', '\n' + translate_to_swedish(word, trans))
+			remark_without_third_lang = text_remark.get('1.0','end')
+			text_remark.tag_configure('third_lang_header', font=(font, side_field_fonts['remark'][1], 'italic'))
+			if len(remark_without_third_lang) > 1:
+				title_string = '\n\n' + f'{third_lang.capitalize()} translations: '
+				text_remark.insert('end', title_string, 'third_lang_header')
+				text_remark.insert('end', '\n' + translate_to_third_lang(word, trans))
 			else:
-				text_remark.insert('end', 'Swedish translations: ', 'swedish_header')
-				text_remark.insert('end', '\n' + translate_to_swedish(word, trans))
-			last_word_translated_to_swedish = word
+				title_string = f'{third_lang.capitalize()} translations: '
+				text_remark.insert('end', title_string, 'third_lang_header')
+				text_remark.insert('end', '\n' + translate_to_third_lang(word, trans))
+			last_word_translated_to_third_lang = word
 		freeze_side_field()
 
 # Add a Google translation to the definitions of the word and show in the side field.
@@ -1608,23 +1612,27 @@ def select_sentence(event):
 		insert_sentence(sentence, sentence_trans)
 		freeze_side_field()
 
-# Get Swedish translations from string of english translations
+# Get third_lang translations from string of english translations
 include_trans_of_original_word = True
-def translate_to_swedish(word, trans):
+def translate_to_third_lang(word, trans):
 	global include_trans_of_original_word
 	translator = Translator()
 	translations = []
 	
-	# Translate the original word directly to Swedish
+	# Translate the original word directly to third_lang
 	if include_trans_of_original_word:
-		swedish_trans = translator.translate(word, src=get_language_code(language), dest='sv').text
-		translations.append(word + ' = ' + swedish_trans)
+		third_lang_trans = translator.translate(word,
+										  src=get_language_code(language),
+										  dest=get_language_code(third_lang)).text
+		translations.append(word + ' = ' + third_lang_trans)
 	
-	# Translate the English translations to Swedish
+	# Translate the English translations to third_lang
 	definitions = definitions_to_list(trans)
 	for definition in definitions:
-		swedish_trans = translator.translate(definition, src='en', dest='sv').text
-		translations.append(definition + ' = ' + swedish_trans)
+		third_lang_trans = translator.translate(definition,
+										  src='en',
+										  dest=get_language_code(third_lang)).text
+		translations.append(definition + ' = ' + third_lang_trans)
 
 	if len(translations) == 0:
 		return ''
@@ -2511,7 +2519,7 @@ def run(language, text_file):
 	w.bind("<e>", space)
 	w.bind("<r>", change_remark)
 	w.bind("<b>", repeat_learning_words)
-	w.bind("<s>", add_swedish_trans)
+	w.bind("<s>", add_third_lang_trans)
 	w.bind("<t>", add_google_trans)
 	w.bind("<d>", open_dictionary)
 	w.bind("<v>", open_verb_conjugation)
