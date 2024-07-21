@@ -1025,7 +1025,7 @@ def center_window(window, width, height):
 	window.geometry(f'{width}x{height}+{x}+{y}')
 
 # When pressing space
-def space(event):
+def go_to_next(event):
 	global active
 	global active_looked_up
 	global word_queue
@@ -1278,7 +1278,7 @@ def pronounce_active_word(event):
 		pronounce(text_word.get('1.0','end'), language)
 
 def pronounce_next(event):
-	space(event)
+	go_to_next(event)
 	pronounce_active_word(event)
 
 def change_remark(event):
@@ -2556,9 +2556,9 @@ def run(language, text_file):
 	w.protocol("WM_DELETE_WINDOW", quit_program)
 
 	# Add key bindings
-	w.bind("<space>", space)
+	w.bind("<space>", go_to_next)
 	w.bind("<Return>", enter)
-	w.bind("<Right>", space)
+	w.bind("<Right>", go_to_next)
 	w.bind("<Up>", enter)
 	w.bind("<Down>", known)
 	w.bind("<Left>", go_to_previous_learning_word)
