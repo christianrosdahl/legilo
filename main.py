@@ -303,7 +303,7 @@ def mouse_click(event):
 		word_tags = text.tag_names(text.index(CURRENT))
 		is_old_phrase = False
 		for tag in word_tags:
-			if 'e' in tag:
+			if 'p' in tag:
 				is_old_phrase = True
 		# If old phrase
 		if is_old_phrase:
@@ -315,7 +315,7 @@ def mouse_click(event):
 
 			# Show old phrase
 			for tag in word_tags:
-				if 'e' in tag:
+				if 'p' in tag:
 					phrase_tag = tag
 
 			(phrase, info, line, word_num1, word_num2) = find_old_phrase(phrase_tag)
@@ -328,7 +328,7 @@ def mouse_click(event):
 		else: 
 			# Choose tag for word, not for phrase:
 			for tag in word_tags:
-				if 'e' not in tag and 'l' not in tag:
+				if 'p' not in tag and 'l' not in tag:
 					word_tag = tag
 
 			selected_phrase_words.append(word_tag)
@@ -346,7 +346,7 @@ def mouse_click(event):
 		word_tags = text.tag_names(text.index(CURRENT))
 		# Choose tag for word, not for phrase:
 		for tag in word_tags:
-			if 'e' not in tag and 'l' not in tag:
+			if 'p' not in tag and 'l' not in tag:
 				word_tag = tag
 				break
 	else:
@@ -455,19 +455,19 @@ def mark_phrase(line, startword_num, status):
 			font_settings = (font, phrasefont_size, "underline", "bold")
 		else:
 			font_settings = (font, phrasefont_size, "underline")
-		text.tag_config("e" + str(line) + "." + str(startword_num), font = font_settings)
+		text.tag_config("p" + str(line) + "." + str(startword_num), font = font_settings)
 	elif status == 'none':
 		if is_title_line:
 			font_settings = (font, phrasefont_size, "bold")
 		else:
 			font_settings = (font, phrasefont_size)
-		text.tag_config("e" + str(line) + "." + str(startword_num), font = font_settings)
+		text.tag_config("p" + str(line) + "." + str(startword_num), font = font_settings)
 	elif status == 'active':
 		if is_title_line:
 			font_settings = (font, phrasefont_size, "underline", "italic", "bold")
 		else:
 			font_settings = (font, phrasefont_size, "underline", "italic")
-		text.tag_config("e" + str(line) + "." + str(startword_num), font = font_settings)
+		text.tag_config("p" + str(line) + "." + str(startword_num), font = font_settings)
 
 # Mark all instances of an phrase
 def mark_all_phrase_instances(phrase_words, status):
@@ -481,10 +481,10 @@ def mark_all_phrase_instances(phrase_words, status):
 			if first_word == word and len(phrase_words) <= len(line_words)-j:
 				if str(line_words[j:j+len(phrase_words)]) == str(phrase_words):
 					if status == 'none':
-						text.tag_delete("e" + str(i+1) + "." + str(j))
+						text.tag_delete("p" + str(i+1) + "." + str(j))
 						mark_phrase(i+1, j, 'none')
 					elif status == 'ordinary':
-						text.tag_add('e' + str(i+1) + "." + str(j), word_start[i][j], word_end[i][j+len(phrase_words)-1])
+						text.tag_add('p' + str(i+1) + "." + str(j), word_start[i][j], word_end[i][j+len(phrase_words)-1])
 						mark_phrase(i+1, j, 'ordinary')
 
 # Set word referred to by `word_dict` as `active` and mark it
@@ -1736,7 +1736,7 @@ def new_phrase(word_tag1, word_tag2):
 		# Add tag to new phrase
 		phrase_start = word_start[active_phrase['line']-1][active_phrase['startword_num']]
 		phrase_end = word_end[active_phrase['line']-1][active_phrase['endword_num']]
-		text.tag_add('e' + str(line1) + "." + str(active_phrase['startword_num']), phrase_start, phrase_end)
+		text.tag_add('p' + str(line1) + "." + str(active_phrase['startword_num']), phrase_start, phrase_end)
 		mark_phrase(active_phrase['line'], active_phrase['startword_num'], 'active')
 
 		side_field_show(phrase, info, 'new phrase')
@@ -2399,7 +2399,7 @@ def run(language, text_file):
 		word_start[i] = [None]*numline_words
 		word_end[i] = [None]*numline_words
 		char_count = 0
-		linephrases = []
+		line_phrases = []
 		for j, word in enumerate(line_words):
 			index = rest_of_line.find(word)
 			rest_of_line = rest_of_line[index+len(word):]
@@ -2428,17 +2428,17 @@ def run(language, text_file):
 							if matching_phrases:
 								text_phrases.append({'phrase_words' : phrase_words, 'line' : i+1,
 								'startword_num' : j, 'endword_num' : j+len(phrase_words)-1})
-								linephrases.append({'phrase_words' : phrase_words, 'line' : i+1,
+								line_phrases.append({'phrase_words' : phrase_words, 'line' : i+1,
 								'startword_num' : j, 'endword_num' : j+len(phrase_words)-1})
 								break
 			word_count += 1
 
 		# Add tags to phrases on the line
 		if consider_phrases:
-			for phrase in linephrases:
+			for phrase in line_phrases:
 				phrase_start = word_start[i][phrase['startword_num']]
 				phrase_end = word_end[i][phrase['endword_num']]
-				text.tag_add('e' + str(i+1) + "." + str(phrase['startword_num']), phrase_start, phrase_end)
+				text.tag_add('p' + str(i+1) + "." + str(phrase['startword_num']), phrase_start, phrase_end)
 
 	# Set word status
 	words_to_remove = []
