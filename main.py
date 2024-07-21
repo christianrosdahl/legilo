@@ -250,16 +250,23 @@ def handle_active_words(unqueue_looked_up=True):
 			put_back_in_queue(active)
 		unset_active_word()
 
-# Handles active phrase when another word or phrase is selected
-def handle_active_phrases():
+# Handles active phrase when another word or phrase is selected.
+# Saves a new active phrase if `save_new` is True
+def handle_active_phrases(save_new=True):
 	global active_phrase
+	global active_phrase_is_new
 	global phrases
 	if active_phrase:
 		info = get_phrase_info()
-		add_to_phrases(active_phrase, info)
-		mark_phrase(active_phrase['line'], active_phrase['startword_num'], 'ordinary')
-		mark_all_phrase_instances(active_phrase['phrase_words'], 'ordinary')
+		if active_phrase_is_new and not save_new:
+			mark_phrase(active_phrase['line'], active_phrase['startword_num'], 'none')
+			mark_all_phrase_instances(active_phrase['phrase_words'], 'none')
+		else:
+			add_to_phrases(active_phrase, info)
+			mark_phrase(active_phrase['line'], active_phrase['startword_num'], 'ordinary')
+			mark_all_phrase_instances(active_phrase['phrase_words'], 'ordinary')
 		active_phrase = False
+		active_phrase_is_new = False
 		clear_side_field()
 
 # Find old phrase from tag
@@ -283,12 +290,12 @@ def find_old_phrase(tag):
 	if first_word in phrases:
 		phrases_list = phrases[first_word]
 
-		for expnum, exp in enumerate(phrases_list):
-			phrase_words2 = exp['phrase_words']
+		for phrase_num, p in enumerate(phrases_list):
+			phrase_words2 = p['phrase_words']
 			if len(phrase_words) == len(phrase_words2):
 				if str(phrase_words) == str(phrase_words2):
 					# phrases are matching
-					info = phrases_list[expnum]
+					info = phrases_list[phrase_num]
 					break
 	return (phrase, info, line, word_num1, word_num2)
 
@@ -1026,7 +1033,7 @@ def space(event):
 
 	if not editing:
 		unfocus()
-		handle_active_phrases()
+		handle_active_phrases(save_new=False)
 		if active and not active_looked_up:
 			if active['status'] == 'learning':
 				removed_from_queue.append(active)
@@ -1038,7 +1045,6 @@ def space(event):
 			handle_active_words()
 			set_next_to_active()
 
-
 def enter(event):
 	global active
 	global active_looked_up
@@ -1049,7 +1055,7 @@ def enter(event):
 		if active and not active_looked_up:
 			look_up(active['word'], active['status'])
 		else:
-			handle_active_phrases()
+			handle_active_phrases(save_new=True)
 			handle_active_words()
 			set_next_to_active()
 
@@ -1093,11 +1099,11 @@ def ignore(event):
 		phrase_words = active_phrase['phrase_words']
 		first_word = phrase_words[0]
 		if first_word in phrases:
-			phraseswithsamefirst_word = phrases[first_word]
-			for expnum, exp in enumerate(phraseswithsamefirst_word):
-				if str(exp['phrase_words']) == str(phrase_words):
-					del phraseswithsamefirst_word[expnum]
-					if len(phraseswithsamefirst_word) == 0:
+			phrases_with_same_first_word = phrases[first_word]
+			for phrase_num, p in enumerate(phrases_with_same_first_word):
+				if str(p['phrase_words']) == str(phrase_words):
+					del phrases_with_same_first_word[phrase_num]
+					if len(phrases_with_same_first_word) == 0:
 						phrases.pop(first_word)
 		active_phrase = False
 		clear_side_field()
@@ -1722,6 +1728,9 @@ def new_phrase(word_tag1, word_tag2, do_pronounce=True):
 	global active
 	global active_looked_up
 	global active_phrase
+	global active_phrase_is_new
+
+	active_phrase_is_new = True
 
 	lineandword_num1 = word_tag1.split(".")
 	lineandword_num2 = word_tag2.split(".")
@@ -2260,6 +2269,7 @@ def run(language, text_file):
 	global active
 	global active_looked_up
 	global active_phrase
+	global active_phrase_is_new
 	global last_pronounced
 	global editing
 	global phrase_mode
@@ -2281,6 +2291,7 @@ def run(language, text_file):
 	active = None # Current active word
 	active_looked_up = False # Gives whether the active word has been looked up
 	active_phrase = False # Current active phrase
+	active_phrase_is_new = False # The active phrase is new (not yet saved)
 	last_pronounced = False # Last pronounced word
 	editing = False # Editing text fields
 	phrase_mode = False # phrase mode active
