@@ -875,16 +875,26 @@ def add_to_known(word, info):
 
 # Add phrase to phrases
 def add_to_phrases(phrase, info):
+	global phrases
 	i = phrase['line']-1
 	word_num1 = phrase['startword_num']
-	phrase_words = []
 	first_word = text_words[i][word_num1]
 
-	# Add phrase to phrases
-	if first_word in phrases:
-		phrases[first_word].append(info)
-	else:
-		phrases[first_word] = [info]
+	if not is_in_phrases(phrase['phrase_words']):
+		if first_word in phrases:
+			phrases[first_word].append(info)
+		else:
+			phrases[first_word] = [info]
+
+def is_in_phrases(phrase_words):
+	global phrases
+	if len(phrase_words) > 0:
+		first_word = phrase_words[0]
+		if first_word in phrases:
+			for phrase in phrases[first_word]:
+				if phrase['phrase_words'] == phrase_words:
+					return True
+	return False
 
 # Empty the side field
 def clear_side_field():
