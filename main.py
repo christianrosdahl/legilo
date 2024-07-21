@@ -1465,8 +1465,7 @@ def add_third_lang_trans(event):
 	global editing
 	global info_for_showed_word
 
-
-	if ((active and active_looked_up) or active_phrase) and not editing:
+	if active and active_looked_up and not editing:
 		word = active['word']
 		trans = info_for_showed_word['trans']
 		edit_side_field()
