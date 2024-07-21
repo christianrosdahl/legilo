@@ -2,6 +2,7 @@
 
 import os
 import re
+import regex
 from datetime import date
 from tkinter import *
 from tkinter import messagebox
@@ -674,7 +675,7 @@ def insert_translation(info):
 				text_trans.insert(END, '\n\n', 'normal')
 
 # View in side field
-def side_field_show(word, info, status):
+def side_field_show(word, info, status, do_pronounce=True):
 	global language
 	global info_for_showed_word
 	info_for_showed_word = info
@@ -738,7 +739,7 @@ def side_field_show(word, info, status):
 	freeze_side_field()
 
 	# Pronunciation
-	if sound_on:
+	if sound_on and do_pronounce:
 		w.update_idletasks()
 		w.after(100, pronounce(word, language))
 
@@ -1171,6 +1172,24 @@ def go_to_previous_learning_word(event):
 				put_back_in_queue_sorted(previous_word)
 				removed_from_queue.remove(previous_word)
 				set_next_to_active()
+
+def mark_sentence_as_phrase(event):
+	global active
+	global sentences
+	if active:
+		line = active['line']
+		sentence_indices = sentences[line]
+		word_index = active['word_num']
+		for (start_index, end_index) in sentence_indices:
+			if word_index >= start_index and word_index <= end_index:
+				word_tag1 = str(line) + '.' + str(start_index)
+				word_tag2 = str(line) + '.' + str(end_index)
+				handle_active_phrases()
+				handle_active_words()
+				# Since sentences tend to be long, they are not
+				# pronounced by default
+				new_phrase(word_tag1, word_tag2, do_pronounce=False)
+				break
 
 def pronounce(word, language):
 	global active
@@ -1689,7 +1708,7 @@ def deactivate_phrase_mode(event):
 		selected_phrase_words = []
 		phrase_mode = False
 
-def new_phrase(word_tag1, word_tag2):
+def new_phrase(word_tag1, word_tag2, do_pronounce=True):
 	global active
 	global active_looked_up
 	global active_phrase
@@ -1739,7 +1758,7 @@ def new_phrase(word_tag1, word_tag2):
 		text.tag_add('p' + str(line1) + "." + str(active_phrase['startword_num']), phrase_start, phrase_end)
 		mark_phrase(active_phrase['line'], active_phrase['startword_num'], 'active')
 
-		side_field_show(phrase, info, 'new phrase')
+		side_field_show(phrase, info, 'new phrase', do_pronounce=do_pronounce)
 	else: 
 		phrase_words = []
 	selected_phrase_words = []
@@ -2211,6 +2230,7 @@ def remove_old_from_list(event):
 def run(language, text_file):
 	global w
 	global text
+	global sentences
 	global last_opened_files
 	global text_words
 	global word_start
@@ -2440,6 +2460,11 @@ def run(language, text_file):
 				phrase_end = word_end[i][phrase['endword_num']]
 				text.tag_add('p' + str(i+1) + "." + str(phrase['startword_num']), phrase_start, phrase_end)
 
+	# Get sentences from text
+	sentences = {}
+	for i, line in enumerate(lines):
+		sentences[i+1] = get_sentence_word_indices(line)
+
 	# Set word status
 	words_to_remove = []
 	for i, word_dict in enumerate(word_queue):
@@ -2521,12 +2546,11 @@ def run(language, text_file):
 	w.bind("<k>", known)
 	w.bind("<x>", ignore)
 	w.bind("<BackSpace>", ignore)
-	w.bind("<h>", pronounce_active_word)
-	w.bind("<.>", pronounce_active_word)
-	w.bind("<e>", space)
+	w.bind("<s>", mark_sentence_as_phrase)
+	w.bind("<p>", pronounce_active_word)
 	w.bind("<r>", change_remark)
 	w.bind("<b>", repeat_learning_words)
-	w.bind("<s>", add_third_lang_trans)
+	w.bind("<e>", add_third_lang_trans)
 	w.bind("<t>", add_google_trans)
 	w.bind("<d>", open_dictionary)
 	w.bind("<v>", open_verb_conjugation)
@@ -2563,7 +2587,29 @@ def run(language, text_file):
 
 	w.mainloop()
 
+# Split a line into sentences and get index of first and last word in each sentence
+def get_sentence_word_indices(line):
+	# This regular expression captures sentence-ending punctuation followed by a space or end of string.
+    # It considers periods, exclamation marks, question marks, and ellipses as sentence-ending characters.
+    sentence_endings = regex.compile(r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?|!|\.\.\.)\s+')
+    word_splitter = regex.compile(r'\s+')
+    
+    sentences = sentence_endings.split(line)
+    sentences = [sentence.strip() for sentence in sentences if sentence.strip()]
+    
+    word_index = 0
+    word_indices = []
 
+    for sentence in sentences:
+        words = word_splitter.split(sentence)
+        num_words = len(words)
+        if num_words > 0:
+            first_word_index = word_index
+            last_word_index = word_index + num_words - 1
+            word_indices.append((first_word_index, last_word_index))
+            word_index += num_words
+
+    return word_indices
 
 
 
