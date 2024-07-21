@@ -1780,6 +1780,7 @@ def start():
 		print(f"Error: The config file '{config_file_path}' was not found.")
 	except json.JSONDecodeError:
 		print(f"Error: The config file '{config_file_path}' contains invalid JSON.")
+	set_config_params()
 
 	start_window = Tk()
 	start_window.title("Legilo")
@@ -1834,6 +1835,12 @@ def start():
 	start_window.bind("<Return>", confirm)
 
 	start_window.mainloop()
+
+# Set parameters to values specified in config
+def set_config_params():
+	global third_lang
+	if 'third_language' in config:
+		third_lang = config['third_language']
 
 def lang_choice(event):
 	global config
