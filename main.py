@@ -1295,6 +1295,32 @@ def change_sentence(event):
 		#text_remark.configure(state="normal")
 		#text_remark.focus()
 
+def scroll_up(event):
+    scroll_lines(-10, text)
+
+def scroll_down(event):
+    scroll_lines(10, text)
+
+def scroll_up_translation(event):
+    scroll_lines(-10, text_trans)
+
+def scroll_down_translation(event):
+    scroll_lines(10, text_trans)
+
+def scroll_up_remark(event):
+    scroll_lines(-10, text_remark)
+
+def scroll_down_remark(event):
+    scroll_lines(10, text_remark)
+
+def scroll_lines(num_lines, text_field):
+    # Number of small scroll steps for animation
+    steps = 10
+    # Amount to scroll per step
+    step_size = num_lines / steps
+    for i in range(steps):
+        w.after(i * 20, lambda step_size=step_size: text_field.yview_scroll(int(step_size), "units"))
+
 def open_dictionary(event):
 	global active
 	global editing
@@ -2562,15 +2588,18 @@ def run(language, text_file):
 	w.bind("<Up>", enter)
 	w.bind("<Down>", known)
 	w.bind("<Left>", go_to_previous_learning_word)
-	w.bind("<a>", enter)
-	w.bind("<k>", known)
-	w.bind("<x>", ignore)
 	w.bind("<BackSpace>", ignore)
-	w.bind("<s>", mark_sentence_as_phrase)
+	w.bind("<a>", mark_sentence_as_phrase)
 	w.bind("<p>", pronounce_active_word)
 	w.bind("<r>", change_remark)
 	w.bind("<b>", repeat_learning_words)
-	w.bind("<e>", add_third_lang_trans)
+	w.bind("<Command-Key-Down>", scroll_down)
+	w.bind("<Command-Key-Up>", scroll_up)
+	w.bind("<Command-Key-Right>", scroll_down_translation)
+	w.bind("<Command-Key-Left>", scroll_up_translation)
+	w.bind("<Option-Right>", scroll_down_remark)
+	w.bind("<Option-Left>", scroll_up_remark)
+	w.bind("<s>", add_third_lang_trans)
 	w.bind("<t>", add_google_trans)
 	w.bind("<d>", open_dictionary)
 	w.bind("<v>", open_verb_conjugation)
