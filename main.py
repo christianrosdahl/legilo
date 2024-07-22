@@ -2620,6 +2620,8 @@ def run(language, text_file):
 	w.bind("<Down>", known)
 	w.bind("<Left>", go_to_previous_learning_word)
 	w.bind("<BackSpace>", ignore)
+	w.bind("<k>", known)
+	w.bind("<x>", ignore)
 	w.bind("<a>", mark_sentence_as_phrase)
 	w.bind("<p>", pronounce_active_word)
 	w.bind("<r>", change_remark)
