@@ -252,7 +252,7 @@ def handle_active_words(unqueue_looked_up=True):
 
 # Handles active phrase when another word or phrase is selected.
 # Saves a new active phrase if `save_new` is True
-def handle_active_phrases(save_new=True):
+def handle_active_phrases(save_new=False):
 	global active_phrase
 	global active_phrase_is_new
 	global phrases
@@ -1035,7 +1035,7 @@ def go_to_next(event):
 
 	if not editing:
 		unfocus()
-		handle_active_phrases(save_new=False)
+		handle_active_phrases()
 		if active and not active_looked_up:
 			if active['status'] == 'learning':
 				removed_from_queue.append(active)
