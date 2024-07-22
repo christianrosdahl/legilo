@@ -2157,7 +2157,7 @@ def open_old(language):
 
 	text_field1 = Text(main_frame, width=65, height=1, wrap='word', font=(font,20))
 	text_field1.pack(side=TOP)
-	text_field1.insert('1.0','Write file path: ')
+	text_field1.insert('1.0',f'Write name of file in {data_dir}/{language}/texts: ')
 	text_field1.configure(state="disabled", background=window_background_color, highlightbackground=window_background_color)
 
 	old_path = Text(main_frame, width=65, height=1, wrap='word', font=(font,20))
@@ -2219,7 +2219,7 @@ def open_old_from_path(event):
 		elif not file_name[:-4] == '.txt':
 			file_name = file_name + '.txt'
 		old_window.destroy()
-		directory = language + '/texts'
+		directory = data_dir + '/' + language + '/texts'
 		run(language, directory + '/' + file_name)
 
 def open_old_from_number(event):
