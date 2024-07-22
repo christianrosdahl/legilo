@@ -2616,12 +2616,12 @@ def run(language, text_file):
 	w.protocol("WM_DELETE_WINDOW", quit_program)
 
 	# Add key bindings
-	w.bind("<space>", go_to_next)
-	w.bind("<Return>", enter)
 	w.bind("<Right>", go_to_next)
 	w.bind("<Up>", enter)
 	w.bind("<Down>", known)
 	w.bind("<Left>", go_to_previous_learning_word)
+	w.bind("<Return>", enter)
+	w.bind("<space>", pronounce_next)
 	w.bind("<BackSpace>", ignore)
 	w.bind("<k>", known)
 	w.bind("<x>", ignore)
