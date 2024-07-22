@@ -67,7 +67,7 @@ side_field_fonts = {'title': (font, 14),
 							'remark': (font, 14),
 							'example': (font, 14, 'bold'),
 							'example_translation': (font, 14, 'italic')}
-side_field_width = 30 # Side field width in number of characters
+side_field_width = 40 # Side field width in number of characters
 side_field_padx = 5
 side_field_pady = 5
 
@@ -790,6 +790,7 @@ def update_translation_for_showed_word(trans):
 
 # Enable input of text in sidebar
 def edit_side_field():
+	text_status.configure(state="normal")
 	text_word.configure(state="normal")
 	text_trans.configure(state="normal")
 	text_remark.configure(state="normal")
@@ -797,6 +798,7 @@ def edit_side_field():
 
 # Disable input of text in sidebar
 def freeze_side_field():
+	text_status.configure(state="disabled")
 	text_word.configure(state="disabled")
 	text_trans.configure(state="disabled")
 	text_remark.configure(state="disabled")
@@ -1142,9 +1144,10 @@ def known(event):
 
 # Repeat learning words from the beginning of the text
 def repeat_learning_words(event):
+	global editing
 	go_to_start()
 	set_next_to_active()
-	if active:
+	if active and not editing:
 		active_word_tag = str(active['line']) + '.' + str(active['word_num'])
 		text.see(active_word_tag)
 
@@ -1191,8 +1194,9 @@ def go_to_previous_learning_word(event):
 
 def mark_sentence_as_phrase(event):
 	global active
+	global editing
 	global sentences
-	if active:
+	if active and not editing:
 		line = active['line']
 		sentence_indices = sentences[line]
 		word_index = active['word_num']
@@ -1283,17 +1287,12 @@ def pronounce_next(event):
 
 def change_remark(event):
 	global editing
-	if not editing:
+	global active_looked_up
+	global active_phrase
+	if not editing and (active_looked_up or active_phrase):
 		editing = True
 		text_remark.configure(state="normal")
 		text_remark.focus()
-
-def change_sentence(event):
-	global editing
-	if not editing:
-		editing = True
-		#text_remark.configure(state="normal")
-		#text_remark.focus()
 
 def scroll_up(event):
     scroll_lines(-10, text)
@@ -1314,12 +1313,14 @@ def scroll_down_remark(event):
     scroll_lines(10, text_remark)
 
 def scroll_lines(num_lines, text_field):
-    # Number of small scroll steps for animation
-    steps = 10
-    # Amount to scroll per step
-    step_size = num_lines / steps
-    for i in range(steps):
-        w.after(i * 20, lambda step_size=step_size: text_field.yview_scroll(int(step_size), "units"))
+	global editing
+	if not editing:
+		# Number of small scroll steps for animation
+		steps = 10
+		# Amount to scroll per step
+		step_size = num_lines / steps
+		for i in range(steps):
+			w.after(i * 20, lambda step_size=step_size: text_field.yview_scroll(int(step_size), "units"))
 
 def open_dictionary(event):
 	global active
@@ -1520,7 +1521,8 @@ def add_third_lang_trans(event):
 # Reverse if Google translation already is added.
 def add_google_trans(event):
 	global info_for_showed_word
-	if active and active_looked_up:
+	global editing
+	if active and active_looked_up and not editing:
 		trans = info_for_showed_word['trans']
 		has_google_trans = False
 		for item in trans:
@@ -2338,40 +2340,104 @@ def run(language, text_file):
 	center_window(w, width, height)
 
 	# Create frames
-	top_frame = Frame(w, width=1200, height=50, background=window_background_color)
-	top_frame.pack(side=TOP)
-	top_frame.pack_propagate(0)
+	container = Frame(w) # Main container frame to hold all other frames
+	container.pack(fill=BOTH, expand=True)
+	container.grid_rowconfigure(0, weight=1)
+	container.grid_columnconfigure(0, weight=1)
+	container.grid_columnconfigure(1, weight=0)
+	container.grid_columnconfigure(2, weight=1)
 
-	bottom_frame = Frame(w, width=1200, height=50, background=window_background_color)
-	bottom_frame.pack(side=BOTTOM)
-	bottom_frame.pack_propagate(0)
+	left_margin_frame = Frame(container, background=window_background_color)
+	left_margin_frame.grid(row=0, column=0, sticky='nswe')
+	
+	main_frame = Frame(container, background=window_background_color)
+	main_frame.grid(row=0, column=1, sticky='nswe')
 
-	main_frame = Frame(w, width=800, height=2000, background=window_background_color)
-	main_frame.pack(side=LEFT)
-	main_frame.pack_propagate(0)
+	main_frame.grid_rowconfigure(0, weight=1)
+	main_frame.grid_columnconfigure(0, weight=1)
+	
+	right_margin_frame = Frame(container, background=window_background_color)
+	right_margin_frame.grid(row=0, column=2, sticky='nswe')
 
-	side_frame = Frame(w, width=400, height=2000, background=window_background_color)
-	side_frame.pack(side=TOP)
-	side_frame.pack_propagate(0)
+	text_frame = Frame(main_frame, background=window_background_color)
+	text_frame.grid(row=0, column=0, padx=20, pady=20, sticky='nswe')
+
+	text_frame.grid_rowconfigure(0, weight=1)
+	text_frame.grid_columnconfigure(0, weight=1)
+
+	side_frame = Frame(main_frame, background=window_background_color)
+	side_frame.grid(row=0, column=1, padx=20, pady=20, sticky='nswe')
+
+	side_frame.grid_rowconfigure(0, weight=0)
+	side_frame.grid_rowconfigure(1, weight=0)
+	side_frame.grid_rowconfigure(2, weight=0)
+	side_frame.grid_rowconfigure(3, weight=1)
+	side_frame.grid_rowconfigure(4, weight=0)
+	side_frame.grid_rowconfigure(5, weight=0)
+	side_frame.grid_rowconfigure(6, weight=0)
+	side_frame.grid_rowconfigure(7, weight=0)
+	side_frame.grid_columnconfigure(0, weight=1)
 
 	# Add text field
 	text = scrolledtextwindow.ScrolledText(
-	    master=main_frame,
+	    master=text_frame,
 		padx=text_field_padx,
 		pady=text_field_pady,
 	    wrap='word',  # wrap text at full words only
-	    width=text_field_width,      # characters
-	    height=100,      # text lines
+		width=text_field_width,
 	    bg='white',        # background color of edit area
 		highlightthickness=0,
 		borderwidth=0, 
-	    font=(font, font_size)
+	    font=(font, font_size),
+		cursor='arrow'
 	)
+	text.grid(row=0, column=0, sticky='nswe')
 
-	#text = Text(main_frame, width=50, height=30, wrap='word', font=("Helvetica",20))
-	text.pack(side=TOP)
-	text.config(cursor='arrow')
-	#text.grid(row=0, column=0)
+	# Add text fields in side field
+	text_status = Text(side_frame, height=1, width=0, padx=side_field_padx, pady=side_field_pady,
+				   wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['status'])
+	text_status.grid(row=0, column=0, sticky='nswe')
+	
+	text_word = Text(side_frame, height=1, width=0, padx=side_field_padx, pady=side_field_pady,
+				 wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['word'])
+	text_word.grid(row=1, column=0, sticky='nswe')
+	
+	text_trans_title = Text(side_frame, height=1, width=0, padx=side_field_padx, pady=side_field_pady,
+					   wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['title'],
+					   background=side_field_fonts['field_title_background'],
+					   foreground=side_field_fonts['field_title_text_color'])
+	text_trans_title.grid(row=2, column=0, sticky='nswe')
+	text_trans_title.insert('1.0', 'Translations: ')
+	text_trans_title.configure(state="disabled")
+	
+	text_trans = Text(side_frame, width=side_field_width, height=20, padx=side_field_padx, pady=side_field_pady,
+				  wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['translation'])
+	text_trans.grid(row=3, column=0, sticky='nswe')
+	
+	text_remark_title = Text(side_frame, height=1, width=0, padx=side_field_padx, pady=side_field_pady,
+							 wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['title'],
+							 background=side_field_fonts['field_title_background'],
+							 foreground=side_field_fonts['field_title_text_color'])
+	text_remark_title.grid(row=4, column=0, sticky='nswe')
+	text_remark_title.insert('1.0', 'Notes & Remarks: ')
+	text_remark_title.configure(state="disabled")
+
+	text_remark = Text(side_frame, height=10, width=0, padx=side_field_padx, pady=side_field_pady,
+				   wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['remark'])
+	text_remark.grid(row=5, column=0, sticky='nswe')
+	
+	text_example_title = Text(side_frame, height=1, width=0, padx=side_field_padx, pady=side_field_pady,
+						 wrap='word', highlightthickness=0, borderwidth=0,
+						 font=side_field_fonts['title'], background=side_field_fonts['field_title_background'],
+						 foreground=side_field_fonts['field_title_text_color'])
+	text_example_title.grid(row=6, column=0, sticky='nswe')
+	text_example_title.insert('1.0', 'Example Sentence: ')
+	text_example_title.configure(state="disabled")
+	
+	text_example = Text(side_frame, height=4, width=0, padx=side_field_padx, pady=side_field_pady,
+					wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['example_translation'])
+	text_example.grid(row=7, column=0, sticky='nswe')
+	freeze_side_field()
 
 	# Read text
 	opened_text_path = text_file
@@ -2538,41 +2604,6 @@ def run(language, text_file):
 	# Mark phrases in text
 	for phrase in text_phrases:
 		mark_phrase(phrase['line'], phrase['startword_num'], 'ordinary')
-
-	# Add text fields in side field
-	text_status = Text(side_frame, width=side_field_width, height=1, padx=side_field_padx, pady=side_field_pady,
-				   wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['status'])
-	text_status.pack(fill='x')
-	text_word = Text(side_frame, width=side_field_width, height=1, padx=side_field_padx, pady=side_field_pady,
-				 wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['word'])
-	text_word.pack(fill='x')
-	text_trans_title = Text(side_frame, width=side_field_width, height=1, padx=side_field_padx, pady=side_field_pady,
-					   wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['title'],
-					   background=side_field_fonts['field_title_background'],
-					   foreground=side_field_fonts['field_title_text_color'])
-	text_trans_title.pack(fill='x')
-	text_trans_title.insert('1.0', 'Translations: ')
-	text_trans = Text(side_frame, width=side_field_width, height=20, padx=side_field_padx, pady=side_field_pady,
-				  wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['translation'])
-	text_trans.pack(fill='x')
-	text_remark_title = Text(side_frame, width=side_field_width, height=1, padx=side_field_padx, pady=side_field_pady,
-							 wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['title'],
-							 background=side_field_fonts['field_title_background'],
-							 foreground=side_field_fonts['field_title_text_color'])
-	text_remark_title.pack(fill='x')
-	text_remark_title.insert('1.0', 'Notes & Remarks: ')
-	text_remark = Text(side_frame, width=side_field_width, height=12, padx=side_field_padx, pady=side_field_pady,
-				   wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['remark'])
-	text_remark.pack(fill='x')
-	text_example_title = Text(side_frame, width=side_field_width, height=1, padx=side_field_padx, pady=side_field_pady,
-						 wrap='word', highlightthickness=0, borderwidth=0,
-						 font=side_field_fonts['title'], background=side_field_fonts['field_title_background'],
-						 foreground=side_field_fonts['field_title_text_color'])
-	text_example_title.pack(fill='x')
-	text_example_title.insert('1.0', 'Example Sentence: ')
-	text_example = Text(side_frame, width=side_field_width, height=50, padx=side_field_padx, pady=side_field_pady,
-					wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['example_translation'])
-	text_example.pack(fill='x')
 
 	# Set program to saved state
 	if state:
