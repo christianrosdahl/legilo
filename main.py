@@ -1282,8 +1282,10 @@ def pronounce_active_word(event):
 		pronounce(text_word.get('1.0','end'), language)
 
 def pronounce_next(event):
+	global w
 	go_to_next(event)
-	pronounce_active_word(event)
+	w.update_idletasks()
+	w.after(100, pronounce_active_word(event))
 
 def change_remark(event):
 	global editing
@@ -2646,7 +2648,9 @@ def run(language, text_file):
 	w.bind("<Command-Key-s>", save_lists)
 	w.bind("<Command-Key-t>", save_listsastxt)
 	w.bind("<Command-Key-x>", quit_without_saving)
-	w.bind("<z>", pronounce_next)
+	w.bind("<n>", pronounce_next)
+	w.bind("<.>", pronounce_next)
+	w.bind("<j>", enter)
 
 	text_remark.bind("<Button-1>", change_remark)
 
