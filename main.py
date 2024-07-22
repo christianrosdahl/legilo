@@ -107,16 +107,16 @@ def save_to_txt(title, text, file_name, directory):
 
 # Save word list
 def save_list(obj, name):
-	save(obj, name, data_dir + '/' + language + '/' + 'wordlists')
+	save(obj, name, data_dir + '/' + language + '/' + 'history')
 
 # Load word list
 def load_list(name):
-	obj = load(name, data_dir + '/' + language + '/' + 'wordlists')
+	obj = load(name, data_dir + '/' + language + '/' + 'history')
 	return obj
 
 # Save word list as txt file
 def save_list_as_txt(obj, name):
-	save_to_txt(name, str(obj), name + '.txt', data_dir + '/' + language + '/' + 'txtwordlists')
+	save_to_txt(name, str(obj), name + '.txt', data_dir + '/' + language + '/' + 'txt_word_lists')
 
 # Load all the word lists
 def load_all():
@@ -172,7 +172,7 @@ def save_all():
 	if save_state_on:
 		save_state()
 	if not use_message_box:
-		print("The wordlists were saved!")
+		print("The history was saved!")
 		print(f"Number of known words: {len(known_words)}")
 
 # Save all the word lists as txt files
@@ -212,7 +212,7 @@ def save_lists(event):
 	global text
 	save_all()
 	if use_message_box:
-		ans = messagebox.showinfo("Saved", "The wordlists were saved!")
+		ans = messagebox.showinfo("Saved", "The history was saved!")
 	deactivate_phrase_mode(event)
 	text.focus()
 	unfocus()
@@ -223,9 +223,9 @@ def save_listsastxt(event):
 	global text
 	save_all_as_txt()
 	if use_message_box:
-		ans = messagebox.showinfo("Saved", "The wordlists were saved as txt files!")
+		ans = messagebox.showinfo("Saved", "The word lists were saved as txt files!")
 	else:
-		print("The wordlists were saved as txt files!")
+		print("The word lists were saved as txt files!")
 	deactivate_phrase_mode(event)
 	text.focus()
 	unfocus()
