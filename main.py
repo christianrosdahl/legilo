@@ -1145,11 +1145,12 @@ def known(event):
 # Repeat learning words from the beginning of the text
 def repeat_learning_words(event):
 	global editing
-	go_to_start()
-	set_next_to_active()
-	if active and not editing:
-		active_word_tag = str(active['line']) + '.' + str(active['word_num'])
-		text.see(active_word_tag)
+	if not editing:
+		go_to_start()
+		set_next_to_active()
+		if active:
+			active_word_tag = str(active['line']) + '.' + str(active['word_num'])
+			text.see(active_word_tag)
 
 # Put back all learning words in the queue to go through them from start
 def go_to_start():
