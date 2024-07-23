@@ -205,7 +205,8 @@ def save_state():
 		with open(opened_text_path, "w") as file:
 			file.write('#state ' + state + '\n')
 			for line in lines:
-				file.write(line)
+				if not '#state' in line:
+					file.write(line)
 
 # Invoke save_all
 def save_lists(event):
