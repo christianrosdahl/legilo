@@ -715,6 +715,14 @@ def replace_phrase_translation(trans, color):
 	text_trans.insert("1.0", trans, "phrase_trans")
 	freeze_side_field()
 
+# Get personal translation from a translations list, if available
+def get_personal_translation(trans_list):
+	for item in trans_list:
+		if 'source' in item and item['source'] == 'personal translation':
+			if 'definitions' in item:
+				return item['definitions'][0]['definition']
+	return None
+
 # Check if word translations list contains a personal translation
 def has_personal_translation(trans_list):
 	for item in trans_list:
@@ -850,12 +858,11 @@ def look_up(word, status):
 	side_field_show(word, info, status)
 	active_looked_up = True
 
-def update_translation_for_showed_word(trans):
+def update_translation_for_showed_word():
 	global info_for_showed_word
 	if active and active_looked_up:
-		info_for_showed_word['trans'] = trans
 		clear_translation_field()
-		insert_translation(trans)
+		insert_translation(info_for_showed_word['trans'])
 
 # Enable input of text in sidebar
 def edit_side_field():
@@ -963,7 +970,7 @@ def add_personal_translation_info_to_showed_word():
 		delete_personal_translation(info_for_showed_word['trans'])
 		if len(trans) > 0:
 			info_for_showed_word['trans'].append({'word': phrase, 'definitions': [{'definition': trans}], 'source': 'personal translation'})
-		update_translation_for_showed_word(info_for_showed_word['trans'])
+		update_translation_for_showed_word()
 	text_personal_trans.delete("1.0", "end")
 
 # Add word to learning words
@@ -1399,10 +1406,55 @@ def edit_personal_translation(event):
 	global active_looked_up
 	global active_phrase
 	global text_personal_trans
+	global info_for_showed_word
 	if not editing and (active_looked_up or active_phrase):
 		editing = True
 		text_personal_trans.grid(row=3, column=0, sticky='nswe')
 		text_personal_trans.focus()
+
+		current_personal_trans = get_current_personal_trans()
+		if current_personal_trans:
+			text_personal_trans.insert('1.0', current_personal_trans)
+
+			# Skipped the part below for now, due to flickering
+			# # Temporarily delete the personal translation while editing
+			# delete_current_personal_trans()
+			# word_type = None
+			# if 'word_type' in info_for_showed_word:
+			# 	word_type = remove_new_line_at_end(info_for_showed_word['word_type'])
+			# if word_type == 'phrase':
+			# 	color = side_field_fonts['google_translate_background']
+			# 	replace_phrase_translation(info_for_showed_word['trans'], color)
+			# else:
+			# 	update_translation_for_showed_word()
+
+def get_current_personal_trans():
+	global info_for_showed_word
+	if active_looked_up or active_phrase:
+		word_type = None
+		if 'word_type' in info_for_showed_word:
+			word_type = info_for_showed_word['word_type']
+		if word_type != 'phrase':
+			if 'trans' in info_for_showed_word:
+				return get_personal_translation(info_for_showed_word['trans'])
+		else:
+			if 'personal_trans' in info_for_showed_word:
+				return info_for_showed_word['personal_trans']
+	return None
+
+def delete_current_personal_trans():
+	global info_for_showed_word
+	if active_looked_up or active_phrase:
+		word_type = None
+		if 'word_type' in info_for_showed_word:
+			word_type = info_for_showed_word['word_type']
+		if word_type != 'phrase':
+			if 'trans' in info_for_showed_word:
+				delete_personal_translation(info_for_showed_word['trans'])
+		else:
+			if 'personal_trans' in info_for_showed_word:
+				del info_for_showed_word['personal_trans']
+	return None
 
 def change_remark(event):
 	global editing
@@ -1659,7 +1711,7 @@ def add_google_trans(event):
 			trans_list += google_trans
 		else:
 			delete_google_translation(trans_list)
-		update_translation_for_showed_word(trans_list)
+		update_translation_for_showed_word()
 
 def quit_program():
 	if use_message_box:
@@ -2555,7 +2607,8 @@ def run(language, text_file):
 	text_trans_title.configure(state="disabled")
 	
 	text_personal_trans = Text(side_frame, width=side_field_width, height=5, padx=side_field_padx, pady=side_field_pady,
-				  wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['translation'])
+				  wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['translation'],
+				  background='orange')
 	text_personal_trans.grid(row=3, column=0, sticky='nswe')
 	text_personal_trans.grid_forget()
 	
