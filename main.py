@@ -1403,9 +1403,11 @@ def pronounce_next(event):
 	w.after(100, pronounce_active_word(event))
 
 def edit_personal_translation(event):
+	global w
 	global editing
 	global active_looked_up
 	global active_phrase
+	global text_trans
 	global text_personal_trans
 	global info_for_showed_word
 	if not editing and (active_looked_up or active_phrase):
@@ -1417,17 +1419,12 @@ def edit_personal_translation(event):
 		if current_personal_trans:
 			text_personal_trans.insert('1.0', current_personal_trans)
 
-			# Skipped the part below for now, due to flickering
-			# # Temporarily delete the personal translation while editing
-			# delete_current_personal_trans()
-			# word_type = None
-			# if 'word_type' in info_for_showed_word:
-			# 	word_type = remove_new_line_at_end(info_for_showed_word['word_type'])
-			# if word_type == 'phrase':
-			# 	color = side_field_fonts['google_translate_background']
-			# 	replace_phrase_translation(info_for_showed_word['trans'], color)
-			# else:
-			# 	update_translation_for_showed_word()
+			# Temporarily delete the personal translation while editing
+			# Forcing the order below gives a feeling of less flickering
+			text_trans.configure(state='normal')
+			w.update_idletasks()
+			w.after(100, text_trans.delete('1.0', '3.0'))
+			text_trans.configure(state='disabled')
 
 def get_current_personal_trans():
 	global info_for_showed_word
@@ -1757,12 +1754,13 @@ def word_from_index(index):
 def enter_in_personal_translation_field(event):
 	global editing
 	global text_personal_trans
-
-	global info_for_showed_word
+	global w
 	unfocus()
 	editing = False
-	text_personal_trans.grid_forget()
 	add_personal_translation_info_to_showed_word()
+	# Forcing the order below gives a feeling of less flickering
+	w.update_idletasks()
+	w.after(100, text_personal_trans.grid_forget())
 	return 'break'
 
 # Pressing enter in remark field to stop editing
