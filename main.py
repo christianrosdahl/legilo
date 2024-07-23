@@ -43,7 +43,7 @@ window_background_color = 'lightgray'
 active_color = 'orange'
 learning_color = '#fde367' #'yellow' macyellow:'#facd5a'
 new_color = '#cce6ff' #'#a3daf0'#'lightblue' macblue: '#69aff1'
-known_color = 'lightgreen'
+known_color = '#b0fc81', #'#9ffa66' #'lightgreen'
 
 # Font
 font = 'Avant Garde' #'Museo Sans Rounded', 'Bookman', 'Georgia', 'Helvetica', 'Avant Garde'
@@ -63,7 +63,8 @@ side_field_fonts = {'title': (font, 14),
 							'word': (font, 20, 'bold'),
 							'status': (font, 12, 'bold'),
 							'translation': (font, 16),
-							'google_translate_background': 'orange',
+							'personal_translation_background': 'orange',
+							'google_translate_background': '#b0fc81',
 							'remark': (font, 14),
 							'example': (font, 14, 'bold'),
 							'example_translation': (font, 14, 'italic')}
@@ -253,16 +254,16 @@ def handle_active_words(unqueue_looked_up=True):
 # Handles active phrase when another word or phrase is selected.
 # Saves a new active phrase if `save_new` is True
 def handle_active_phrases(save_new=False):
+	global info_for_showed_word
 	global active_phrase
 	global active_phrase_is_new
 	global phrases
 	if active_phrase:
-		info = get_phrase_info()
 		if active_phrase_is_new and not save_new:
 			mark_phrase(active_phrase['line'], active_phrase['startword_num'], 'none')
 			mark_all_phrase_instances(active_phrase['phrase_words'], 'none')
 		else:
-			add_to_phrases(active_phrase, info)
+			add_to_phrases(active_phrase, info_for_showed_word)
 			mark_phrase(active_phrase['line'], active_phrase['startword_num'], 'ordinary')
 			mark_all_phrase_instances(active_phrase['phrase_words'], 'ordinary')
 		active_phrase = False
@@ -626,34 +627,46 @@ def gender_color(gender):
 
 # Insert example sentence
 def insert_sentence(sentence, sentence_trans):
+	edit_side_field()
 	text_example.delete("1.0", "end")
 	text_example.insert("1.0", sentence + "\n")
 	text_example.insert("3.0", sentence_trans)
 	text_example.tag_add("sentence", "1.0", "1." + str(len(sentence)))
 	text_example.tag_config("sentence", font = side_field_fonts['example'])
+	freeze_side_field()
 
 # Insert formated translation into translation field
-def insert_translation(info):
+def insert_translation(trans):
+	edit_side_field()
 	# Define tags for formatting
 	(translation_font, translation_font_size) = side_field_fonts['translation']
 	text_trans.tag_configure("word", font=(translation_font, translation_font_size, "bold"))
 	text_trans.tag_configure("normal", font=(translation_font, translation_font_size))
 	text_trans.tag_configure("parenthesis", font=(translation_font, translation_font_size))
 	text_trans.tag_configure("type_and_gender", font=(translation_font, translation_font_size, "italic"))
+	text_trans.tag_configure("personal_translation", font=(translation_font, translation_font_size),
+						 background=side_field_fonts['personal_translation_background'])
 	text_trans.tag_configure("google_translate", font=(translation_font, translation_font_size),
 						 background=side_field_fonts['google_translate_background'])
 	text_trans.tag_configure("definitions", font=(translation_font, translation_font_size), lmargin1=20, spacing1=5)
 	text_trans.tag_configure("synonyms", font=(translation_font, translation_font_size-2, "bold"), lmargin1=40, spacing1=2)
 
-	for i, item in enumerate(info):
-		if 'source' in item and item['source'] == 'Google Translate':
+	personal_trans = None
+	google_trans = None
+	for i, item in enumerate(trans):
+		if 'source' in item and item['source'] == 'personal translation':
 			if 'definitions' in item:
 				definition = item['definitions'][0]
 				if 'definition' in definition:
-					def_def = definition['definition'] 
-					text_trans.insert(END, def_def, 'google_translate')
-					text_trans.insert(END, '\n\n', 'normal')
-		else: # If source is Wiktionary
+					personal_trans = definition['definition']
+
+		elif 'source' in item and item['source'] == 'Google Translate':
+			if 'definitions' in item:
+				definition = item['definitions'][0]
+				if 'definition' in definition:
+					google_trans = definition['definition']
+
+		elif 'source' in item and item['source'] == 'Wiktionary':
 			if 'word' in item:
 				text_trans.insert(END, item['word'], 'word')
 			if 'part_of_speech' in item:
@@ -678,8 +691,61 @@ def insert_translation(info):
 					if 'antonyms' in definition:
 						antonyms = definition['antonyms']
 						text_trans.insert(END, f'\n≠ {antonyms}', 'synonyms')
-			if i < len(info)-1:
+			if i < len(trans)-1:
 				text_trans.insert(END, '\n\n', 'normal')
+
+	if google_trans:
+		text_trans.insert('1.0', '\n\n', 'normal')
+		text_trans.insert('1.0', google_trans, 'google_translate')
+	
+	if personal_trans:
+		text_trans.insert('1.0', '\n\n', 'normal')
+		text_trans.insert('1.0', personal_trans, 'personal_translation')
+
+	freeze_side_field()
+
+def replace_phrase_translation(trans, color):
+	global text_trans
+	global side_field_fonts
+	edit_side_field()
+	text_trans.delete('1.0', "end")
+	text_trans.tag_configure("phrase_trans",
+						  font=side_field_fonts['translation'],
+						  background=color)
+	text_trans.insert("1.0", trans, "phrase_trans")
+	freeze_side_field()
+
+# Check if word translations list contains a personal translation
+def has_personal_translation(trans_list):
+	for item in trans_list:
+		if 'source' in item and item['source'] == 'personal translation':
+			return True
+	return False
+
+# Check if word translations list contains a Google translation
+def has_google_translation(trans_list):
+	for item in trans_list:
+		if 'source' in item and item['source'] == 'Google Translate':
+			return True
+	return False
+
+# Delete personal translation from translations list, if available
+def delete_personal_translation(trans_list):
+	if has_personal_translation(trans_list):
+		for i, item in enumerate(trans_list):
+			if 'source' in item and item['source'] == 'personal translation':
+				translation_index_to_remove = i
+				break
+		del trans_list[translation_index_to_remove]
+
+# Delete Google translation from translations list, if available
+def delete_google_translation(trans_list):
+	if has_google_translation(trans_list):
+		for i, item in enumerate(trans_list):
+			if 'source' in item and item['source'] == 'Google Translate':
+				translation_index_to_remove = i
+				break
+		del trans_list[translation_index_to_remove]
 
 # View in side field
 def side_field_show(word, info, status, do_pronounce=True):
@@ -732,10 +798,15 @@ def side_field_show(word, info, status, do_pronounce=True):
 	if not word_type == 'phrase':
 		insert_translation(trans)
 	else:
-		text_trans.tag_configure("phrase_trans",
-						  font=side_field_fonts['translation'],
-						  background=side_field_fonts['google_translate_background'])
-
+		if 'personal_trans' in info:
+			text_trans.tag_configure("phrase_trans",
+							font=side_field_fonts['translation'],
+							background=side_field_fonts['personal_translation_background'])
+			trans = info['personal_trans']
+		else:
+			text_trans.tag_configure("phrase_trans",
+							font=side_field_fonts['translation'],
+							background=side_field_fonts['google_translate_background'])
 		text_trans.insert("1.0", trans, "phrase_trans")
 	has_text_in_remark = False
 	if 'remark' in info:
@@ -784,9 +855,7 @@ def update_translation_for_showed_word(trans):
 	if active and active_looked_up:
 		info_for_showed_word['trans'] = trans
 		clear_translation_field()
-		edit_side_field()
 		insert_translation(trans)
-		freeze_side_field()
 
 # Enable input of text in sidebar
 def edit_side_field():
@@ -839,6 +908,9 @@ def get_word_info():
 	return info
 
 def get_phrase_info():
+	global text_word
+	global text_trans
+	global text_remark
 	edit_side_field()
 	phrase = text_word.get("1.0",END)
 	trans = text_trans.get("1.0",END)
@@ -859,6 +931,40 @@ def get_phrase_info():
 	info = {'phrase_words': phrase_words, 'word' : phrase, 'trans' : trans, 'word_type' : 'phrase', 'remark' : remark, 'sentence' : sentence, 'sentence_trans' : sentence_trans}
 	freeze_side_field()
 	return info
+
+# Add personal translation to info_for_showed_word
+def add_personal_translation_info_to_showed_word():
+	global active
+	global info_for_showed_word
+	global text_word
+	global text_personal_trans
+	global side_field_fonts
+	word_type = None
+	if 'word_type' in info_for_showed_word:
+		word_type = info_for_showed_word['word_type']
+		word_type = remove_new_line_at_end(word_type)
+	if word_type == 'phrase':
+		trans = remove_new_line_at_end(text_personal_trans.get('1.0', END))
+		if not len(trans) > 0:
+			if 'personal_trans' in info_for_showed_word:
+				del info_for_showed_word['personal_trans']
+		else:
+			info_for_showed_word['personal_trans'] = trans
+
+		if 'personal_trans' in info_for_showed_word:
+			color = side_field_fonts['personal_translation_background']
+			replace_phrase_translation(info_for_showed_word['personal_trans'], color)
+		else:
+			color = side_field_fonts['google_translate_background']
+			replace_phrase_translation(info_for_showed_word['trans'], color)
+	else:
+		trans = remove_new_line_at_end(text_personal_trans.get('1.0', END))
+		phrase = remove_new_line_at_end(text_word.get("1.0",END))
+		delete_personal_translation(info_for_showed_word['trans'])
+		if len(trans) > 0:
+			info_for_showed_word['trans'].append({'word': phrase, 'definitions': [{'definition': trans}], 'source': 'personal translation'})
+		update_translation_for_showed_word(info_for_showed_word['trans'])
+	text_personal_trans.delete("1.0", "end")
 
 # Add word to learning words
 def add_to_learning(word, info):
@@ -1288,6 +1394,16 @@ def pronounce_next(event):
 	w.update_idletasks()
 	w.after(100, pronounce_active_word(event))
 
+def edit_personal_translation(event):
+	global editing
+	global active_looked_up
+	global active_phrase
+	global text_personal_trans
+	if not editing and (active_looked_up or active_phrase):
+		editing = True
+		text_personal_trans.grid(row=3, column=0, sticky='nswe')
+		text_personal_trans.focus()
+
 def change_remark(event):
 	global editing
 	global active_looked_up
@@ -1526,18 +1642,14 @@ def add_google_trans(event):
 	global info_for_showed_word
 	global editing
 	if active and active_looked_up and not editing:
-		trans = info_for_showed_word['trans']
-		has_google_trans = False
-		for item in trans:
-			if 'source' in item and item['source'] == 'Google Translate':
-				has_google_trans = True
-				break
-
+		has_google_trans = has_google_translation(info_for_showed_word['trans'])
+		trans_list = info_for_showed_word['trans']
 		if not has_google_trans:
-			new_trans = legilo_translator.translate(active['word'], always_google_trans=True)
+			google_trans = legilo_translator.get_google_translation(active['word'])
+			trans_list += google_trans
 		else:
-			new_trans = legilo_translator.translate(active['word'])
-		update_translation_for_showed_word(new_trans)
+			delete_google_translation(trans_list)
+		update_translation_for_showed_word(trans_list)
 
 def quit_program():
 	if use_message_box:
@@ -1578,11 +1690,21 @@ def word_from_index(index):
 			word_num = j
 	return line, word_num
 
-# Pressing enter in info field to stop editing
-def enter_in_info_field(event):
+# Pressing enter in personal translation field to stop editing
+def enter_in_personal_translation_field(event):
 	global editing
-	global text_word
-	global word_type
+	global text_personal_trans
+
+	global info_for_showed_word
+	unfocus()
+	editing = False
+	text_personal_trans.grid_forget()
+	add_personal_translation_info_to_showed_word()
+	return 'break'
+
+# Pressing enter in remark field to stop editing
+def enter_in_remark_field(event):
+	global editing
 	unfocus()
 	editing = False
 	freeze_side_field()
@@ -1590,14 +1712,24 @@ def enter_in_info_field(event):
 
 # Pressing shift + enter in info field to get new line
 def new_line1(event):
-	global text_trans
-	index = text_trans.index(INSERT)
-	text_trans.insert(index,"\n")
+	global text_personal_trans
+	index = text_personal_trans.index(INSERT)
+	text_personal_trans.insert(index,"\n")
 	return 'break'
 def new_line2(event):
 	global text_remark
 	index = text_remark.index(INSERT)
 	text_remark.insert(index,"\n")
+	return 'break'
+
+# Pressing cmd + backspace in info field to empty it
+def empty_text_field1(event):
+	global text_personal_trans
+	text_personal_trans.delete('1.0', 'end')
+	return 'break'
+def empty_text_field2(event):
+	global text_remark
+	text_remark.delete('1.0', 'end')
 	return 'break'
 
 # Select example sentence
@@ -1672,10 +1804,7 @@ def select_sentence(event):
 			# Don't use a translation
 			else: # n == 9
 				sentence_trans = ""
-
-		edit_side_field()
 		insert_sentence(sentence, sentence_trans)
-		freeze_side_field()
 
 # Get third_lang translations from string of english translations
 include_trans_of_original_word = True
@@ -2286,6 +2415,7 @@ def run(language, text_file):
 	global word_end
 	global text_status
 	global text_word
+	global text_personal_trans
 	global text_trans
 	global text_remark
 	global text_example_title
@@ -2374,11 +2504,12 @@ def run(language, text_file):
 	side_frame.grid_rowconfigure(0, weight=0)
 	side_frame.grid_rowconfigure(1, weight=0)
 	side_frame.grid_rowconfigure(2, weight=0)
-	side_frame.grid_rowconfigure(3, weight=1)
-	side_frame.grid_rowconfigure(4, weight=0)
+	side_frame.grid_rowconfigure(3, weight=0)
+	side_frame.grid_rowconfigure(4, weight=1)
 	side_frame.grid_rowconfigure(5, weight=0)
 	side_frame.grid_rowconfigure(6, weight=0)
 	side_frame.grid_rowconfigure(7, weight=0)
+	side_frame.grid_rowconfigure(8, weight=0)
 	side_frame.grid_columnconfigure(0, weight=1)
 
 	# Add text field
@@ -2413,33 +2544,38 @@ def run(language, text_file):
 	text_trans_title.insert('1.0', 'Translations: ')
 	text_trans_title.configure(state="disabled")
 	
+	text_personal_trans = Text(side_frame, width=side_field_width, height=5, padx=side_field_padx, pady=side_field_pady,
+				  wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['translation'])
+	text_personal_trans.grid(row=3, column=0, sticky='nswe')
+	text_personal_trans.grid_forget()
+	
 	text_trans = Text(side_frame, width=side_field_width, height=20, padx=side_field_padx, pady=side_field_pady,
 				  wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['translation'])
-	text_trans.grid(row=3, column=0, sticky='nswe')
+	text_trans.grid(row=4, column=0, sticky='nswe')
 	
 	text_remark_title = Text(side_frame, height=1, width=0, padx=side_field_padx, pady=side_field_pady,
 							 wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['title'],
 							 background=side_field_fonts['field_title_background'],
 							 foreground=side_field_fonts['field_title_text_color'])
-	text_remark_title.grid(row=4, column=0, sticky='nswe')
+	text_remark_title.grid(row=5, column=0, sticky='nswe')
 	text_remark_title.insert('1.0', 'Notes & Remarks: ')
 	text_remark_title.configure(state="disabled")
 
 	text_remark = Text(side_frame, height=10, width=0, padx=side_field_padx, pady=side_field_pady,
 				   wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['remark'])
-	text_remark.grid(row=5, column=0, sticky='nswe')
+	text_remark.grid(row=6, column=0, sticky='nswe')
 	
 	text_example_title = Text(side_frame, height=1, width=0, padx=side_field_padx, pady=side_field_pady,
 						 wrap='word', highlightthickness=0, borderwidth=0,
 						 font=side_field_fonts['title'], background=side_field_fonts['field_title_background'],
 						 foreground=side_field_fonts['field_title_text_color'])
-	text_example_title.grid(row=6, column=0, sticky='nswe')
+	text_example_title.grid(row=7, column=0, sticky='nswe')
 	text_example_title.insert('1.0', 'Example Sentence: ')
 	text_example_title.configure(state="disabled")
 	
 	text_example = Text(side_frame, height=4, width=0, padx=side_field_padx, pady=side_field_pady,
 					wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['example_translation'])
-	text_example.grid(row=7, column=0, sticky='nswe')
+	text_example.grid(row=8, column=0, sticky='nswe')
 	freeze_side_field()
 
 	# Read text
@@ -2642,7 +2778,7 @@ def run(language, text_file):
 	w.bind("<w>", open_wiktionary)
 	w.bind("<c>", open_context_reverso)
 	w.bind("<g>", open_google)
-	w.bind("<i>", open_google_images)
+	w.bind("<f>", open_google_images)
 	w.bind("<l>", open_wikipedia)
 	w.bind("<Meta_L>", activate_phrase_mode)
 	w.bind("<KeyRelease-Meta_L>", deactivate_phrase_mode)
@@ -2652,14 +2788,18 @@ def run(language, text_file):
 	w.bind("<n>", pronounce_next)
 	w.bind("<.>", pronounce_next)
 	w.bind("<j>", enter)
+	w.bind("<i>", edit_personal_translation)
 
 	text_remark.bind("<Button-1>", change_remark)
 
-	text_trans.bind("<Return>", enter_in_info_field)
-	text_remark.bind("<Return>", enter_in_info_field)
+	text_personal_trans.bind("<Return>", enter_in_personal_translation_field)
+	text_remark.bind("<Return>", enter_in_remark_field)
 
-	text_trans.bind("<Shift-Return>", new_line1)
+	text_personal_trans.bind("<Shift-Return>", new_line1)
 	text_remark.bind("<Shift-Return>", new_line2)
+
+	text_personal_trans.bind("<Command-Key-BackSpace>", empty_text_field1)
+	text_remark.bind("<Command-Key-BackSpace>", empty_text_field2)
 
 	w.bind("1", select_sentence)
 	w.bind("2", select_sentence)
