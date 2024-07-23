@@ -1447,15 +1447,25 @@ def open_dictionary(event):
 	global language
 	if active and not editing:
 		word = active["word"]
-		if not language == 'russian':
+		collins_languages = ['english', 'french', 'german', 'italian', 'spanish',
+					   'portuguese', 'hindi', 'chinese', 'korean', 'japanese']
+		if language == 'spanish':
+			link = 'https://www.spanishdict.com/translate/' + word
+			link = urllib.parse.quote(link, safe='/:')
+			open_url_in_old_tab(link)
+		elif language in collins_languages:
 			link = "https://www.collinsdictionary.com/dictionary/" + language + "-english/" + word
 			link = urllib.parse.quote(link, safe='/:')
 			#webbrowser.get('chrome').open(link)
 			open_url_in_old_tab(link)
-		else: # language == 'russian'
+		elif language == 'russian':
 			if language == 'russian':
 				word = remove_russian_accents(word)
 			link = "https://en.openrussian.org/ru/" + word
+			link = urllib.parse.quote(link, safe='/:')
+			open_url_in_old_tab(link)
+		else:
+			link = 'https://glosbe.com/' + get_language_code(language) + '/en/' + word
 			link = urllib.parse.quote(link, safe='/:')
 			open_url_in_old_tab(link)
 	if active_phrase and not editing:
