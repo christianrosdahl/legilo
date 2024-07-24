@@ -32,7 +32,7 @@ class LegiloTranslator():
         else:
             self.nlp = None
 
-    def translate(self, word, always_google_trans=False):
+    def translate(self, word, always_google_trans=False, is_phrase=False):
         results = self.parse_from_wiktionary(word)
         
         # Handle that nouns must be looked up with capital letter in German
@@ -43,7 +43,7 @@ class LegiloTranslator():
                 capitalized_word = word[0].upper() + word[1:]
             results += self.parse_from_wiktionary(capitalized_word)
 
-        if self.use_lemma:
+        if self.use_lemma and not is_phrase:
             lemma = self.get_lemma(word)
             lemmas_from_wiktionary = self.get_lemmas_from_results(results)
             lookup_words_from_result = self.get_lookup_words_from_results(results)
@@ -64,9 +64,9 @@ class LegiloTranslator():
         return results
     
     # Get word info, including translation, on the format used in Legilo
-    def get_info(self, word, include_word_info=True, include_etymology=True):
+    def get_info(self, word, include_word_info=True, include_etymology=True, is_phrase=False):
         remark_line_marker = '\u2022 '
-        translation = self.translate(word)
+        translation = self.translate(word, is_phrase=is_phrase)
         wordtypes = set()
         genders = set()
         lemmas = set()

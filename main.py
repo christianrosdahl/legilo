@@ -804,23 +804,9 @@ def side_field_show(word, info, status, do_pronounce=True):
 		gender_color(gender)
 	else:
 		text_word.configure(fg="black")
-	if not word_type == 'phrase':
-		insert_translation(trans)
-	else:
-		if 'personal_trans' in info:
-			text_trans.tag_configure("phrase_trans",
-							font=side_field_fonts['translation'],
-							background=side_field_fonts['personal_translation_background'])
-			trans = info['personal_trans']
-		else:
-			text_trans.tag_configure("phrase_trans",
-							font=side_field_fonts['translation'],
-							background=side_field_fonts['google_translate_background'])
-		text_trans.insert("1.0", trans, "phrase_trans")
-	has_text_in_remark = False
+	insert_translation(trans)
 	if 'remark' in info:
 		text_remark.insert(END, info['remark'])
-		has_text_in_remark = True
 	if 'sentence' in info and 'sentence_trans' in info:
 		insert_sentence(info['sentence'], info['sentence_trans'])
 	freeze_side_field()
@@ -860,8 +846,10 @@ def look_up(word, status):
 	active_looked_up = True
 
 def update_translation_for_showed_word():
+	global active_looked_up
+	global active_phrase
 	global info_for_showed_word
-	if active and active_looked_up:
+	if active_looked_up or active_phrase:
 		clear_translation_field()
 		insert_translation(info_for_showed_word['trans'])
 
@@ -901,77 +889,26 @@ def get_word_info():
 	sentence = remove_new_line_at_end(sentence)
 	sentence_trans = text_example.get("2.0","2.end")
 	sentence_trans = remove_new_line_at_end(sentence_trans)
-	if word_type == 'phrase':
-		trans = text_trans.get("1.0",END)
-		trans = remove_new_line_at_end(trans)
-		info = {'trans' : trans, 'word_type' : word_type, 'remark' : remark,
-		  		'sentence' : sentence, 'sentence_trans' : sentence_trans}
-	else:
-		info = info_for_showed_word
-		info['remark'] = remark
-		info['sentence'] = sentence
-		info['sentence_trans'] = sentence_trans
 
-	freeze_side_field()
-	return info
+	info = info_for_showed_word
+	info['remark'] = remark
+	info['sentence'] = sentence
+	info['sentence_trans'] = sentence_trans
 
-def get_phrase_info():
-	global text_word
-	global text_trans
-	global text_remark
-	edit_side_field()
-	phrase = text_word.get("1.0",END)
-	trans = text_trans.get("1.0",END)
-	remark = text_remark.get("1.0",END)
-	sentence = '' #text_example.get("1.0","1.end")
-	sentence_trans = '' #text_example.get("3.0","3.end")
-
-	# Remove newline at end
-	phrase = remove_new_line_at_end(phrase)
-	trans = remove_new_line_at_end(trans)
-	remark = remove_new_line_at_end(remark)
-	sentence = remove_new_line_at_end(sentence)
-	sentence_trans = remove_new_line_at_end(sentence_trans)
-
-	phrase_words = phrase.translate(str.maketrans("""'´’!"#$%&()*+,./:;<=>?@[]^_`{|}~«»“”„""", "                                     "))
-	phrase_words = phrase_words.lower().split()
-
-	info = {'phrase_words': phrase_words, 'word' : phrase, 'trans' : trans, 'word_type' : 'phrase', 'remark' : remark, 'sentence' : sentence, 'sentence_trans' : sentence_trans}
 	freeze_side_field()
 	return info
 
 # Add personal translation to info_for_showed_word
 def add_personal_translation_info_to_showed_word():
-	global active
 	global info_for_showed_word
 	global text_word
 	global text_personal_trans
-	global side_field_fonts
-	word_type = None
-	if 'word_type' in info_for_showed_word:
-		word_type = info_for_showed_word['word_type']
-		word_type = remove_new_line_at_end(word_type)
-	if word_type == 'phrase':
-		trans = remove_new_line_at_end(text_personal_trans.get('1.0', END))
-		if not len(trans) > 0:
-			if 'personal_trans' in info_for_showed_word:
-				del info_for_showed_word['personal_trans']
-		else:
-			info_for_showed_word['personal_trans'] = trans
-
-		if 'personal_trans' in info_for_showed_word:
-			color = side_field_fonts['personal_translation_background']
-			replace_phrase_translation(info_for_showed_word['personal_trans'], color)
-		else:
-			color = side_field_fonts['google_translate_background']
-			replace_phrase_translation(info_for_showed_word['trans'], color)
-	else:
-		trans = remove_new_line_at_end(text_personal_trans.get('1.0', END))
-		phrase = remove_new_line_at_end(text_word.get("1.0",END))
-		delete_personal_translation(info_for_showed_word['trans'])
-		if len(trans) > 0:
-			info_for_showed_word['trans'].append({'word': phrase, 'definitions': [{'definition': trans}], 'source': 'personal translation'})
-		update_translation_for_showed_word()
+	trans = remove_new_line_at_end(text_personal_trans.get('1.0', END))
+	word = remove_new_line_at_end(text_word.get("1.0",END))
+	delete_personal_translation(info_for_showed_word['trans'])
+	if len(trans) > 0:
+		info_for_showed_word['trans'].append({'word': word, 'definitions': [{'definition': trans}], 'source': 'personal translation'})
+	update_translation_for_showed_word()
 	text_personal_trans.delete("1.0", "end")
 
 # Add word to learning words
@@ -1423,35 +1360,25 @@ def edit_personal_translation(event):
 			# Forcing the order below gives a feeling of less flickering
 			text_trans.configure(state='normal')
 			w.update_idletasks()
-			w.after(100, text_trans.delete('1.0', '3.0'))
+			w.after(100, text_trans.delete('1.0', '3.0')) #TODO: Change this to handle multiple lines!
 			text_trans.configure(state='disabled')
 
 def get_current_personal_trans():
+	global active_looked_up
+	global active_phrase
 	global info_for_showed_word
 	if active_looked_up or active_phrase:
-		word_type = None
-		if 'word_type' in info_for_showed_word:
-			word_type = info_for_showed_word['word_type']
-		if word_type != 'phrase':
-			if 'trans' in info_for_showed_word:
-				return get_personal_translation(info_for_showed_word['trans'])
-		else:
-			if 'personal_trans' in info_for_showed_word:
-				return info_for_showed_word['personal_trans']
+		if 'trans' in info_for_showed_word:
+			return get_personal_translation(info_for_showed_word['trans'])
 	return None
 
 def delete_current_personal_trans():
+	global active_looked_up
+	global active_phrase
 	global info_for_showed_word
 	if active_looked_up or active_phrase:
-		word_type = None
-		if 'word_type' in info_for_showed_word:
-			word_type = info_for_showed_word['word_type']
-		if word_type != 'phrase':
-			if 'trans' in info_for_showed_word:
-				delete_personal_translation(info_for_showed_word['trans'])
-		else:
-			if 'personal_trans' in info_for_showed_word:
-				del info_for_showed_word['personal_trans']
+		if 'trans' in info_for_showed_word:
+			delete_personal_translation(info_for_showed_word['trans'])
 	return None
 
 def change_remark(event):
@@ -1665,14 +1592,13 @@ def add_third_lang_trans(event):
 	global text_remark
 	global remark_without_third_lang
 	global last_word_translated_to_third_lang
-	global active
 	global active_looked_up
 	global active_phrase
 	global editing
 	global info_for_showed_word
 
-	if active and active_looked_up and not editing:
-		word = active['word']
+	if active_looked_up or active_phrase and not editing:
+		word = info_for_showed_word['dictword']
 		trans = info_for_showed_word['trans']
 		edit_side_field()
 		# Remove translation if already added
@@ -1699,13 +1625,15 @@ def add_third_lang_trans(event):
 # Add a Google translation to the definitions of the word and show in the side field.
 # Reverse if Google translation already is added.
 def add_google_trans(event):
+	global active_looked_up
+	global active_phrase
 	global info_for_showed_word
 	global editing
-	if active and active_looked_up and not editing:
+	if active_looked_up or active_phrase and not editing:
 		has_google_trans = has_google_translation(info_for_showed_word['trans'])
 		trans_list = info_for_showed_word['trans']
 		if not has_google_trans:
-			google_trans = legilo_translator.get_google_translation(active['word'])
+			google_trans = legilo_translator.get_google_translation(info_for_showed_word['dictword'])
 			trans_list += google_trans
 		else:
 			delete_google_translation(trans_list)
@@ -1949,6 +1877,7 @@ def new_phrase(word_tag1, word_tag2, do_pronounce=True):
 	global active_looked_up
 	global active_phrase
 	global active_phrase_is_new
+	global legilo_translator
 
 	active_phrase_is_new = True
 
@@ -1980,9 +1909,9 @@ def new_phrase(word_tag1, word_tag2, do_pronounce=True):
 		for word_num in range(min(word_num1, word_num2), max(word_num1, word_num2)+1):
 			phrase_words.append(line_words[word_num])
 
-		translator = Translator()
-		trans = translator.translate(phrase, src=get_language_code(language), dest='en').text
-		info = {'phrase_words': phrase_words, 'word' : phrase, 'trans' : trans, 'word_type' : 'phrase'}
+		info = legilo_translator.get_info(phrase, is_phrase=True)
+		info['word_type'] = 'phrase'
+		info['phrase_words'] = phrase_words
 		(sentence, sentence_trans) = get_first_sentence(phrase, language)
 		if len(sentence) > 0:
 			info['sentence'] = sentence
