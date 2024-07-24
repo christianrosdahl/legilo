@@ -11,6 +11,9 @@ New words are words that haven't been seen previously in any text. Learning word
 When reading a text, you iterate through the new and learning words using the keyboard (see below). The current word is marked with an orange background. You can look up a marked word easily or change the label of it using the keyboard as well.
 
 # How to use it?
+## Disclaimer
+The program has only been tested for macOS, and it is unclear if it will work on other operating systems without further modifications. The code is unfortunately not very well organized (I was a beginner in Python programming when starting this project), and there are probably many unfound bugs left. I made the program for my personal use, and there are no guarantees that it will work well for anyone else. However, you are very welcome to try it out on your own risk.
+
 ## Get started
 Start by downloading the files, e.g. using `git clone` or clicking the green button "Code" at the top of this page, choosing "Download ZIP" and unzipping the downloaded files. Then navigate to the folder in the terminal (type `cd <path to the folder with the files>`). After that, you type `./run.sh` and press <kbd>⏎</kbd>. This will activate a Python virtual environment (it is created if it doesn't exist already), and make sure that all necessary dependencies are installed in this virtual environment. After that, the program UI will open up in a window.
 
