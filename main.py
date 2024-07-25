@@ -1916,6 +1916,63 @@ def definitions_to_list(translations):
 	
 	return def_strings
 
+def activate_general_word_selection_mode():
+	global editing
+	global general_word_selection_mode
+	global selected_tag1
+	global saved_tag_config1
+	if active and not editing:
+		general_word_selection_mode = True
+		selected_tag1 = str(active['line']) + '.' + str(active['word_num'])
+		mark_word(active['line'], active['word_num'], active['status'])
+		saved_tag_config1 = {'tag': selected_tag1, 'config': save_tag_config(selected_tag1)}
+		mark_word(active['line'], active['word_num'], 'active')
+
+def deactivate_general_word_selection_mode(event):
+	global general_word_selection_mode
+	global selected_tag1
+	global saved_tag_config1
+	if general_word_selection_mode:
+		general_word_selection_mode = False
+		if move_back_when_clicking_previous:
+			handle_active_phrases()
+			handle_active_words()
+			go_to_start()
+		skip_to_word(selected_tag1)
+		selected_tag1 = None
+		saved_tag_config1 = None
+
+def general_word_selection_left(event):
+	global editing
+	global general_word_selection_mode
+	global selected_tag1
+	global saved_tag_config1
+	if not editing:
+		if not general_word_selection_mode:
+			activate_general_word_selection_mode()
+		prev_tag = get_previous_tag(selected_tag1)
+		if prev_tag:
+			apply_tag_config(saved_tag_config1['tag'], saved_tag_config1['config'])
+			selected_tag1 = prev_tag
+			line, word_num = [int(i) for i in selected_tag1.split('.')]
+			saved_tag_config1 = {'tag': selected_tag1, 'config': save_tag_config(selected_tag1)}
+			mark_word(line, word_num, 'active')
+
+def general_word_selection_right(event):
+	global editing
+	global general_word_selection_mode
+	global selected_tag1
+	global saved_tag_config1
+	if not editing:
+		if not general_word_selection_mode:
+			activate_general_word_selection_mode()
+		next_tag = get_next_tag(selected_tag1)
+		if next_tag:
+			apply_tag_config(saved_tag_config1['tag'], saved_tag_config1['config'])
+			selected_tag1 = next_tag
+			line, word_num = [int(i) for i in selected_tag1.split('.')]
+			saved_tag_config1 = {'tag': selected_tag1, 'config': save_tag_config(selected_tag1)}
+			mark_word(line, word_num, 'active')
 
 def activate_phrase_mode(event):
 	global editing
@@ -1931,12 +1988,12 @@ def activate_phrase_mode(event):
 		phrase_mode = True
 		text.config(cursor='dot')
 		selected_phrase_words = []
-	
-	if active:
-		selected_tag1 = str(active['line']) + '.' + str(active['word_num'])
-		mark_word(active['line'], active['word_num'], active['status'])
-		saved_tag_config1 = {'tag': selected_tag1, 'config': save_tag_config(selected_tag1)}
-		mark_word(active['line'], active['word_num'], 'selection')
+
+		if active:
+			selected_tag1 = str(active['line']) + '.' + str(active['word_num'])
+			mark_word(active['line'], active['word_num'], active['status'])
+			saved_tag_config1 = {'tag': selected_tag1, 'config': save_tag_config(selected_tag1)}
+			mark_word(active['line'], active['word_num'], 'selection')
 
 def deactivate_phrase_mode(event=None):
 	global editing
@@ -2610,6 +2667,7 @@ def run(language, text_file):
 	global active_phrase_is_new
 	global last_pronounced
 	global editing
+	global general_word_selection_mode
 	global phrase_mode
 	global selected_phrase_words
 	global word_queue
@@ -2636,7 +2694,8 @@ def run(language, text_file):
 	active_phrase_is_new = False # The active phrase is new (not yet saved)
 	last_pronounced = False # Last pronounced word
 	editing = False # Editing text fields
-	phrase_mode = False # phrase mode active
+	general_word_selection_mode = False # General word selection mode active
+	phrase_mode = False # Phrase mode active
 	selected_phrase_words = [] # List of selected phrase words
 	selected_tag1 = None # First keyboard selected word tag in phrase mode
 	selected_tag2 = None # Second keyboard selected word tag in phrase mode
@@ -2971,6 +3030,9 @@ def run(language, text_file):
 	w.bind("<g>", open_google)
 	w.bind("<f>", open_google_images)
 	w.bind("<l>", open_wikipedia)
+	w.bind("<KeyRelease-Shift_L>", deactivate_general_word_selection_mode)
+	w.bind("<Shift-Left>", general_word_selection_left)
+	w.bind("<Shift-Right>", general_word_selection_right)
 	w.bind("<Meta_L>", activate_phrase_mode)
 	w.bind("<KeyRelease-Meta_L>", deactivate_phrase_mode)
 	w.bind("<Command-Key-Left>", phrase_word_selection_left)
