@@ -3002,27 +3002,51 @@ def run(language, text_file):
 	w.protocol("WM_DELETE_WINDOW", quit_program)
 
 	# Add key bindings
+	## General
 	w.bind("<Right>", go_to_next)
+	w.bind("<space>", go_to_next)
+	w.bind("<n>", go_to_next)
 	w.bind("<Up>", enter)
-	w.bind("<Down>", known)
-	w.bind("<Left>", go_to_previous_learning_word)
 	w.bind("<Return>", enter)
-	w.bind("<space>", pronounce_next)
-	w.bind("<BackSpace>", ignore)
+	w.bind("<Down>", known)
 	w.bind("<k>", known)
+	w.bind("<Left>", go_to_previous_learning_word)
+	w.bind("<BackSpace>", ignore)
 	w.bind("<x>", ignore)
-	w.bind("<a>", mark_sentence_as_phrase)
-	w.bind("<p>", pronounce_active_word)
+	w.bind("<i>", edit_personal_translation)
 	w.bind("<r>", change_remark)
+	w.bind("<p>", pronounce_active_word)
+	w.bind("<.>", pronounce_active_word)
+	w.bind("<s>", add_third_lang_trans)
+	w.bind("<t>", add_google_trans)
+	w.bind("<a>", mark_sentence_as_phrase)
 	w.bind("<b>", repeat_learning_words)
+
+	## Scrolling
 	w.bind("<Command-Key-Down>", scroll_down)
 	w.bind("<Command-Key-Up>", scroll_up)
 	w.bind("<Shift-Down>", scroll_down_translation)
 	w.bind("<Shift-Up>", scroll_up_translation)
 	w.bind("<Option-Down>", scroll_down_remark)
 	w.bind("<Option-Up>", scroll_up_remark)
-	w.bind("<s>", add_third_lang_trans)
-	w.bind("<t>", add_google_trans)
+
+	## Phrase mode
+	w.bind("<Meta_L>", activate_phrase_mode)
+	w.bind("<KeyRelease-Meta_L>", deactivate_phrase_mode)
+	w.bind("<Command-Key-Left>", phrase_word_selection_left)
+	w.bind("<Command-Key-Right>", phrase_word_selection_right)
+
+	## General word selection
+	w.bind("<Shift-Left>", general_word_selection_left)
+	w.bind("<Shift-Right>", general_word_selection_right)
+	w.bind("<KeyRelease-Shift_L>", deactivate_general_word_selection_mode)
+
+	## Saving
+	w.bind("<Command-Key-s>", save_lists)
+	w.bind("<Command-Key-t>", save_listsastxt)
+	w.bind("<Command-Key-x>", quit_without_saving)
+
+	## Open external resources
 	w.bind("<d>", open_dictionary)
 	w.bind("<v>", open_verb_conjugation)
 	w.bind("<w>", open_wiktionary)
@@ -3030,21 +3054,8 @@ def run(language, text_file):
 	w.bind("<g>", open_google)
 	w.bind("<f>", open_google_images)
 	w.bind("<l>", open_wikipedia)
-	w.bind("<KeyRelease-Shift_L>", deactivate_general_word_selection_mode)
-	w.bind("<Shift-Left>", general_word_selection_left)
-	w.bind("<Shift-Right>", general_word_selection_right)
-	w.bind("<Meta_L>", activate_phrase_mode)
-	w.bind("<KeyRelease-Meta_L>", deactivate_phrase_mode)
-	w.bind("<Command-Key-Left>", phrase_word_selection_left)
-	w.bind("<Command-Key-Right>", phrase_word_selection_right)
-	w.bind("<Command-Key-s>", save_lists)
-	w.bind("<Command-Key-t>", save_listsastxt)
-	w.bind("<Command-Key-x>", quit_without_saving)
-	w.bind("<n>", pronounce_next)
-	w.bind("<.>", pronounce_next)
-	w.bind("<j>", enter)
-	w.bind("<i>", edit_personal_translation)
 
+	## Edit personal translation and remark
 	text_remark.bind("<Button-1>", change_remark)
 
 	text_personal_trans.bind("<Return>", enter_in_personal_translation_field)
@@ -3056,6 +3067,7 @@ def run(language, text_file):
 	text_personal_trans.bind("<Command-Key-BackSpace>", empty_text_field1)
 	text_remark.bind("<Command-Key-BackSpace>", empty_text_field2)
 
+	## Select example sentence
 	w.bind("1", select_sentence)
 	w.bind("2", select_sentence)
 	w.bind("3", select_sentence)
