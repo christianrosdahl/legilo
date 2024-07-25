@@ -47,9 +47,9 @@ class LegiloTranslator():
             lemma = self.get_lemma(word)
             lemmas_from_wiktionary = self.get_lemmas_from_results(results)
             lookup_words_from_result = self.get_lookup_words_from_results(results)
-            if (lemma != word and
-                not lemma in lemmas_from_wiktionary and
-                not lemma in lookup_words_from_result):
+            if (lemma.lower() != word.lower() and
+                not lemma.lower() in lemmas_from_wiktionary and
+                not lemma.lower() in lookup_words_from_result):
                 results = results + self.parse_from_wiktionary(lemma)
         
         if len(results) == 0:
@@ -57,7 +57,7 @@ class LegiloTranslator():
 
         # If the specific form wasn't found in Wiktionary, add traslation of this first.
         # If 'always_google_trans' is True, this is done anyway.
-        if (self.remove_accents(word) not in self.get_lookup_words_from_results(results)
+        if (self.remove_accents(word).lower() not in self.get_lookup_words_from_results(results)
             or always_google_trans):
             results = self.get_google_translation(word) + results
         
@@ -136,7 +136,7 @@ class LegiloTranslator():
         lemmas = set()
         for item in results:
             if 'lemma' in item:
-                lemmas.add(item['lemma'])
+                lemmas.add(item['lemma'].lower())
         return lemmas
     
     def get_lookup_words_from_results(self, results):
@@ -144,7 +144,7 @@ class LegiloTranslator():
         for item in results:
             if 'word' in item:
                 # Words sometimes have extra accents for pronunciation
-                word = self.remove_accents(item['word'])
+                word = self.remove_accents(item['word']).lower()
                 words.add(word)
         return words
 
