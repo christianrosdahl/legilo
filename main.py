@@ -671,24 +671,24 @@ def gender_color(gender):
 	gender_colors = {'m': 'blue', 'f': 'red', 'n': 'green', 'c': 'purple'}
 	# Only set gender color if gender is unique and gender_color is defined
 	if not gender in gender_colors:
-		text_word.configure(fg='black')
+		text_word.configure(foreground='black')
 		return
 
 	if language in ['croatian', 'french', 'italian', 'spanish', 'swedish', 'russian']:
-		text_word.configure(fg=gender_colors[gender])
+		text_word.configure(foreground=gender_colors[gender])
 	if language in ['german']:
 		verb = False
 		word = text_word.get('1.0','end')
 		if ',' in word:
 			verb = True
 		if not verb:
-			text_word.configure(fg=gender_colors[gender])
+			text_word.configure(foreground=gender_colors[gender])
 		else:
-			nounandverb = word.split(',')
-			nounlength = len(nounandverb[0])
-			text_word.configure(fg='black')
-			text_word.tag_add('noun', '1.0', '1.' + str(nounlength))
-			text_word.tag_configure('noun', fg=gender_colors[gender])
+			noun_and_verb = word.split(',')
+			noun_length = len(noun_and_verb[0])
+			text_word.configure(foreground='black')
+			text_word.tag_add('noun', '1.0', '1.' + str(noun_length))
+			text_word.tag_configure('noun', foreground=gender_colors[gender])
 			
 
 # Insert example sentence
