@@ -44,6 +44,7 @@ active_color = 'orange'
 learning_color = '#fde367' #'yellow' macyellow:'#facd5a'
 new_color = '#cce6ff' #'#a3daf0'#'lightblue' macblue: '#69aff1'
 known_color = '#b0fc81', #'#9ffa66' #'lightgreen'
+selection_color = '#b0fc81' # Color for selector in phrase mode
 
 # Font
 font = 'Avant Garde' #'Museo Sans Rounded', 'Bookman', 'Georgia', 'Helvetica', 'Avant Garde'
@@ -304,71 +305,85 @@ def find_old_phrase(tag):
 # Handle mouse click in text field
 def mouse_click(event):
 	global active
-	global active_looked_up
-	global active_phrase
 	global phrase_mode
-	global selected_phrase_words
-	# For phrase mode:
+
 	if phrase_mode:
-		word_tags = text.tag_names(text.index(CURRENT))
-		is_old_phrase = False
-		for tag in word_tags:
-			if 'p' in tag:
-				is_old_phrase = True
-		# If old phrase
-		if is_old_phrase:
-			selected_phrase_words = [] # Cancel selection of new phrase
-			# Mark and save previous phrase
-			handle_active_phrases()
-			# Put back active word in queue and clear side field
-			handle_active_words()
-
-			# Show old phrase
-			for tag in word_tags:
-				if 'p' in tag:
-					phrase_tag = tag
-
-			(phrase, info, line, word_num1, word_num2) = find_old_phrase(phrase_tag)
-
-			active_phrase = {'phrase_words' : info['phrase_words'], 'line' : line, 'startword_num' : word_num1, 'endword_num' : word_num2}
-			mark_phrase(active_phrase['line'], active_phrase['startword_num'], 'active')
-			side_field_show(phrase, info, 'learning phrase')
-
-		# If new phrase
-		else: 
+		handle_selected_phrase_word(selected_by_mouse=True)
+	else:
+		if consider_phrases:
+			word_tags = text.tag_names(text.index(CURRENT))
 			# Choose tag for word, not for phrase:
 			for tag in word_tags:
 				if 'p' not in tag and 'l' not in tag:
 					word_tag = tag
+					break
+		else:
+			word_tag = text.tag_names(text.index(CURRENT))[0]
 
-			selected_phrase_words.append(word_tag)
-			# If two words are selected so that a new phrase can be created
-			if len(selected_phrase_words) > 1:
-				# Mark and save previous phrase
-				handle_active_phrases()
-				handle_active_words()
-				new_phrase(selected_phrase_words[0], selected_phrase_words[1])
-				selected_phrase_words = [] # Restore selected phrase words list
-		return
+		if move_back_when_clicking_previous:
+			handle_active_phrases()
+			handle_active_words()
+			go_to_start()
 
-	# If not in phrase mode:
-	if consider_phrases:
+		skip_to_word(word_tag)
+		look_up(active['word'], active['status'])
+
+def handle_selected_phrase_word(selected_by_mouse=False):
+	global text
+	global active_phrase
+	global selected_phrase_words
+	global selected_tag1
+	global selected_tag2
+
+	if selected_by_mouse:
 		word_tags = text.tag_names(text.index(CURRENT))
+	else:
+		if len(selected_phrase_words) == 0:
+			word_tags = get_containing_tags(selected_tag1) + [selected_tag1]
+		else:
+			word_tags = get_containing_tags(selected_tag2) + [selected_tag2]
+	is_old_phrase = False
+	for tag in word_tags:
+		if 'p' in tag:
+			is_old_phrase = True
+	
+	# If old phrase
+	if is_old_phrase:
+		selected_phrase_words = [] # Cancel selection of new phrase
+		# Mark and save previous phrase
+		handle_active_phrases()
+		# Put back active word in queue and clear side field
+		handle_active_words()
+
+		# Show old phrase
+		for tag in word_tags:
+			if 'p' in tag:
+				phrase_tag = tag
+
+		(phrase, info, line, word_num1, word_num2) = find_old_phrase(phrase_tag)
+
+		active_phrase = {'phrase_words' : info['phrase_words'], 'line' : line, 'startword_num' : word_num1, 'endword_num' : word_num2}
+		mark_phrase(active_phrase['line'], active_phrase['startword_num'], 'active')
+		deactivate_phrase_mode()
+		side_field_show(phrase, info, 'learning phrase')
+
+	# If new phrase
+	else: 
 		# Choose tag for word, not for phrase:
 		for tag in word_tags:
 			if 'p' not in tag and 'l' not in tag:
 				word_tag = tag
-				break
-	else:
-		word_tag = text.tag_names(text.index(CURRENT))[0]
 
-	if move_back_when_clicking_previous:
-		handle_active_phrases()
-		handle_active_words()
-		go_to_start()
-
-	skip_to_word(word_tag)
-	look_up(active['word'], active['status'])
+		selected_phrase_words.append(word_tag)
+		# If two words are selected so that a new phrase can be created
+		if len(selected_phrase_words) > 1:
+			# Mark and save previous phrase
+			handle_active_phrases()
+			handle_active_words()
+			first_phrase_word = selected_phrase_words[0]
+			second_phrase_word = selected_phrase_words[1]
+			deactivate_phrase_mode()
+			new_phrase(first_phrase_word, second_phrase_word)
 
 # Skip to word with word tag `word_tag`
 def skip_to_word(word_tag, scroll_to_word=False):
@@ -434,6 +449,8 @@ def mark_word(line, word_num, status):
 		text.tag_config(str(line) + "." + str(word_num), background="white")
 	elif status == 'active':
 		text.tag_config(str(line) + "." + str(word_num), background=active_color)
+	elif status == 'selection':
+		text.tag_config(str(line) + "." + str(word_num), background=selection_color)
 
 # Mark all instances of a word
 def mark_all_instances(word, status):
@@ -523,6 +540,54 @@ def unset_active_word():
 	active_looked_up = False
 	clear_side_field()
 
+# Retrieve tag configuration and convert it to a dictionary
+def save_tag_config(tag_name):
+	global text
+	config = text.tag_configure(tag_name)
+	tag_config = {option: config[option][4] for option in config}
+	return tag_config
+
+# Apply the saved tag configuration to the specified tag
+def apply_tag_config(tag_name, tag_config):
+	global text
+	for option, value in tag_config.items():
+		text.tag_configure(tag_name, **{option: value})
+
+# Get a list with all other tags that contain a tag
+def get_containing_tags(word_tag):
+	global text
+	# Get the range of the specific tag
+	word_tag_ranges = text.tag_ranges(word_tag)
+
+	if len(word_tag_ranges) < 2:
+		return []  # If the specific tag has no range, return an empty list
+    
+	word_tag_start = word_tag_ranges[0]
+	word_tag_end = word_tag_ranges[1]
+
+	# Get all tags in the text widget
+	all_tags = text.tag_names()
+
+	# List to store tags that contain the specific tag
+	containing_tags = []
+
+	for tag in all_tags:
+		if tag == word_tag:
+			continue  # Skip the specific tag itself
+
+		# Get the ranges of the current tag
+		tag_ranges = text.tag_ranges(tag)
+		for i in range(0, len(tag_ranges), 2):
+			tag_start = tag_ranges[i]
+			tag_end = tag_ranges[i+1]
+
+			# Check if specific tag is fully contained within the current tag
+			if (text.compare(tag_start, '<=', word_tag_start) and
+				text.compare(tag_end, '>=', word_tag_end)):
+				containing_tags.append(tag)
+				break  # No need to check further ranges for this tag
+
+	return containing_tags
 
 # Remove possible focus on text fields
 def unfocus():
@@ -1079,6 +1144,7 @@ def center_window(window, width, height):
 
 # When pressing space
 def go_to_next(event):
+	global editing
 	global active
 	global active_looked_up
 	global word_queue
@@ -1104,13 +1170,17 @@ def enter(event):
 	global word_queue
 	global removed_from_queue
 	global editing
+	global phrase_mode
 	if not editing:
-		if active and not active_looked_up:
-			look_up(active['word'], active['status'])
+		if phrase_mode:
+			enter_in_phrase_mode()
 		else:
-			handle_active_phrases(save_new=True)
-			handle_active_words()
-			set_next_to_active()
+			if active and not active_looked_up:
+				look_up(active['word'], active['status'])
+			else:
+				handle_active_phrases(save_new=True)
+				handle_active_words()
+				set_next_to_active()
 
 def ignore(event):
 	global active
@@ -1851,29 +1921,142 @@ def activate_phrase_mode(event):
 	global editing
 	global text
 	global phrase_mode
-	global considerphrase_mode
 	global phrase_click_binding
 	global selected_phrase_words
+	global selected_tag1
+	global saved_tag_config1
 
 	if consider_phrases and not editing:
 		global phrase_mode
 		phrase_mode = True
 		text.config(cursor='dot')
 		selected_phrase_words = []
+	
+	if active:
+		selected_tag1 = str(active['line']) + '.' + str(active['word_num'])
+		mark_word(active['line'], active['word_num'], active['status'])
+		saved_tag_config1 = {'tag': selected_tag1, 'config': save_tag_config(selected_tag1)}
+		mark_word(active['line'], active['word_num'], 'selection')
 
-def deactivate_phrase_mode(event):
+def deactivate_phrase_mode(event=None):
 	global editing
 	global text
+	global active
 	global phrase_mode
-	global considerphrase_mode
 	global phrase_click_binding
 	global selected_phrase_words
+	global selected_tag1
+	global selected_tag2
+	global saved_tag_config1
+	global saved_tag_config2
 
 	if consider_phrases and not editing:
 		global phrase_mode
 		text.config(cursor='arrow')
 		selected_phrase_words = []
+		if saved_tag_config1:
+			apply_tag_config(saved_tag_config1['tag'], saved_tag_config1['config'])
+			saved_tag_config1 = None
+		if saved_tag_config2:
+			apply_tag_config(saved_tag_config2['tag'], saved_tag_config2['config'])
+			saved_tag_config2 = None
+		if active:
+			mark_word(active['line'], active['word_num'], 'active')
+		selected_tag1 = None
+		selected_tag2 = None
 		phrase_mode = False
+
+def phrase_word_selection_left(event):
+	global active
+	global selected_phrase_words
+	if active:
+		if len(selected_phrase_words) == 0:
+			move_selection_to_prev(1)
+		else:
+			move_selection_to_prev(2)
+
+def phrase_word_selection_right(event):
+	global active
+	global selected_phrase_words
+	if active:
+		if len(selected_phrase_words) == 0:
+			move_selection_to_next(1)
+		else:
+			move_selection_to_next(2)
+
+def move_selection_to_prev(selection_num):
+	global selected_tag1
+	global selected_tag2
+	global saved_tag_config1
+	global saved_tag_config2
+	if selection_num == 1:
+		prev_tag = get_previous_tag(selected_tag1)
+		if prev_tag:
+			apply_tag_config(saved_tag_config1['tag'], saved_tag_config1['config'])
+			selected_tag1 = prev_tag
+			line, word_num = [int(i) for i in selected_tag1.split('.')]
+			saved_tag_config1 = {'tag': selected_tag1, 'config': save_tag_config(selected_tag1)}
+			mark_word(line, word_num, 'selection')
+	elif selection_num == 2:
+		prev_tag = get_previous_tag(selected_tag2)
+		if prev_tag:
+			apply_tag_config(saved_tag_config2['tag'], saved_tag_config2['config'])
+			selected_tag2 = prev_tag
+			line, word_num = [int(i) for i in selected_tag2.split('.')]
+			saved_tag_config2 = {'tag': selected_tag2, 'config': save_tag_config(selected_tag2)}
+			mark_word(line, word_num, 'selection')
+
+def move_selection_to_next(selection_num):
+	global selected_tag1
+	global selected_tag2
+	global saved_tag_config1
+	global saved_tag_config2
+	if selection_num == 1:
+		next_tag = get_next_tag(selected_tag1)
+		if next_tag:
+			apply_tag_config(saved_tag_config1['tag'], saved_tag_config1['config'])
+			selected_tag1 = next_tag
+			line, word_num = [int(i) for i in selected_tag1.split('.')]
+			saved_tag_config1 = {'tag': selected_tag1, 'config': save_tag_config(selected_tag1)}
+			mark_word(line, word_num, 'selection')
+	elif selection_num == 2:
+		next_tag = get_next_tag(selected_tag2)
+		if next_tag:
+			apply_tag_config(saved_tag_config2['tag'], saved_tag_config2['config'])
+			selected_tag2 = next_tag
+			line, word_num = [int(i) for i in selected_tag2.split('.')]
+			saved_tag_config2 = {'tag': selected_tag2, 'config': save_tag_config(selected_tag2)}
+			mark_word(line, word_num, 'selection')
+
+def get_previous_tag(tag):
+	global ordered_word_tags
+	prev_index = ordered_word_tags.index(tag) - 1
+	if prev_index >= 0 and prev_index < len(ordered_word_tags):
+		return ordered_word_tags[prev_index]
+	return None
+
+def get_next_tag(tag):
+	global ordered_word_tags
+	next_index = ordered_word_tags.index(tag) + 1
+	if next_index >= 0 and next_index < len(ordered_word_tags):
+		return ordered_word_tags[next_index]
+	return None
+
+def enter_in_phrase_mode():
+	global active
+	global selected_phrase_words
+	global selected_tag1
+	global selected_tag2
+	global saved_tag_config2
+	handle_selected_phrase_word()
+	if active and len(selected_phrase_words) == 1:
+		line1, word_num1 = [int(i) for i in selected_tag1.split('.')]
+		mark_word(line1, word_num1, 'selection')
+		selected_tag2 = str(active['line']) + '.' + str(active['word_num'])
+		if not selected_tag2 == selected_tag1:
+			mark_word(active['line'], active['word_num'], active['status'])
+		saved_tag_config2 = {'tag': selected_tag2, 'config': save_tag_config(selected_tag2)}
+		mark_word(active['line'], active['word_num'], 'selection')
 
 def new_phrase(word_tag1, word_tag2, do_pronounce=True):
 	global active
@@ -2406,6 +2589,8 @@ def run(language, text_file):
 	global text_words
 	global word_start
 	global word_end
+	global ordered_word_tags
+
 	global text_status
 	global text_word
 	global text_personal_trans
@@ -2430,6 +2615,10 @@ def run(language, text_file):
 	global word_queue
 	global removed_from_queue
 	global text_phrases
+	global selected_tag1
+	global selected_tag2
+	global saved_tag_config1
+	global saved_tag_config2
 
 	global legilo_translator
 
@@ -2449,6 +2638,10 @@ def run(language, text_file):
 	editing = False # Editing text fields
 	phrase_mode = False # phrase mode active
 	selected_phrase_words = [] # List of selected phrase words
+	selected_tag1 = None # First keyboard selected word tag in phrase mode
+	selected_tag2 = None # Second keyboard selected word tag in phrase mode
+	saved_tag_config1 = None # Saved original tag config for selected_tag1
+	saved_tag_config2 = None # Saved original tag config for selected_tag2
 
 	word_queue = [] # Word queue
 	removed_from_queue = [] # Words removed from queue
@@ -2650,6 +2843,7 @@ def run(language, text_file):
 	text_words = [None]*nbr_lines
 	word_start = [None]*nbr_lines
 	word_end = [None]*nbr_lines
+	ordered_word_tags = []
 	word_count = 0
 	for i in range(nbr_lines): # Go through the lines
 		line = lines[i]
@@ -2659,10 +2853,10 @@ def run(language, text_file):
 		line = line.translate(str.maketrans("""'´’!"#$%&()*+,./:;<=>?@[]^_`{|}~«»“”„""", "                                     ", chars_to_remove))
 		rest_of_line = line
 		line_words = line.split()
-		numline_words = len(line_words)
-		text_words[i] = [None]*numline_words
-		word_start[i] = [None]*numline_words
-		word_end[i] = [None]*numline_words
+		num_line_words = len(line_words)
+		text_words[i] = [None]*num_line_words
+		word_start[i] = [None]*num_line_words
+		word_end[i] = [None]*num_line_words
 		char_count = 0
 		line_phrases = []
 		for j, word in enumerate(line_words):
@@ -2674,8 +2868,11 @@ def run(language, text_file):
 			word_end[i][j] = str(i+1) + "." + str(char_count + len(word))
 			char_count = char_count + len(word)
 			word_queue.append({'index' : word_count, 'word' : word, 'line' : i+1, 'word_num' : j})
-			text.tag_add(str(i+1) + "." + str(j), word_start[i][j], word_end[i][j])
-			text.tag_bind(str(i+1) + "." + str(j), "<Button-1>", mouse_click)
+			word_tag = str(i+1) + "." + str(j)
+			ordered_word_tags.append(word_tag)
+			text.tag_add(word_tag, word_start[i][j], word_end[i][j])
+			text.tag_configure(word_tag, wrap='word')
+			text.tag_bind(word_tag, "<Button-1>", mouse_click)
 
 			# If word is in start of an phrase:
 			if consider_phrases:
@@ -2683,7 +2880,7 @@ def run(language, text_file):
 					phrases_list = phrases[word]
 					for phrase in phrases_list:
 						phrase_words = phrase['phrase_words']
-						if len(phrase_words) <= numline_words - j:
+						if len(phrase_words) <= num_line_words - j:
 							for k, exp_word in enumerate(phrase_words):
 								if exp_word == line_words[j+k]:
 									matching_phrases = True
@@ -2761,10 +2958,10 @@ def run(language, text_file):
 	w.bind("<b>", repeat_learning_words)
 	w.bind("<Command-Key-Down>", scroll_down)
 	w.bind("<Command-Key-Up>", scroll_up)
-	w.bind("<Command-Key-Right>", scroll_down_translation)
-	w.bind("<Command-Key-Left>", scroll_up_translation)
-	w.bind("<Option-Right>", scroll_down_remark)
-	w.bind("<Option-Left>", scroll_up_remark)
+	w.bind("<Shift-Down>", scroll_down_translation)
+	w.bind("<Shift-Up>", scroll_up_translation)
+	w.bind("<Option-Down>", scroll_down_remark)
+	w.bind("<Option-Up>", scroll_up_remark)
 	w.bind("<s>", add_third_lang_trans)
 	w.bind("<t>", add_google_trans)
 	w.bind("<d>", open_dictionary)
@@ -2776,6 +2973,8 @@ def run(language, text_file):
 	w.bind("<l>", open_wikipedia)
 	w.bind("<Meta_L>", activate_phrase_mode)
 	w.bind("<KeyRelease-Meta_L>", deactivate_phrase_mode)
+	w.bind("<Command-Key-Left>", phrase_word_selection_left)
+	w.bind("<Command-Key-Right>", phrase_word_selection_right)
 	w.bind("<Command-Key-s>", save_lists)
 	w.bind("<Command-Key-t>", save_listsastxt)
 	w.bind("<Command-Key-x>", quit_without_saving)
