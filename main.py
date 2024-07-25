@@ -835,11 +835,11 @@ def side_field_show(word, info, status, do_pronounce=True):
 		word_is_variant = 'lemmas' in info
 
 	# Write german nouns with initial capital letter and article
-	if language == 'german' and 'noun' in word_type and len(word) > 0:
+	if language == 'german' and word_type and 'noun' in word_type:
 		if not 'verb' in word_type:
-			word = word[0].upper() + word[1:]
+			word = word.capitalize()
 		else:
-			word = word[0].upper() + word[1:] + ', ' + word
+			word = word.capitalize() + ', ' + word
 
 	has_unique_gender = False
 	if 'gender' in info:
@@ -1563,7 +1563,7 @@ def add_third_lang_trans(event):
 	global info_for_showed_word
 
 	if (active_looked_up or active_phrase) and not editing:
-		word = info_for_showed_word['dictword']
+		word = info_for_showed_word['dict_word']
 		trans = info_for_showed_word['trans']
 		edit_side_field()
 		# Remove translation if already added
@@ -1598,7 +1598,7 @@ def add_google_trans(event):
 		has_google_trans = has_google_translation(info_for_showed_word['trans'])
 		trans_list = info_for_showed_word['trans']
 		if not has_google_trans:
-			google_trans = legilo_translator.get_google_translation(info_for_showed_word['dictword'])
+			google_trans = legilo_translator.get_google_translation(info_for_showed_word['dict_word'])
 			trans_list += google_trans
 		else:
 			delete_google_translation(trans_list)

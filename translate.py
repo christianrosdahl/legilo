@@ -96,9 +96,9 @@ class LegiloTranslator():
                     remarks.append(remark_line_marker + item['word_info'])
             if 'etymology' in item:
                 etymologies.append(remark_line_marker + f'Etymology {i+1}: ' + item['etymology'])
-        info = {'dictword' : word, 'trans': translation}
+        info = {'dict_word' : word, 'trans': translation}
         if len(wordtypes) > 0:
-            info['wordtype'] = ', '.join(wordtypes)
+            info['word_type'] = ', '.join(wordtypes)
         if len(genders) > 0:
             info['gender'] = ', '.join(genders)
         if len(lemmas) > 0:
