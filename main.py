@@ -674,6 +674,7 @@ def gender_color(gender):
 		text_word.configure(foreground='black')
 		return
 
+	text_word.configure(state='normal')
 	if language in ['croatian', 'french', 'italian', 'spanish', 'swedish', 'russian']:
 		text_word.configure(foreground=gender_colors[gender])
 	if language in ['german']:
@@ -689,21 +690,27 @@ def gender_color(gender):
 			text_word.configure(foreground='black')
 			text_word.tag_add('noun', '1.0', '1.' + str(noun_length))
 			text_word.tag_configure('noun', foreground=gender_colors[gender])
-			
+	text_word.configure(state='disabled')
+
+# Insert example sentence
+def insert_remark(remark):
+	text_remark.configure(state='normal')
+	text_remark.insert(END, remark)
+	text_remark.configure(state='disabled')
 
 # Insert example sentence
 def insert_sentence(sentence, sentence_trans):
-	edit_side_field()
+	text_example.configure(state='normal')
 	text_example.delete("1.0", "end")
 	text_example.insert("1.0", sentence + "\n")
 	text_example.insert("3.0", sentence_trans)
 	text_example.tag_add("sentence", "1.0", "1." + str(len(sentence)))
 	text_example.tag_config("sentence", font = side_field_fonts['example'])
-	freeze_side_field()
+	text_example.configure(state='disabled')
 
 # Insert formated translation into translation field
 def insert_translation(trans):
-	edit_side_field()
+	text_trans.configure(state='normal')
 	# Define tags for formatting
 	(translation_font, translation_font_size) = side_field_fonts['translation']
 	text_trans.tag_configure("word", font=(translation_font, translation_font_size, "bold"))
@@ -768,18 +775,18 @@ def insert_translation(trans):
 		text_trans.insert('1.0', '\n\n', 'normal')
 		text_trans.insert('1.0', personal_trans, 'personal_translation')
 
-	freeze_side_field()
+	text_trans.configure(state='disabled')
 
 def replace_phrase_translation(trans, color):
 	global text_trans
 	global side_field_fonts
-	edit_side_field()
+	text_trans.configure(state='normal')
 	text_trans.delete('1.0', "end")
 	text_trans.tag_configure("phrase_trans",
 						  font=side_field_fonts['translation'],
 						  background=color)
 	text_trans.insert("1.0", trans, "phrase_trans")
-	freeze_side_field()
+	text_trans.configure(state='disabled')
 
 # Get personal translation from a translations list, if available
 def get_personal_translation(trans_list):
@@ -862,19 +869,22 @@ def side_field_show(word, info, status, do_pronounce=True):
 					if len(article) > 0:
 						word = article + ' ' + word
 
-	edit_side_field()
 	print_status(status)
+	text_word.configure(state='normal')
 	text_word.insert("1.0", word)
+	text_word.configure(state='disabled')
+
 	if has_unique_gender:
 		gender_color(gender)
 	else:
+		text_word.configure(state='normal')
 		text_word.configure(fg="black")
+		text_word.configure(state='disabled')
 	insert_translation(trans)
 	if 'remark' in info:
-		text_remark.insert(END, info['remark'])
+		insert_remark(info['remark'])
 	if 'sentence' in info and 'sentence_trans' in info:
 		insert_sentence(info['sentence'], info['sentence_trans'])
-	freeze_side_field()
 
 	# Pronunciation
 	if sound_on and do_pronounce:
@@ -885,10 +895,10 @@ def side_field_show(word, info, status, do_pronounce=True):
 def show_active_word_in_sidefield():
 	if active:
 		clear_side_field()
-		edit_side_field()
+		text_word.configure(state='normal')
 		text_word.insert('1.0', active['word'])
 		text_word.configure(fg='black')
-		freeze_side_field()
+		text_word.configure(state='disabled')
 		print_status(active['status'])
 
 # Add info in side field
@@ -1565,7 +1575,7 @@ def add_third_lang_trans(event):
 	if (active_looked_up or active_phrase) and not editing:
 		word = info_for_showed_word['dict_word']
 		trans = info_for_showed_word['trans']
-		edit_side_field()
+		text_remark.configure(state='normal')
 		# Remove translation if already added
 		if remark_without_third_lang and word == last_word_translated_to_third_lang:
 			text_remark.delete('1.0','end')
@@ -1585,7 +1595,7 @@ def add_third_lang_trans(event):
 				text_remark.insert('end', title_string, 'third_lang_header')
 				text_remark.insert('end', '\n' + translate_to_third_lang(word, trans))
 			last_word_translated_to_third_lang = word
-		freeze_side_field()
+		text_remark.configure(state='disabled')
 
 # Add a Google translation to the definitions of the word and show in the side field.
 # Reverse if Google translation already is added.
