@@ -1,34 +1,143 @@
 {
-  "languages": {
-    "croatian": {
-        "menu_entry": "🇭🇷 [C]roatian",
-        "selection_key": "c"
+    "languages": {
+        "croatian": {
+            "menu_entry": "🇭🇷 [C]roatian",
+            "selection_key": "c",
+            "external_resources": [
+                {
+                    "url": "https://glosbe.com/hr/en/%s",
+                    "open_key": "d",
+                    "phrase_word_delimiter": "%20"
+                },
+                {
+                    "url": "https://www.verbix.com/webverbix/go.php?T1=%s&Submit=Go&D1=204&H1=204",
+                    "open_key": "v"
+                }
+            ]
+        },
+        "french": {
+            "menu_entry": "🇫🇷 [F]rench",
+            "selection_key": "f",
+            "external_resources": [
+                {
+                    "url": "https://www.collinsdictionary.com/dictionary/french-english/%s",
+                    "open_key": "d",
+                    "phrase_word_delimiter": "+"
+                },
+                {
+                    "url": "https://context.reverso.net/translation/french-swedish/%s",
+                    "open_key": "c",
+                    "phrase_word_delimiter": "+"
+                },
+                {
+                    "url": "https://leconjugueur.lefigaro.fr/conjugaison/verbe/%s",
+                    "open_key": "v"
+                }
+            ]
+        },
+        "german": {
+            "menu_entry": "🇩🇪 [G]erman",
+            "selection_key": "g",
+            "external_resources": [
+                {
+                    "url": "https://www.collinsdictionary.com/dictionary/german-english/%s",
+                    "open_key": "d",
+                    "phrase_word_delimiter": "+"
+                },
+                {
+                    "url": "https://context.reverso.net/translation/german-swedish/%s",
+                    "open_key": "c",
+                    "phrase_word_delimiter": "+"
+                },
+                {
+                    "url": "https://www.verbformen.de/konjugation/?w=%s",
+                    "open_key": "v"
+                }
+            ]
+        },
+        "italian": {
+            "menu_entry": "🇮🇹 [I]talian",
+            "selection_key": "i",
+            "external_resources": [
+                {
+                    "url": "https://www.collinsdictionary.com/dictionary/italian-english/%s",
+                    "open_key": "d",
+                    "phrase_word_delimiter": "+"
+                },
+                {
+                    "url": "https://context.reverso.net/translation/italian-swedish/%s",
+                    "open_key": "c",
+                    "phrase_word_delimiter": "+"
+                },
+                {
+                    "url": "https://www.italian-verbs.com/italian-verbs/conjugation.php?parola=%s",
+                    "open_key": "v"
+                }
+            ]
+        },
+        "russian": {
+            "menu_entry": "🇷🇺 [R]ussian",
+            "selection_key": "r",
+            "text_to_speech_voice": "mac",
+            "external_resources": [
+                {
+                    "url": "https://en.openrussian.org/ru?search=%s",
+                    "open_key": "d",
+                    "phrase_word_delimiter": "+"
+                },
+                {
+                    "url": "https://context.reverso.net/translation/russian-english/%s",
+                    "open_key": "c",
+                    "phrase_word_delimiter": "+"
+                },
+                {
+                    "url": "https://conjugator.reverso.net/conjugation-russian-verb-%s.html",
+                    "open_key": "v"
+                }
+            ]
+            
+        },
+        "spanish": {
+            "menu_entry": "🇪🇸 [S]panish",
+            "selection_key": "s",
+            "external_resources": [
+                {
+                    "url": "https://www.spanishdict.com/translate/%s",
+                    "open_key": "d",
+                    "phrase_word_delimiter": "%20"
+                },
+                {
+                    "url": "https://context.reverso.net/translation/spanish-swedish/%s",
+                    "open_key": "c",
+                    "phrase_word_delimiter": "+"
+                },
+                {
+                    "url": "https://www.spanishdict.com/conjugate/%s",
+                    "open_key": "v"
+                }
+            ]
+        },
+        "swedish": {
+            "menu_entry": "🇸🇪 S[w]edish",
+            "selection_key": "w",
+            "external_resources": [
+                {
+                    "url": "https://svenska.se/so/?sok=%s&pz=1",
+                    "open_key": "d",
+                    "phrase_word_delimiter": "+"
+                },
+                {
+                    "url": "https://context.reverso.net/translation/swedish-english/%s",
+                    "open_key": "c",
+                    "phrase_word_delimiter": "+"
+                },
+                {
+                    "url": "https://sv.bab.la/verb/svensk/%s",
+                    "open_key": "v"
+                }
+            ]
+            
+        }
     },
-    "french": {
-        "menu_entry": "🇫🇷 [F]rench",
-        "selection_key": "f"
-    },
-    "german": {
-        "menu_entry": "🇩🇪 [G]erman",
-        "selection_key": "g"
-    },
-    "italian": {
-        "menu_entry": "🇮🇹 [I]talian",
-        "selection_key": "i"
-    },
-    "russian": {
-        "menu_entry": "🇷🇺 [R]ussian",
-        "selection_key": "r",
-        "text_to_speech_voice": "mac"
-    },
-    "spanish": {
-        "menu_entry": "🇪🇸 [S]panish",
-        "selection_key": "s"
-    },
-    "swedish": {
-        "menu_entry": "🇸🇪 S[w]edish",
-        "selection_key": "w"
-    }
-  },
-  "third_language": "swedish"
+    "third_language": "swedish"
 }

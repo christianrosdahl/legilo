@@ -1491,151 +1491,43 @@ def scroll_lines(num_lines, text_field):
 		for i in range(steps):
 			w.after(i * 20, lambda step_size=step_size: text_field.yview_scroll(int(step_size), "units"))
 
-def open_dictionary(event):
+def open_external(event):
 	global active
 	global editing
-	global language
-	if active and not editing:
-		word = active["word"]
-		collins_languages = ['english', 'french', 'german', 'italian', 'spanish',
-					   'portuguese', 'hindi', 'chinese', 'korean', 'japanese']
-		if language == 'spanish':
-			link = 'https://www.spanishdict.com/translate/' + word
-			link = urllib.parse.quote(link, safe='/:')
-			open_url_in_old_tab(link)
-		elif language in collins_languages:
-			link = "https://www.collinsdictionary.com/dictionary/" + language + "-english/" + word
-			link = urllib.parse.quote(link, safe='/:')
-			#webbrowser.get('chrome').open(link)
-			open_url_in_old_tab(link)
-		elif language == 'russian':
-			if language == 'russian':
-				word = remove_russian_accents(word)
-			link = "https://en.openrussian.org/ru/" + word
-			link = urllib.parse.quote(link, safe='/:')
-			open_url_in_old_tab(link)
-		else:
-			link = 'https://glosbe.com/' + get_language_code(language) + '/en/' + word
-			link = urllib.parse.quote(link, safe='/:')
-			open_url_in_old_tab(link)
-	if active_phrase and not editing:
-		phrase_words = active_phrase['phrase_words']
-		phrase_str = ''
-		for word in phrase_words:
-			phrase_str = phrase_str + word + '-'
-		phrase_str = phrase_str[0:-1] # Remove last +
-		link = "https://www.collinsdictionary.com/dictionary/" + language + "-english/" + phrase_str
-		open_url_in_old_tab(link)
+	global external_resources
 
-def open_verb_conjugation(event):
-	global active
-	global editing
-	if active and not editing:
-		word = active["word"]
-		if language == 'french':
-			link = "https://leconjugueur.lefigaro.fr/conjugaison/verbe/" + word
-		elif language == 'german':
-			link = "https://www.verbformen.de/konjugation/?w=" + word
-		elif language == 'italian':
-			link = "https://www.italian-verbs.com/italian-verbs/conjugation.php?parola=" + word
-		elif language == 'russian':
-			word = remove_russian_accents(word)
-			link = 'https://conjugator.reverso.net/conjugation-russian-verb-' + word + '.html'
-		else:
-			link = "http://www.google.se"
-		#link = urllib.parse.quote(link, safe='/:')
-		#webbrowser.get('chrome').open(link)
-		open_url_in_old_tab(link)
+	if not editing and (active or active_phrase):
+		pressed_key = event.keysym
+		url = None
+		phrase_word_delimiter = None
+		for key, resource_info in external_resources.items():
+			if pressed_key == key and 'url' in resource_info:
+				url = resource_info['url']
+				if 'phrase_word_delimiter' in resource_info:
+					phrase_word_delimiter = resource_info['phrase_word_delimiter']
+				break
+		
+		if not url:
+			return
+		
+		url_parts = url.split('%s')
+		if not len(url_parts) == 2:
+			error_string = ('Could not open the external resource due to incorrect formating. '
+				+ f'The url {url} should contain exactly one %s as a word placeholder.')
+			return
 
-def open_wiktionary(event):
-	global active
-	global editing
-	if active and not editing:
-		word = active["word"]
+		lookup_text = None
+		if active:
+			lookup_text = active["word"]
+		elif active_phrase and phrase_word_delimiter:
+			lookup_text = phrase_word_delimiter.join(active_phrase["phrase_words"])
+
 		if language == 'russian':
-			word = remove_russian_accents(word)
-		link = "https://en.wiktionary.org/wiki/" + word + "#" + language[0].upper() + language[1:]
-		#link = urllib.parse.quote(link, safe='/:')
-		#webbrowser.get('chrome').open(link)
-		open_url_in_old_tab(link)
-	if active_phrase and not editing:
-		phrase_words = active_phrase['phrase_words']
-		phrase_str = ''
-		for word in phrase_words:
-			phrase_str = phrase_str + word + '_'
-		phrase_str = phrase_str[0:-1] # Remove last +
-		link = "https://en.wiktionary.org/wiki/" + phrase_str + "#" + language[0].upper() + language[1:]
-		open_url_in_old_tab(link)
-
-def open_context_reverso(event):
-	global active
-	global editing
-	if active and not editing:
-		word = active["word"]
-		link = "https://context.reverso.net/translation/" + language + "-english/" + word
-		open_url_in_old_tab(link)
-	if active_phrase and not editing:
-		phrase_words = active_phrase['phrase_words']
-		phrase_str = ''
-		for word in phrase_words:
-			phrase_str = phrase_str + word + '+'
-		phrase_str = phrase_str[0:-1] # Remove last +
-		link = "https://context.reverso.net/translation/" + language + "-english/" + phrase_str
-		open_url_in_old_tab(link)
-
-def open_google(event):
-	global active
-	global editing
-	if active and not editing:
-		word = active["word"]
-		link = "https://www.google.com/search?q=" + word
-		#link = urllib.parse.quote(link, safe='/:')
-		#webbrowser.get('chrome').open(link)
-		open_url_in_old_tab(link)
-	if active_phrase and not editing:
-		phrase_words = active_phrase['phrase_words']
-		phrase_str = ''
-		for word in phrase_words:
-			phrase_str = phrase_str + word + '+'
-		phrase_str = phrase_str[0:-1] # Remove last +
-		link = "https://www.google.com/search?q=" + phrase_str
-		open_url_in_old_tab(link)
-
-def open_google_images(event):
-	global active
-	global editing
-	if active and not editing:
-		word = active["word"]
-		link = "https://www.google.com/search?q=" + word + "&tbm=isch"
-		#link = urllib.parse.quote(link, safe='/:')
-		#webbrowser.get('chrome').open(link)
-		open_url_in_old_tab(link)
-	if active_phrase and not editing:
-		phrase_words = active_phrase['phrase_words']
-		phrase_str = ''
-		for word in phrase_words:
-			phrase_str = phrase_str + word + '+'
-		phrase_str = phrase_str[0:-1] # Remove last +
-		link = "https://www.google.com/search?q=" + phrase_str + "&tbm=isch"
-		open_url_in_old_tab(link)
-
-def open_wikipedia(event):
-	global active
-	global editing
-	if active and not editing:
-		word = active["word"]
-		link = "https://en.wikipedia.org/wiki/" + word
-		#link = urllib.parse.quote(link, safe='/:')
-		#webbrowser.get('chrome').open(link)
-		open_url_in_old_tab(link)
-	if active_phrase and not editing:
-		phrase_words = active_phrase['phrase_words']
-		phrase_str = ''
-		for word in phrase_words:
-			phrase_str = phrase_str + word + '_'
-		phrase_str = phrase_str[0:-1] # Remove last +
-		link = "https://en.wikipedia.org/wiki/" + phrase_str
-		open_url_in_old_tab(link)
+			lookup_text = remove_russian_accents(lookup_text)
+			
+		if lookup_text:
+			url = url_parts[0] + lookup_text + url_parts[1]
+			open_url_in_old_tab(url)
 
 def open_url_in_old_tab(url):
 	global new_browser_tab
@@ -2667,6 +2559,7 @@ def run(language, text_file):
 	global active_phrase_is_new
 	global last_pronounced
 	global editing
+	global external_resources
 	global general_word_selection_mode
 	global phrase_mode
 	global selected_phrase_words
@@ -3047,13 +2940,8 @@ def run(language, text_file):
 	w.bind("<Command-Key-x>", quit_without_saving)
 
 	## Open external resources
-	w.bind("<d>", open_dictionary)
-	w.bind("<v>", open_verb_conjugation)
-	w.bind("<w>", open_wiktionary)
-	w.bind("<c>", open_context_reverso)
-	w.bind("<g>", open_google)
-	w.bind("<f>", open_google_images)
-	w.bind("<l>", open_wikipedia)
+	common_resources = get_common_external_resources()
+	configure_external_resources(config, common_resources)
 
 	## Edit personal translation and remark
 	text_remark.bind("<Button-1>", change_remark)
@@ -3080,6 +2968,59 @@ def run(language, text_file):
 	w.bind("0", select_sentence)
 
 	w.mainloop()
+
+# Get external resources that are common for all languages
+def get_common_external_resources():
+	global language
+
+	wiktionary_url = 'https://en.wiktionary.org/wiki/%s#' + language.capitalize()
+	if language == 'croatian':
+		wiktionary_url = 'https://en.wiktionary.org/wiki/%s#Serbo-Croatian'
+
+	common_resources = [
+		{'open_key': 'w',
+   		'url': wiktionary_url,
+   		'phrase_word_delimiter': '_'},
+		{'open_key': 'g',
+   		'url': 'https://www.google.com/search?q=%s',
+   		'phrase_word_delimiter': '+'},
+		{'open_key': 'f',
+   		'url': 'https://www.google.com/search?q=%s&tbm=isch',
+   		'phrase_word_delimiter': '+'},
+		{'open_key': 'l',
+   		'url': 'https://en.wikipedia.org/wiki/%s',
+   		'phrase_word_delimiter': '_'}
+	]
+
+	external_resources = {}
+	for resource in common_resources:
+		external_resources[resource['open_key']] = resource
+	return external_resources
+
+def configure_external_resources(config, common_resources):
+	global w
+	global language
+	global external_resources
+	external_resources = common_resources
+	if 'languages' in config and language in config['languages']:
+		lang_config = config['languages'][language]
+		if 'external_resources' in lang_config:
+			for resource in lang_config['external_resources']:
+				if 'open_key' in resource and 'url' in resource:
+					external_resources[resource['open_key']] = resource
+	
+	for key, resource in external_resources.items():
+		if key in w.bind():
+			url = resource['url']
+			used_keys = [i for i in w.bind() if not '<' in i]
+			used_keys.sort()
+			error_string = ('Error: Could not set external resource '
+				   + f'{url}, to be opened by key {key}, '
+				   + 'since the key already is used. Please choose '
+				   + f'a key that is not in this list: {used_keys}.')
+			print(error_string)
+		else:
+			w.bind(key, open_external)
 
 # Split a line into sentences and get index of first and last word in each sentence
 def get_sentence_word_indices(line):
