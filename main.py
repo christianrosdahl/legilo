@@ -1358,9 +1358,12 @@ def edit_personal_translation(event):
 
 			# Temporarily delete the personal translation while editing
 			# Forcing the order below gives a feeling of less flickering
+			current_trans_num_lines = current_personal_trans.count('\n')
+			num_lines_to_delete = current_trans_num_lines + 1
+			index2 = str(num_lines_to_delete + 1) + '.0'
 			text_trans.configure(state='normal')
 			w.update_idletasks()
-			w.after(100, text_trans.delete('1.0', '3.0')) #TODO: Change this to handle multiple lines!
+			w.after(100, text_trans.delete('1.0', index2))
 			text_trans.configure(state='disabled')
 
 def get_current_personal_trans():
@@ -1597,7 +1600,7 @@ def add_third_lang_trans(event):
 	global editing
 	global info_for_showed_word
 
-	if active_looked_up or active_phrase and not editing:
+	if (active_looked_up or active_phrase) and not editing:
 		word = info_for_showed_word['dictword']
 		trans = info_for_showed_word['trans']
 		edit_side_field()
@@ -1629,7 +1632,7 @@ def add_google_trans(event):
 	global active_phrase
 	global info_for_showed_word
 	global editing
-	if active_looked_up or active_phrase and not editing:
+	if (active_looked_up or active_phrase) and not editing:
 		has_google_trans = has_google_translation(info_for_showed_word['trans'])
 		trans_list = info_for_showed_word['trans']
 		if not has_google_trans:
