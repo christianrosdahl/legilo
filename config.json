@@ -11,7 +11,7 @@
                 },
                 {
                     "url": "https://glosbe.com/hr/en/%s",
-                    "open_key": "d",
+                    "open_key": "l",
                     "phrase_word_delimiter": "%20"
                 },
                 {
@@ -31,7 +31,7 @@
                 },
                 {
                     "url": "https://www.collinsdictionary.com/dictionary/french-english/%s",
-                    "open_key": "d",
+                    "open_key": "l",
                     "phrase_word_delimiter": "+"
                 },
                 {
@@ -56,7 +56,7 @@
                 },
                 {
                     "url": "https://www.collinsdictionary.com/dictionary/german-english/%s",
-                    "open_key": "d",
+                    "open_key": "l",
                     "phrase_word_delimiter": "+"
                 },
                 {
@@ -81,7 +81,7 @@
                 },
                 {
                     "url": "https://www.collinsdictionary.com/dictionary/italian-english/%s",
-                    "open_key": "d",
+                    "open_key": "l",
                     "phrase_word_delimiter": "+"
                 },
                 {
@@ -107,7 +107,7 @@
                 },
                 {
                     "url": "https://en.openrussian.org/ru?search=%s",
-                    "open_key": "d",
+                    "open_key": "l",
                     "phrase_word_delimiter": "+"
                 },
                 {
@@ -133,7 +133,7 @@
                 },
                 {
                     "url": "https://www.spanishdict.com/translate/%s",
-                    "open_key": "d",
+                    "open_key": "l",
                     "phrase_word_delimiter": "%20"
                 },
                 {
@@ -158,7 +158,7 @@
                 },
                 {
                     "url": "https://svenska.se/so/?sok=%s&pz=1",
-                    "open_key": "d",
+                    "open_key": "l",
                     "phrase_word_delimiter": "+"
                 },
                 {
@@ -187,9 +187,27 @@
         },
         {
             "url": "https://en.wikipedia.org/wiki/%s",
-            "open_key": "l",
+            "open_key": "q",
             "phrase_word_delimiter": "_"
         }
     ],
+    "keyboard_shortcuts": {
+        "i": "edit_personal_translation",
+        "r": "change_remark",
+        "p": "pronounce_active_word",
+        ".": "add_google_trans",
+        ",": "add_third_lang_trans",
+        "a": "mark_sentence_as_phrase",
+        "b": "repeat_learning_words"
+    },
+    "extra_keyboard_shortcuts": {
+        "n": "go_to_next",
+        "s": "go_to_previous",
+        "N": "general_word_selection_right",
+        "S": "general_word_selection_left",
+        "t": "known",
+        "d": "enter",
+        "x": "ignore"
+    },
     "third_language": "swedish"
 }

@@ -1301,7 +1301,7 @@ def go_to_start():
 		for word in remove_from_removed:
 			removed_from_queue.remove(word)
 
-def go_to_previous_learning_word(event):
+def go_to_previous(event):
 	global word_queue
 	global removed_from_queue
 	global editing
@@ -2922,22 +2922,12 @@ def run(language, text_file):
 	## General
 	w.bind("<Right>", go_to_next)
 	w.bind("<space>", go_to_next)
-	w.bind("<n>", go_to_next)
 	w.bind("<Up>", enter)
 	w.bind("<Return>", enter)
 	w.bind("<Down>", known)
-	w.bind("<k>", known)
-	w.bind("<Left>", go_to_previous_learning_word)
+	w.bind("<Left>", go_to_previous)
 	w.bind("<BackSpace>", ignore)
-	w.bind("<x>", ignore)
-	w.bind("<i>", edit_personal_translation)
-	w.bind("<r>", change_remark)
-	w.bind("<p>", pronounce_active_word)
-	w.bind("<.>", pronounce_active_word)
-	w.bind("<s>", add_third_lang_trans)
-	w.bind("<t>", add_google_trans)
-	w.bind("<a>", mark_sentence_as_phrase)
-	w.bind("<b>", repeat_learning_words)
+	configure_keyboard_shortcuts(config)
 
 	## Scrolling
 	w.bind("<Shift-Option-Down>", scroll_down)
@@ -2994,6 +2984,52 @@ def run(language, text_file):
 
 	w.mainloop()
 
+def configure_keyboard_shortcuts(config):
+	global w
+
+	keyboard_triggerable_functions = {
+		'edit_personal_translation': edit_personal_translation,
+		'change_remark': change_remark,
+		'pronounce_active_word': pronounce_active_word,
+		'add_google_trans': add_google_trans,
+		'add_third_lang_trans': add_third_lang_trans,
+		'mark_sentence_as_phrase': mark_sentence_as_phrase,
+		'repeat_learning_words': repeat_learning_words,
+		'go_to_next': go_to_next,
+		'go_to_previous': go_to_previous,
+		'known': known,
+		'enter': enter,
+		'ignore': ignore,
+		'phrase_word_selection_left': phrase_word_selection_left,
+		'phrase_word_selection_right': phrase_word_selection_right,
+		'general_word_selection_left': general_word_selection_left,
+		'general_word_selection_right': general_word_selection_right
+	}
+
+	# Add keyboard shortcuts
+	shortcuts_dict = {}
+	if 'extra_keyboard_shortcuts' in config:
+		shortcuts_dict.update(config['extra_keyboard_shortcuts'])
+	if 'keyboard_shortcuts' in config:
+		shortcuts_dict.update(config['keyboard_shortcuts'])
+	for key, function in shortcuts_dict.items():
+		if key in w.bind():
+			used_keys = w.bind()
+			used_keys.sort()
+			error_string = ('Error: Could not set keyboard shortcut '
+				+ f'{function}, to be accessed by key {key}, '
+				+ 'since the key already is used. Please choose '
+				+ f'a key that is not in this list: {used_keys}.')
+			print(error_string)
+		else:
+			if function in keyboard_triggerable_functions:
+				w.bind(key, keyboard_triggerable_functions[function])
+			else:
+				error_string = (f'Error: The function {function} that you '
+					+ 'try to set a keyboard shortcut for in config.json '
+					+ 'is not an allowed keyboard triggerable function.')
+				print(error_string)
+
 def configure_external_resources(config):
 	global w
 	global language
@@ -3015,7 +3051,12 @@ def configure_external_resources(config):
 					external_resources[resource['open_key']] = resource
 	
 	for key, resource in external_resources.items():
-		if key in w.bind() or key.upper() in w.bind():
+		if len(key) != 1 or not key.isalpha():
+			error_string = (f'Error: In config.json, the shortcut {key} '
+				   + 'is set to an external resource. Only one-letter '
+				   + 'shortcuts are allowed for external resources.')
+			print(error_string)
+		elif key in w.bind() or key.upper() in w.bind():
 			url = resource['url']
 			used_keys = [i for i in w.bind() if not '<' in i]
 			used_keys.sort()
@@ -3025,7 +3066,7 @@ def configure_external_resources(config):
 				   + f'a key that is not in this list: {used_keys}.')
 			print(error_string)
 		else:
-			w.bind(key, open_external)
+			w.bind(key.lower(), open_external)
 			w.bind(key.upper(), open_lemma_external)
 
 # Split a line into sentences and get index of first and last word in each sentence
