@@ -1866,13 +1866,14 @@ def general_word_selection_left(event):
 	if not editing:
 		if not general_word_selection_mode:
 			activate_general_word_selection_mode()
-		prev_tag = get_previous_tag(selected_tag1)
-		if prev_tag:
-			apply_tag_config(saved_tag_config1['tag'], saved_tag_config1['config'])
-			selected_tag1 = prev_tag
-			line, word_num = [int(i) for i in selected_tag1.split('.')]
-			saved_tag_config1 = {'tag': selected_tag1, 'config': save_tag_config(selected_tag1)}
-			mark_word(line, word_num, 'active')
+		if general_word_selection_mode:
+			prev_tag = get_previous_tag(selected_tag1)
+			if prev_tag:
+				apply_tag_config(saved_tag_config1['tag'], saved_tag_config1['config'])
+				selected_tag1 = prev_tag
+				line, word_num = [int(i) for i in selected_tag1.split('.')]
+				saved_tag_config1 = {'tag': selected_tag1, 'config': save_tag_config(selected_tag1)}
+				mark_word(line, word_num, 'active')
 
 def general_word_selection_right(event):
 	global editing
@@ -1882,13 +1883,14 @@ def general_word_selection_right(event):
 	if not editing:
 		if not general_word_selection_mode:
 			activate_general_word_selection_mode()
-		next_tag = get_next_tag(selected_tag1)
-		if next_tag:
-			apply_tag_config(saved_tag_config1['tag'], saved_tag_config1['config'])
-			selected_tag1 = next_tag
-			line, word_num = [int(i) for i in selected_tag1.split('.')]
-			saved_tag_config1 = {'tag': selected_tag1, 'config': save_tag_config(selected_tag1)}
-			mark_word(line, word_num, 'active')
+		if general_word_selection_mode:
+			next_tag = get_next_tag(selected_tag1)
+			if next_tag:
+				apply_tag_config(saved_tag_config1['tag'], saved_tag_config1['config'])
+				selected_tag1 = next_tag
+				line, word_num = [int(i) for i in selected_tag1.split('.')]
+				saved_tag_config1 = {'tag': selected_tag1, 'config': save_tag_config(selected_tag1)}
+				mark_word(line, word_num, 'active')
 
 def activate_phrase_mode(event):
 	global editing
