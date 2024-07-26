@@ -1475,10 +1475,10 @@ def change_remark(event):
 		text_remark.focus()
 
 def scroll_up(event):
-    scroll_lines(-10, text)
+	scroll_lines(-10, text)
 
 def scroll_down(event):
-    scroll_lines(10, text)
+	scroll_lines(10, text)
 
 def scroll_up_translation(event):
     scroll_lines(-10, text_trans)
@@ -2927,8 +2927,10 @@ def run(language, text_file):
 	w.bind("<b>", repeat_learning_words)
 
 	## Scrolling
-	w.bind("<Command-Key-Down>", scroll_down)
-	w.bind("<Command-Key-Up>", scroll_up)
+	w.bind("<Shift-Option-Down>", scroll_down)
+	w.bind("<Shift-Option-Up>", scroll_up)
+	w.bind("<Next>", scroll_down)
+	w.bind("<Prior>", scroll_up)
 	w.bind("<Shift-Down>", scroll_down_translation)
 	w.bind("<Shift-Up>", scroll_up_translation)
 	w.bind("<Option-Down>", scroll_down_remark)
