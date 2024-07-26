@@ -426,6 +426,7 @@ def skip_to_word(word_tag, scroll_to_word=False):
 	if not clicked_word_in_queue:
 		for word_dict in removed_from_queue:
 			if word_dict['line'] == line and word_dict['word_num'] == word_num:
+				removed_from_queue.remove(word_dict)
 				set_to_active(word_dict)
 				break
 
