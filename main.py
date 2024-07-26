@@ -1503,12 +1503,18 @@ def scroll_lines(num_lines, text_field):
 			w.after(i * 20, lambda step_size=step_size: text_field.yview_scroll(int(step_size), "units"))
 
 def open_external(event):
+	open_external_resource(event.keysym)
+
+def open_lemma_external(event):
+	open_external_resource(event.keysym.lower(), lemma=True)
+
+def open_external_resource(pressed_key, lemma=False):
 	global active
+	global info_for_showed_word
 	global editing
 	global external_resources
 
 	if not editing and (active or active_phrase):
-		pressed_key = event.keysym
 		url = None
 		phrase_word_delimiter = None
 		for key, resource_info in external_resources.items():
@@ -1526,12 +1532,19 @@ def open_external(event):
 			error_string = ('Could not open the external resource due to incorrect formating. '
 				+ f'The url {url} should contain exactly one %s as a word placeholder.')
 			return
-
-		lookup_text = None
-		if active:
-			lookup_text = active["word"]
-		elif active_phrase and phrase_word_delimiter:
-			lookup_text = phrase_word_delimiter.join(active_phrase["phrase_words"])
+		
+		if lemma:
+			lookup_text = None
+			if active_looked_up and 'lemmas' in info_for_showed_word:
+				lemmas = info_for_showed_word['lemmas']
+				if len(lemmas) > 0:
+					lookup_text = list(lemmas)[0]
+		else:
+			lookup_text = None
+			if active:
+				lookup_text = active["word"]
+			elif active_phrase and phrase_word_delimiter:
+				lookup_text = phrase_word_delimiter.join(active_phrase["phrase_words"])
 
 		if language == 'russian':
 			lookup_text = remove_russian_accents(lookup_text)
@@ -2953,8 +2966,7 @@ def run(language, text_file):
 	w.bind("<Command-Key-x>", quit_without_saving)
 
 	## Open external resources
-	common_resources = get_common_external_resources()
-	configure_external_resources(config, common_resources)
+	configure_external_resources(config)
 
 	## Edit personal translation and remark
 	text_remark.bind("<Button-1>", change_remark)
@@ -2982,39 +2994,19 @@ def run(language, text_file):
 
 	w.mainloop()
 
-# Get external resources that are common for all languages
-def get_common_external_resources():
-	global language
-
-	wiktionary_url = 'https://en.wiktionary.org/wiki/%s#' + language.capitalize()
-	if language == 'croatian':
-		wiktionary_url = 'https://en.wiktionary.org/wiki/%s#Serbo-Croatian'
-
-	common_resources = [
-		{'open_key': 'w',
-   		'url': wiktionary_url,
-   		'phrase_word_delimiter': '_'},
-		{'open_key': 'g',
-   		'url': 'https://www.google.com/search?q=%s',
-   		'phrase_word_delimiter': '+'},
-		{'open_key': 'f',
-   		'url': 'https://www.google.com/search?q=%s&tbm=isch',
-   		'phrase_word_delimiter': '+'},
-		{'open_key': 'l',
-   		'url': 'https://en.wikipedia.org/wiki/%s',
-   		'phrase_word_delimiter': '_'}
-	]
-
-	external_resources = {}
-	for resource in common_resources:
-		external_resources[resource['open_key']] = resource
-	return external_resources
-
-def configure_external_resources(config, common_resources):
+def configure_external_resources(config):
 	global w
 	global language
 	global external_resources
-	external_resources = common_resources
+
+	external_resources = {}
+
+	# Add external resources common to all languages
+	if 'common_external_resources' in config:
+		for resource in config['common_external_resources']:
+			external_resources[resource['open_key']] = resource
+
+	# Add external resources for the specific language
 	if 'languages' in config and language in config['languages']:
 		lang_config = config['languages'][language]
 		if 'external_resources' in lang_config:
@@ -3023,7 +3015,7 @@ def configure_external_resources(config, common_resources):
 					external_resources[resource['open_key']] = resource
 	
 	for key, resource in external_resources.items():
-		if key in w.bind():
+		if key in w.bind() or key.upper() in w.bind():
 			url = resource['url']
 			used_keys = [i for i in w.bind() if not '<' in i]
 			used_keys.sort()
@@ -3034,6 +3026,7 @@ def configure_external_resources(config, common_resources):
 			print(error_string)
 		else:
 			w.bind(key, open_external)
+			w.bind(key.upper(), open_lemma_external)
 
 # Split a line into sentences and get index of first and last word in each sentence
 def get_sentence_word_indices(line):

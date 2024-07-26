@@ -5,6 +5,11 @@
             "selection_key": "c",
             "external_resources": [
                 {
+                    "url": "https://en.wiktionary.org/wiki/%s#Serbo-Croatian",
+                    "open_key": "w",
+                    "phrase_word_delimiter": "_"
+                },
+                {
                     "url": "https://glosbe.com/hr/en/%s",
                     "open_key": "d",
                     "phrase_word_delimiter": "%20"
@@ -19,6 +24,11 @@
             "menu_entry": "🇫🇷 [F]rench",
             "selection_key": "f",
             "external_resources": [
+                {
+                    "url": "https://en.wiktionary.org/wiki/%s#French",
+                    "open_key": "w",
+                    "phrase_word_delimiter": "_"
+                },
                 {
                     "url": "https://www.collinsdictionary.com/dictionary/french-english/%s",
                     "open_key": "d",
@@ -40,6 +50,11 @@
             "selection_key": "g",
             "external_resources": [
                 {
+                    "url": "https://en.wiktionary.org/wiki/%s#German",
+                    "open_key": "w",
+                    "phrase_word_delimiter": "_"
+                },
+                {
                     "url": "https://www.collinsdictionary.com/dictionary/german-english/%s",
                     "open_key": "d",
                     "phrase_word_delimiter": "+"
@@ -59,6 +74,11 @@
             "menu_entry": "🇮🇹 [I]talian",
             "selection_key": "i",
             "external_resources": [
+                {
+                    "url": "https://en.wiktionary.org/wiki/%s#Italian",
+                    "open_key": "w",
+                    "phrase_word_delimiter": "_"
+                },
                 {
                     "url": "https://www.collinsdictionary.com/dictionary/italian-english/%s",
                     "open_key": "d",
@@ -81,6 +101,11 @@
             "text_to_speech_voice": "mac",
             "external_resources": [
                 {
+                    "url": "https://en.wiktionary.org/wiki/%s#Russian",
+                    "open_key": "w",
+                    "phrase_word_delimiter": "_"
+                },
+                {
                     "url": "https://en.openrussian.org/ru?search=%s",
                     "open_key": "d",
                     "phrase_word_delimiter": "+"
@@ -102,6 +127,11 @@
             "selection_key": "s",
             "external_resources": [
                 {
+                    "url": "https://en.wiktionary.org/wiki/%s#Spanish",
+                    "open_key": "w",
+                    "phrase_word_delimiter": "_"
+                },
+                {
                     "url": "https://www.spanishdict.com/translate/%s",
                     "open_key": "d",
                     "phrase_word_delimiter": "%20"
@@ -122,6 +152,11 @@
             "selection_key": "w",
             "external_resources": [
                 {
+                    "url": "https://en.wiktionary.org/wiki/%s#Swedish",
+                    "open_key": "w",
+                    "phrase_word_delimiter": "_"
+                },
+                {
                     "url": "https://svenska.se/so/?sok=%s&pz=1",
                     "open_key": "d",
                     "phrase_word_delimiter": "+"
@@ -139,5 +174,22 @@
             
         }
     },
+    "common_external_resources": [
+        {
+            "url": "https://www.google.com/search?q=%s",
+            "open_key": "g",
+            "phrase_word_delimiter": "+"
+        },
+        {
+            "url": "https://www.google.com/search?q=%s&tbm=isch",
+            "open_key": "f",
+            "phrase_word_delimiter": "+"
+        },
+        {
+            "url": "https://en.wikipedia.org/wiki/%s",
+            "open_key": "l",
+            "phrase_word_delimiter": "_"
+        }
+    ],
     "third_language": "swedish"
 }
