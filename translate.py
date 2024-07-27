@@ -85,6 +85,8 @@ class LegiloTranslator():
                     genders.add('n')
                 if 'c' in gender_string_parts:
                     genders.add('c')
+            if 'word' in item and item['word'] != word:
+                lemmas.add(item['word'])
             if 'lemma' in item:
                 lemmas.add(item['lemma'])
             if 'word_info' in item and include_word_info:
