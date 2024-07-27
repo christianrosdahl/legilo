@@ -840,7 +840,10 @@ def side_field_show(word, info, status, do_pronounce=True):
 		word_type = info['word_type']
 	if not word_type == 'phrase':
 		# The word is a variant of some other word if there are lemmas
-		word_is_variant = 'lemmas' in info
+		word_is_variant = False
+		if ('lemmas' in info and
+	  		(len(info['lemmas']) > 1 or list(info['lemmas'])[0].lower() != word)):
+			word_is_variant = True
 
 	# Write german nouns with initial capital letter and article
 	if language == 'german' and word_type and 'noun' in word_type:
