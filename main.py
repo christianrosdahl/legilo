@@ -1154,26 +1154,30 @@ def center_window(window, width, height):
 	window.geometry(f'{width}x{height}+{x}+{y}')
 
 # When pressing space
-def go_to_next(event):
+def go_to_next(event=None):
 	global editing
+	global phrase_mode
 	global active
 	global active_looked_up
 	global word_queue
 	global removed_from_queue
 
 	if not editing:
-		unfocus()
-		handle_active_phrases()
-		if active and not active_looked_up:
-			if active['status'] == 'learning':
-				removed_from_queue.append(active)
-				unset_active_word()
-				set_next_to_active()
-			else: # active['status'] == 'new'
-				known(event)
+		if phrase_mode:
+			phrase_word_selection_right()
 		else:
-			handle_active_words()
-			set_next_to_active()
+			unfocus()
+			handle_active_phrases()
+			if active and not active_looked_up:
+				if active['status'] == 'learning':
+					removed_from_queue.append(active)
+					unset_active_word()
+					set_next_to_active()
+				else: # active['status'] == 'new'
+					known(event)
+			else:
+				handle_active_words()
+				set_next_to_active()
 
 def enter(event):
 	global active
@@ -1241,6 +1245,7 @@ def ignore(event):
 						phrases.pop(first_word)
 		active_phrase = False
 		clear_side_field()
+		set_next_to_active()
 
 def known(event):
 	global active
@@ -1302,28 +1307,32 @@ def go_to_start():
 			removed_from_queue.remove(word)
 
 def go_to_previous(event):
+	global phrase_mode
 	global word_queue
 	global removed_from_queue
 	global editing
 	global active_looked_up
 	if not editing:
-		if active:
-			current_index = active['index']
-			closest_index = -1
-			previous_word = None
-			for word in removed_from_queue:
-				word_index = word['index']
-				if (word_index < current_index and
-					word_index > closest_index and
-					word['status'] == 'learning'):
-					closest_index = word_index
-					previous_word = word
-			if previous_word:
-				handle_active_phrases()
-				handle_active_words(unqueue_looked_up=False)
-				put_back_in_queue_sorted(previous_word)
-				removed_from_queue.remove(previous_word)
-				set_next_to_active()
+		if phrase_mode:
+			phrase_word_selection_left()
+		else:
+			if active:
+				current_index = active['index']
+				closest_index = -1
+				previous_word = None
+				for word in removed_from_queue:
+					word_index = word['index']
+					if (word_index < current_index and
+						word_index > closest_index and
+						word['status'] == 'learning'):
+						closest_index = word_index
+						previous_word = word
+				if previous_word:
+					handle_active_phrases()
+					handle_active_words(unqueue_looked_up=False)
+					put_back_in_queue_sorted(previous_word)
+					removed_from_queue.remove(previous_word)
+					set_next_to_active()
 
 def mark_sentence_as_phrase(event):
 	global active
@@ -1892,7 +1901,17 @@ def general_word_selection_right(event):
 				saved_tag_config1 = {'tag': selected_tag1, 'config': save_tag_config(selected_tag1)}
 				mark_word(line, word_num, 'active')
 
-def activate_phrase_mode(event):
+def toggle_phrase_mode(event):
+	global editing
+	global phrase_mode
+
+	if not editing:
+		if phrase_mode:
+			deactivate_phrase_mode()
+		else:
+			activate_phrase_mode()
+
+def activate_phrase_mode(event=None):
 	global editing
 	global text
 	global phrase_mode
@@ -1941,7 +1960,7 @@ def deactivate_phrase_mode(event=None):
 		selected_tag2 = None
 		phrase_mode = False
 
-def phrase_word_selection_left(event):
+def phrase_word_selection_left(event=None):
 	global active
 	global selected_phrase_words
 	if active:
@@ -1950,7 +1969,7 @@ def phrase_word_selection_left(event):
 		else:
 			move_selection_to_prev(2)
 
-def phrase_word_selection_right(event):
+def phrase_word_selection_right(event=None):
 	global active
 	global selected_phrase_words
 	if active:
@@ -2932,8 +2951,8 @@ def run(language, text_file):
 	configure_keyboard_shortcuts(config)
 
 	## Scrolling
-	w.bind("<Shift-Option-Down>", scroll_down)
-	w.bind("<Shift-Option-Up>", scroll_up)
+	w.bind("<Command-Key-Down>", scroll_down)
+	w.bind("<Command-Key-Up>", scroll_up)
 	w.bind("<Next>", scroll_down)
 	w.bind("<Prior>", scroll_up)
 	w.bind("<Shift-Down>", scroll_down_translation)
@@ -2942,8 +2961,8 @@ def run(language, text_file):
 	w.bind("<Option-Up>", scroll_up_remark)
 
 	## Phrase mode
-	w.bind("<Meta_L>", activate_phrase_mode)
-	w.bind("<KeyRelease-Meta_L>", deactivate_phrase_mode)
+	# w.bind("<Meta_L>", activate_phrase_mode)
+	# w.bind("<KeyRelease-Meta_L>", deactivate_phrase_mode)
 	w.bind("<Command-Key-Left>", phrase_word_selection_left)
 	w.bind("<Command-Key-Right>", phrase_word_selection_right)
 
@@ -2973,16 +2992,8 @@ def run(language, text_file):
 	text_remark.bind("<Command-Key-BackSpace>", empty_text_field2)
 
 	## Select example sentence
-	w.bind("1", select_sentence)
-	w.bind("2", select_sentence)
-	w.bind("3", select_sentence)
-	w.bind("4", select_sentence)
-	w.bind("5", select_sentence)
-	w.bind("6", select_sentence)
-	w.bind("7", select_sentence)
-	w.bind("8", select_sentence)
-	w.bind("9", select_sentence)
-	w.bind("0", select_sentence)
+	for i in range(0, 10):
+		w.bind(str(i), select_sentence)
 
 	w.mainloop()
 
@@ -2991,6 +3002,7 @@ def configure_keyboard_shortcuts(config):
 
 	keyboard_triggerable_functions = {
 		'edit_personal_translation': edit_personal_translation,
+		'toggle_phrase_mode': toggle_phrase_mode,
 		'change_remark': change_remark,
 		'pronounce_active_word': pronounce_active_word,
 		'add_google_trans': add_google_trans,

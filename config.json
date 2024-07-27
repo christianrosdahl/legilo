@@ -193,6 +193,7 @@
     ],
     "keyboard_shortcuts": {
         "i": "edit_personal_translation",
+        "e": "toggle_phrase_mode",
         "r": "change_remark",
         "p": "pronounce_active_word",
         ".": "add_google_trans",
