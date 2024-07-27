@@ -20,7 +20,7 @@ class LegiloTranslator():
     def __init__(self, language, use_lemma=True):
         self.language = language
         if len(language) > 1:
-            self.language = language[0].upper() + language[1:]
+            self.language = language.capitalize()
         if self.language == 'Croatian':
             self.language = 'Serbo-Croatian'
         self.use_lemma = use_lemma
@@ -33,6 +33,7 @@ class LegiloTranslator():
             self.nlp = None
 
     def translate(self, word, always_google_trans=False, is_phrase=False):
+        word = self.remove_pronunciation_accents(word)
         results = self.parse_from_wiktionary(word)
         
         # Handle that nouns must be looked up with capital letter in German
@@ -57,7 +58,7 @@ class LegiloTranslator():
 
         # If the specific form wasn't found in Wiktionary, add traslation of this first.
         # If 'always_google_trans' is True, this is done anyway.
-        if (self.remove_accents(word).lower() not in self.get_lookup_words_from_results(results)
+        if (word.lower() not in self.get_lookup_words_from_results(results)
             or always_google_trans):
             results = self.get_google_translation(word) + results
         
@@ -145,9 +146,7 @@ class LegiloTranslator():
         words = set()
         for item in results:
             if 'word' in item:
-                # Words sometimes have extra accents for pronunciation
-                word = self.remove_accents(item['word']).lower()
-                words.add(word)
+                words.add(item['word'].lower())
         return words
 
     def get_google_translation(self, word):
@@ -211,7 +210,8 @@ class LegiloTranslator():
                     results[-1]['word_info'] = word_info
                 # Extract headword
                 if found_word and element.find('strong', class_='headword'):
-                    results[-1]['word'] = element.find('strong', class_='headword').text
+                    headword = element.find('strong', class_='headword').text
+                    results[-1]['word'] = self.remove_pronunciation_accents(headword)
                 # Extract gender if available
                 gender_tag = element.find('span', class_='gender')
                 if found_word and gender_tag:
@@ -293,13 +293,38 @@ class LegiloTranslator():
             translation = translation.replace('verb ','')
             translation = translation.replace('infinitive ','')
             lemma = self.find_lemma_after_of(translation)
+            lemma = self.remove_pronunciation_accents(lemma)
         return lemma
     
-    def remove_accents(self, input_str):
-        # Normalize the string to decompose characters into base characters and combining marks
-        normalized_str = unicodedata.normalize('NFD', input_str)
-        # Filter out combining marks
-        return ''.join(char for char in normalized_str if not unicodedata.combining(char))
+    def remove_pronunciation_accents(self, input_str):
+        # Normalize the string to NFD (Normalization Form Decomposition)
+        nfkd_form = unicodedata.normalize('NFD', input_str)
+
+        # Define what accented letters should be kept for each language
+        language = self.language.lower()
+        if language in ['croatian', 'serbo-croatian']:
+            letters_to_keep_accents_for = ['s','c','z']
+        elif language == 'russian':
+            letters_to_keep_accents_for = None
+        else:
+            letters_to_keep_accents_for = 'all'
+        
+        # Remove unwanted accents
+        if letters_to_keep_accents_for == 'all':
+            return input_str
+        elif letters_to_keep_accents_for == None:
+            without_diacritics = ''.join(
+                c for c in nfkd_form
+                if not unicodedata.combining(c)
+                )
+        else:
+            new_letters = []
+            for i, c in enumerate(nfkd_form):
+                if not (unicodedata.combining(c) and i >= 0
+                        and nfkd_form[i-1].lower() not in letters_to_keep_accents_for):
+                    new_letters.append(c)
+            without_diacritics = ''.join(new_letters)
+        return without_diacritics
 
 # # Test
 # # language = 'Spanish'
