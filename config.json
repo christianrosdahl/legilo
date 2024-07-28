@@ -196,8 +196,8 @@
         "e": "toggle_phrase_mode",
         "r": "change_remark",
         "p": "pronounce_active_word",
-        ".": "add_google_trans",
-        ",": "add_third_lang_trans",
+        "o": "add_google_trans",
+        "h": "add_third_lang_trans",
         "a": "mark_sentence_as_phrase",
         "b": "repeat_learning_words"
     },
