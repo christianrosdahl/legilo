@@ -60,7 +60,9 @@ default_colors = {'text_color': 'black',
 				  'google_translate_background': '#A9DC76',
 				  'google_translate_text': 'black',
 				  'field_title_background': 'darkgray',
-				  'field_title_text': 'white'}
+				  'field_title_text': 'white',
+				  'gender_colors': {'m': 'blue', 'f': 'red',
+						'n': 'green', 'c': 'purple'}}
 
 dark_mode_colors = {'text_color': '#F8F8F2',
 					'text_background': '#282c24',
@@ -80,7 +82,9 @@ dark_mode_colors = {'text_color': '#F8F8F2',
 					'google_translate_background': '#282c24',
 					'google_translate_text': '#A6E22E',
 					'field_title_background': '#403c34',
-					'field_title_text': '#F8F8F2'}
+					'field_title_text': '#F8F8F2',
+					'gender_colors': {'m': '#66D9EF','f': '#F92672',
+					   'n': '#A6E22E', 'c': '#AE81FF'}}
 
 styling = {'font': 'Avant Garde',
 		   'font_size': 18,
@@ -704,10 +708,11 @@ def get_article(word, gender, language):
 
 # Color word in side field according to gender
 def gender_color(gender):
+	global styling
 	global language
 	global text_word
 
-	gender_colors = {'m': 'blue', 'f': 'red', 'n': 'green', 'c': 'purple'}
+	gender_colors = styling['colors']['gender_colors']
 	# Only set gender color if gender is unique and gender_color is defined
 	if not gender in gender_colors:
 		text_word.configure(foreground=styling['colors']['text_color'])
