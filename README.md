@@ -18,7 +18,7 @@ The program has only been tested for macOS, and it is unclear if it will work on
 Start by downloading the files, e.g. using `git clone` or clicking the green button "Code" at the top of this page, choosing "Download ZIP" and unzipping the downloaded files. Then navigate to the folder in the terminal (type `cd <path to the folder with the files>`). After that, you type `./run.sh` and press <kbd>⏎ Enter</kbd>. This will activate a Python virtual environment (it is created if it doesn't exist already), and make sure that all necessary dependencies are installed in this virtual environment. After that, the program UI will open up in a window.
 
 ## Language and text selection
-Choose language by pressing the indicated key (the letter within `[]`) for each language name. Choose whether you want to add a new text or open a previous text by pressing <kbd>n</kbd> or <kbd>o</kbd>. Press <kbd>⏎ Enter</kbd> to confirm your choices.
+Choose language by pressing the indicated key (the letter within `[]`) for each language name. Choose whether you want to add a new text or open a previous text by pressing <kbd>n</kbd> or <kbd>o</kbd>. Press <kbd>⏎ Enter</kbd> to confirm your choices. In this start window, you can also choose to activate dark mode by pressing <kbd>d</kbd> and to deactivate pronunciation by pressing <kbd>p</kbd>. Deactivating pronunciation might make lookup of words faster.
 
 ## New text
 - Alt. 1 (Manual text insertion): Paste a title for the text in the first text field and the rest of the text in the second text field. Press <kbd>⏎ Enter</kbd> to deactivate the text field, and press <kbd>⏎ Enter</kbd> again to confirm.

@@ -101,11 +101,11 @@ styling = {'font': 'Avant Garde',
 		   'example_translation': (font, 14, 'italic'),
 		   'colors': default_colors}
 
-if dark_mode:
-	styling['colors'] = dark_mode_colors
-
-
-
+def set_dark_mode(activate=True):
+	if activate:
+		styling['colors'] = dark_mode_colors
+	else:
+		styling['colors'] = default_colors
 
 # General function for saving files
 def save(obj, name, directory):
@@ -134,11 +134,11 @@ def save_to_txt(title, text, file_name, directory):
 	file.close()
 
 # Save word list
-def save_list(obj, name):
+def save_to_history(obj, name):
 	save(obj, name, data_dir + '/' + language + '/' + 'history')
 
 # Load word list
-def load_list(name):
+def load_from_history(name):
 	obj = load(name, data_dir + '/' + language + '/' + 'history')
 	return obj
 
@@ -155,7 +155,7 @@ def load_all():
 	global last_opened_files
 
 	try:
-		known_words = load_list("known_words")
+		known_words = load_from_history("known_words")
 		if print_word_lists_at_start:
 			print('')
 			print('known words:')
@@ -163,7 +163,7 @@ def load_all():
 	except:
 		known_words = {}
 	try:
-		learning_words = load_list("learning_words")
+		learning_words = load_from_history("learning_words")
 		if print_word_lists_at_start:
 			print('')
 			print('learning words:')
@@ -171,7 +171,7 @@ def load_all():
 	except:
 		learning_words = {}
 	try:
-		ignored_words = load_list("ignored_words")
+		ignored_words = load_from_history("ignored_words")
 		if print_word_lists_at_start:
 			print('')
 			print('ignored words:')
@@ -180,7 +180,7 @@ def load_all():
 		ignored_words = []
 	if consider_phrases:
 		try:
-			phrases = load_list("phrases")
+			phrases = load_from_history("phrases")
 			if print_word_lists_at_start:
 				print('')
 				print('phrases:')
@@ -191,12 +191,12 @@ def load_all():
 # Save all the word lists and current state
 def save_all():
 	global save_state_on
-	save_list(known_words, "known_words")
-	save_list(learning_words, "learning_words")
-	save_list(ignored_words, "ignored_words")
+	save_to_history(known_words, "known_words")
+	save_to_history(learning_words, "learning_words")
+	save_to_history(ignored_words, "ignored_words")
 	if consider_phrases:
-		save_list(phrases, "phrases")
-	save_list(last_opened_files, 'last_opened_files')
+		save_to_history(phrases, "phrases")
+	save_to_history(last_opened_files, 'last_opened_files')
 	if save_state_on:
 		save_state()
 	if not use_message_box:
@@ -236,7 +236,7 @@ def save_state():
 					file.write(line)
 
 # Invoke save_all
-def save_lists(event):
+def save_history(event):
 	global w
 	global text
 	save_all()
@@ -247,7 +247,7 @@ def save_lists(event):
 	unfocus()
 
 # Invoke save_all_as_txt
-def save_listsastxt(event):
+def save_lists_as_txt(event):
 	global w
 	global text
 	save_all_as_txt()
@@ -2183,8 +2183,10 @@ def remove_russian_accents(old_string):
 
 def start():
 	global config
+	global settings
 	global start_window
 	global start_text
+	global text_settings
 	global selection_key_to_language
 	
 	# Load config file
@@ -2198,6 +2200,13 @@ def start():
 		print(f"Error: The config file '{config_file_path}' contains invalid JSON.")
 	set_config_params()
 
+	# Load settings
+	try:
+		settings = load('settings', data_dir + '/general')
+	except:
+		settings = {'sound_on': True, 'dark_mode': False}
+
+	# Create window
 	start_window = Tk()
 	start_window.title("Legilo")
 	width = start_window_size['width']
@@ -2217,15 +2226,20 @@ def start():
 	right_frame.pack(side=LEFT)
 	right_frame.pack_propagate(0)
 
-	# Add text field
-	start_text = Text(center_frame, width=50, height=100, wrap='word', background="black", foreground="white", font=(font,20))
+	# Add text fields
+	start_text = Text(center_frame, width=50, height=25, wrap='word', background="black", foreground="white", font=(font,20))
 	start_text.config(highlightbackground='black')
 	start_text.pack(side=TOP)
 	start_text.config(cursor='arrow')
 
+	text_settings = Text(center_frame, width=50, height=10, wrap='word', background="black", foreground="white", font=(font,12))
+	text_settings.config(highlightbackground='black')
+	text_settings.pack(side=TOP)
+	text_settings.config(cursor='arrow')
+
 	# Show text
-	start_text.insert("end", "\n\n\nLegilo")
-	start_text.tag_add("legilo", "4.0", "4.end")
+	start_text.insert("end", "\n\nLegilo")
+	start_text.tag_add("legilo", "3.0", "3.end")
 	start_text.tag_configure("legilo", font=(font,80), justify='center')
 	start_text.insert("end", "\n\nChoose language and option: ")
 	start_text.tag_add("choice", "6.0", "6.end")
@@ -2246,9 +2260,13 @@ def start():
 	start_text.insert("end", "📂 [O]pen\n")
 	start_text.configure(state="disabled")
 
+	show_settings(settings)
+
 	start_window.bind("<n>", option_choice)
 	start_window.bind("<o>", option_choice)
 	start_window.bind("<Return>", confirm)
+	start_window.bind("<p>", toggle_pronounce)
+	start_window.bind("<d>", toggle_dark_mode)
 
 	start_window.mainloop()
 
@@ -2325,10 +2343,43 @@ def option_choice(event):
 			start_text.insert("end", "\nPress [enter] to continue\n")
 			start_text.configure(state="disabled")
 
+def show_settings(settings):
+	global text_settings
+	text_settings.configure(state='normal')
+	text_settings.delete('1.0', 'end')
+	text_settings.insert('end', 'Settings:\n')
+	if settings['sound_on']:
+		text_settings.insert('end', '[P]ronunciation: on\n')
+	else:
+		text_settings.insert('end', '[P]ronunciation: off\n')
+	if settings['dark_mode']:
+		text_settings.insert('end', '[D]ark mode: on\n')
+	else:
+		text_settings.insert('end', '[D]ark mode: off\n')
+	text_settings.configure(state='disabled')
+
+def toggle_pronounce(event):
+	global settings
+	settings['sound_on'] = not settings['sound_on']
+	show_settings(settings)
+
+def toggle_dark_mode(event):
+	global settings
+	settings['dark_mode'] = not settings['dark_mode']
+	show_settings(settings)
+
+def save_and_apply_settings(settings):
+	global sound_on
+	global dark_mode
+	save(settings, 'settings', data_dir + '/general')
+	sound_on = settings['sound_on']
+	set_dark_mode(settings['dark_mode'])
+
 def confirm(event):
 	global start_window
 	if option and language:
 		start_window.destroy()
+		save_and_apply_settings(settings)
 		if option == 'new':
 			create_new(language)
 		elif option == 'open':
@@ -2390,7 +2441,7 @@ def create_new(language):
 
 	# Load list of last opened files
 	try:
-		last_opened_files = load_list("last_opened_files")
+		last_opened_files = load_from_history("last_opened_files")
 	except:
 		last_opened_files = []
 
@@ -2552,7 +2603,7 @@ def open_old(language):
 
 	# Load list of last opened files
 	try:
-		last_opened_files = load_list("last_opened_files")
+		last_opened_files = load_from_history("last_opened_files")
 	except:
 		last_opened_files = []
 
@@ -3093,8 +3144,8 @@ def run(language, text_file):
 	w.bind("<KeyRelease-Shift_L>", deactivate_general_word_selection_mode)
 
 	## Saving
-	w.bind("<Command-Key-s>", save_lists)
-	w.bind("<Command-Key-r>", save_listsastxt)
+	w.bind("<Command-Key-s>", save_history)
+	w.bind("<Command-Key-r>", save_lists_as_txt)
 	w.bind("<Command-Key-x>", quit_without_saving)
 
 	## Open external resources
