@@ -6,6 +6,7 @@ import regex
 from datetime import date
 from tkinter import *
 from tkinter import messagebox
+from tkinter import ttk
 import tkinter.scrolledtext as scrolledtextwindow
 from language_code import get_language_code
 from translate import LegiloTranslator
@@ -14,7 +15,6 @@ from autoread import autoread
 from google_speech import Speech
 from googletrans import Translator
 import webbrowser
-import urllib
 import pickle # For saving and loading data
 import subprocess # Used for text-to speak with Mac OS
 import shlex # Used for text-to speak with Mac OS
@@ -37,22 +37,50 @@ use_message_box = False # Uses message box to inform about saving, which has som
 print_word_lists_at_start = False # Prints word lists in terminal for debugging
 new_browser_tab = True # Use a new browser tab the first time the browser is opened
 data_dir = 'data' # Directory where data (texts and word lists etc.) is saved
+dark_mode = False # Activate dark mode
 
 # Styling for UI
 font = 'Avant Garde' #'Museo Sans Rounded', 'Bookman', 'Georgia', 'Helvetica', 'Avant Garde'
 
 default_colors = {'text_color': 'black',
 				  'text_background': 'white',
-				  'window_background_color': 'green',
-				  'active_color': 'orange',
-				  'learning_color': '#fde367',
-				  'new_color': '#cce6ff',
-				  'known_color': '#b0fc81',
-				  'phrase_mode_marker': '#b0fc81',
+				  'window_background_color': 'lightgray',
+				  'active_text': 'black',
+				  'learning_text': 'black',
+				  'new_text': 'black',
+				  'known_text': 'black',
+				  'active_background': 'orange',
+				  'learning_background': '#fde367',
+				  'new_background': '#cce6ff',
+				  'known_background': '#b0fc81',
+				  'phrase_mode_marker': '#A9DC76', #'#b0fc81',
+				  'phrase_mode_marker_text': 'black',
 				  'personal_translation_background': 'orange',
-				  'google_translate_background': '#b0fc81',
+				  'personal_translation_text': 'black',
+				  'google_translate_background': '#A9DC76',
+				  'google_translate_text': 'black',
 				  'field_title_background': 'darkgray',
-				  'field_title_text_color': 'white'}
+				  'field_title_text': 'white'}
+
+dark_mode_colors = {'text_color': '#F8F8F2',
+					'text_background': '#282c24',
+					'window_background_color': '#20241c',
+					'active_text': '#FD971F',
+					'learning_text': '#f7d200', #'#E6DB74',
+					'new_text': '#66D9EF',
+					'known_text': '#A6E22E',
+					'active_background': '#403c34',
+					'learning_background': '#282c24',
+					'new_background': '#282c24',
+					'known_background': '#282c24',
+					'phrase_mode_marker': '#403c34',
+					'phrase_mode_marker_text': '#A6E22E',
+					'personal_translation_background': '#282c24',
+					'personal_translation_text': '#FD971F',
+					'google_translate_background': '#282c24',
+					'google_translate_text': '#A6E22E',
+					'field_title_background': '#403c34',
+					'field_title_text': '#F8F8F2'}
 
 styling = {'font': 'Avant Garde',
 		   'font_size': 18,
@@ -73,6 +101,8 @@ styling = {'font': 'Avant Garde',
 		   'example_translation': (font, 14, 'italic'),
 		   'colors': default_colors}
 
+if dark_mode:
+	styling['colors'] = dark_mode_colors
 
 
 
@@ -438,21 +468,27 @@ def skip_to_word(word_tag, scroll_to_word=False):
 def mark_word(line, word_num, status):
 	if status == 'new':
 		text.tag_config(str(line) + "." + str(word_num),
-				  background=styling['colors']['new_color'])
+				  foreground=styling['colors']['new_text'],
+				  background=styling['colors']['new_background'])
 	elif status == 'learning':
 		text.tag_config(str(line) + "." + str(word_num),
-				  background=styling['colors']['learning_color'])
+				  foreground=styling['colors']['learning_text'],
+				  background=styling['colors']['learning_background'])
 	elif status == 'known':
 		text.tag_config(str(line) + "." + str(word_num),
+				  foreground=styling['colors']['text_color'],
 				  background=styling['colors']['text_background'])
 	elif status == 'ignored':
 		text.tag_config(str(line) + "." + str(word_num),
+				  foreground=styling['colors']['text_color'],
 				  background=styling['colors']['text_background'])
 	elif status == 'active':
 		text.tag_config(str(line) + "." + str(word_num),
-				  background=styling['colors']['active_color'])
+				  foreground=styling['colors']['active_text'],
+				  background=styling['colors']['active_background'])
 	elif status == 'selection':
 		text.tag_config(str(line) + "." + str(word_num),
+				  foreground=styling['colors']['phrase_mode_marker_text'],
 				  background=styling['colors']['phrase_mode_marker'])
 
 # Mark all instances of a word
@@ -721,9 +757,11 @@ def insert_translation(trans):
 	text_trans.tag_configure("parenthesis", font=(translation_font, translation_font_size))
 	text_trans.tag_configure("type_and_gender", font=(translation_font, translation_font_size, "italic"))
 	text_trans.tag_configure("personal_translation", font=(translation_font, translation_font_size),
-						 background=styling['colors']['personal_translation_background'])
+						  foreground=styling['colors']['personal_translation_text'],
+						  background=styling['colors']['personal_translation_background'])
 	text_trans.tag_configure("google_translate", font=(translation_font, translation_font_size),
-						 background=styling['colors']['google_translate_background'])
+						  foreground=styling['colors']['google_translate_text'],
+						  background=styling['colors']['google_translate_background'])
 	text_trans.tag_configure("definitions", font=(translation_font, translation_font_size), lmargin1=20, spacing1=5)
 	text_trans.tag_configure("synonyms", font=(translation_font, translation_font_size-2, "bold"), lmargin1=40, spacing1=2)
 
@@ -1132,17 +1170,23 @@ def print_status(status):
 		status = 'new'
 	text_status.insert("1.0", status) # Insert text at line i and character 0
 	if status == 'new' or status == 'ignored':
-		text_status.configure(bg=styling['colors']['new_color'])
+		text_status.configure(fg=styling['colors']['new_text'],
+						bg=styling['colors']['new_background'])
 	elif status == 'learning':
-		text_status.configure(bg=styling['colors']['learning_color'])
+		text_status.configure(fg=styling['colors']['learning_text'],
+						bg=styling['colors']['learning_background'])
 	elif status == 'known':
-		text_status.configure(bg=styling['colors']['known_color'])
+		text_status.configure(fg=styling['colors']['known_text'],
+						bg=styling['colors']['known_background'])
 	elif status == 'learning phrase':
-		text_status.configure(bg=styling['colors']['learning_color'])
+		text_status.configure(fg=styling['colors']['learning_text'],
+						bg=styling['colors']['learning_background'])
 	elif status == 'new phrase':
-		text_status.configure(bg=styling['colors']['new_color'])
+		text_status.configure(fg=styling['colors']['new_text'],
+						bg=styling['colors']['new_background'])
 	else:
-		text_status.configure(bg=styling['colors']['text_background'])
+		text_status.configure(fg=styling['colors']['text'],
+						bg=styling['colors']['text_background'])
 	text_status.configure(state="disabled")
 
 # Center window on the screen
@@ -2324,7 +2368,10 @@ def create_new(language):
 	main_frame.pack_propagate(0)
 
 	# Add title field
-	new_title = Text(main_frame, width=65, height=2, wrap='word', font=(font,20))
+	new_title = Text(main_frame, width=65, height=2, wrap='word', font=(font,20),
+				  insertbackground=styling['colors']['text_color'],
+				  foreground=styling['colors']['text_color'],
+				  background=styling['colors']['text_background'])
 	new_title.pack(side=TOP)
 	new_title.focus()
 
@@ -2334,8 +2381,10 @@ def create_new(language):
 	    wrap   = 'word',  # wrap text at full words only
 	    width  = 100,      # characters
 	    height = 100,      # text lines
-	    bg='white',        # background color of edit area
-	    font=(font, 14)
+	    font=(font, 14),
+		insertbackground=styling['colors']['text_color'],
+		foreground=styling['colors']['text_color'],
+		background=styling['colors']['text_background']
 	)
 	new_text.pack(side=TOP)
 
@@ -2461,33 +2510,43 @@ def open_old(language):
 	main_frame.pack(side=LEFT)
 	main_frame.pack_propagate(0)
 
-	text_title_field = Text(main_frame, width=65, height=1, wrap='word', font=(font,30))
+	text_title_field = Text(main_frame, width=65, height=1, wrap='word', font=(font,30),
+						 foreground=styling['colors']['text_color'],
+						 background=styling['colors']['text_background'])
 	text_title_field.pack(side=TOP)
 	text_title_field.insert('1.0','Open file')
 	text_title_field.tag_add("windowtitle", "1.0", "end")
 	text_title_field.tag_configure("windowtitle", font=(font,30), justify='center')
 	text_title_field.configure(state="disabled",
+							foreground=styling['colors']['text_color'],
 							background=styling['colors']['window_background_color'],
 							highlightbackground=styling['colors']['window_background_color'])
 
-	text_field1 = Text(main_frame, width=65, height=1, wrap='word', font=(font,20))
+	text_field1 = Text(main_frame, width=65, height=1, wrap='word', font=(font,20),
+					foreground=styling['colors']['text_color'],
+					background=styling['colors']['window_background_color'])
 	text_field1.pack(side=TOP)
 	text_field1.insert('1.0',f'Write name of file in {data_dir}/{language}/texts: ')
 	text_field1.configure(state="disabled",
-					   background=styling['colors']['window_background_color'],
 					   highlightbackground=styling['colors']['window_background_color'])
 
-	old_path = Text(main_frame, width=65, height=1, wrap='word', font=(font,20))
+	old_path = Text(main_frame, width=65, height=1, wrap='word', font=(font,20),
+				 insertbackground=styling['colors']['text_color'],
+				 foreground=styling['colors']['text_color'],
+				 background=styling['colors']['text_background'])
 	old_path.pack(side=TOP)
 
-	text_field1 = Text(main_frame, width=65, height=1, wrap='word', font=(font,20))
+	text_field1 = Text(main_frame, width=65, height=1, wrap='word', font=(font,20),
+					foreground=styling['colors']['text_color'],
+					background=styling['colors']['window_background_color'])
 	text_field1.pack(side=TOP)
 	text_field1.insert('1.0','Choose one of the latest files: ')
 	text_field1.configure(state="disabled",
-					   background=styling['colors']['window_background_color'],
 					   highlightbackground=styling['colors']['window_background_color'])
 
-	old_text = Text(main_frame, width=65, height=50, wrap='word', font=(font,20))
+	old_text = Text(main_frame, width=65, height=50, wrap='word', font=(font,20),
+				 foreground=styling['colors']['text_color'],
+				 background=styling['colors']['text_background'])
 	old_text.pack(side=TOP)
 	old_text.configure(state="disabled")
 
@@ -2713,8 +2772,29 @@ def run(language, text_file):
 	side_frame.grid_columnconfigure(0, weight=1)
 
 	# Add text field
-	text = scrolledtextwindow.ScrolledText(
-	    master=text_frame,
+	if styling['colors']['text_background'] == 'white':
+		# Use default scrollbar if text field background is white
+		text = scrolledtextwindow.ScrolledText(master=text_frame)
+	else: 
+		# Use custom scrollbar if text background isn't white
+		text = Text(master=text_frame)
+		tkinter_style = ttk.Style()
+		tkinter_style.theme_use('default')
+		tkinter_style.layout("Vertical.TScrollbar",
+					[('Vertical.Scrollbar.trough',
+					{'children': [('Vertical.Scrollbar.thumb', {'unit': '1'})],
+						'sticky': 'nswe'})])
+		tkinter_style.configure("Vertical.TScrollbar",
+						background=styling['colors']['active_background'],
+						troughcolor=styling['colors']['text_background'],
+						borderwidth=0,
+						relief="flat")
+		scrollbar = ttk.Scrollbar(text_frame, orient="vertical", style="Vertical.TScrollbar")
+		scrollbar.grid(row=0, column=1, sticky='ns')
+		text.config(yscrollcommand=scrollbar.set)
+		scrollbar.config(command=text.yview)
+
+	text.configure(
 		padx=styling['text_field_padx'],
 		pady=styling['text_field_pady'],
 	    wrap='word',  # wrap text at full words only
@@ -2747,7 +2827,7 @@ def run(language, text_file):
 						 padx=styling['side_field_padx'], pady=styling['side_field_pady'],
 						 wrap='word', highlightthickness=0, borderwidth=0, font=styling['side_field_title'],
 						 background=styling['colors']['field_title_background'],
-						 foreground=styling['colors']['field_title_text_color'])
+						 foreground=styling['colors']['field_title_text'])
 	text_trans_title.grid(row=2, column=0, sticky='nswe')
 	text_trans_title.insert('1.0', 'Translations: ')
 	text_trans_title.configure(state="disabled")
@@ -2755,7 +2835,8 @@ def run(language, text_file):
 	text_personal_trans = Text(side_frame, width=styling['side_field_width'], height=5,
 							padx=styling['side_field_padx'], pady=styling['side_field_pady'],
 							wrap='word', highlightthickness=0, borderwidth=0, font=styling['translation'],
-							foreground=styling['colors']['text_color'],
+							insertbackground=styling['colors']['text_color'],
+							foreground=styling['colors']['personal_translation_text'],
 							background=styling['colors']['personal_translation_background'])
 	text_personal_trans.grid(row=3, column=0, sticky='nswe')
 	text_personal_trans.grid_forget()
@@ -2770,7 +2851,7 @@ def run(language, text_file):
 	text_remark_title = Text(side_frame, height=1, width=0,
 						  padx=styling['side_field_padx'], pady=styling['side_field_pady'],
 						  wrap='word', highlightthickness=0, borderwidth=0, font=styling['side_field_title'],
-						  foreground=styling['colors']['field_title_text_color'],
+						  foreground=styling['colors']['field_title_text'],
 						  background=styling['colors']['field_title_background'])
 	text_remark_title.grid(row=5, column=0, sticky='nswe')
 	text_remark_title.insert('1.0', 'Notes & Remarks: ')
@@ -2779,6 +2860,7 @@ def run(language, text_file):
 	text_remark = Text(side_frame, height=10, width=0,
 					padx=styling['side_field_padx'], pady=styling['side_field_pady'],
 					wrap='word', highlightthickness=0, borderwidth=0, font=styling['remark'],
+					insertbackground=styling['colors']['text_color'],
 					foreground=styling['colors']['text_color'],
 					background=styling['colors']['text_background'])
 	text_remark.grid(row=6, column=0, sticky='nswe')
@@ -2787,7 +2869,7 @@ def run(language, text_file):
 						   padx=styling['side_field_padx'], pady=styling['side_field_pady'],
 						   wrap='word', highlightthickness=0, borderwidth=0,
 						   font=styling['side_field_title'],
-						   foreground=styling['colors']['field_title_text_color'],
+						   foreground=styling['colors']['field_title_text'],
 						   background=styling['colors']['field_title_background'])
 	text_example_title.grid(row=7, column=0, sticky='nswe')
 	text_example_title.insert('1.0', 'Example Sentence: ')
