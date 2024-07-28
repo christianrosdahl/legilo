@@ -2976,7 +2976,7 @@ def run(language, text_file):
 
 	## Saving
 	w.bind("<Command-Key-s>", save_lists)
-	w.bind("<Command-Key-t>", save_listsastxt)
+	w.bind("<Command-Key-r>", save_listsastxt)
 	w.bind("<Command-Key-x>", quit_without_saving)
 
 	## Open external resources
@@ -3020,7 +3020,13 @@ def configure_keyboard_shortcuts(config):
 		'phrase_word_selection_left': phrase_word_selection_left,
 		'phrase_word_selection_right': phrase_word_selection_right,
 		'general_word_selection_left': general_word_selection_left,
-		'general_word_selection_right': general_word_selection_right
+		'general_word_selection_right': general_word_selection_right,
+		'scroll_down': scroll_down,
+		'scroll_up': scroll_up,
+		'scroll_down_translation': scroll_down_translation,
+		'scroll_up_translation': scroll_up_translation,
+		'scroll_down_remark': scroll_down_remark,
+		'scroll_up_remark': scroll_up_remark
 	}
 
 	# Add keyboard shortcuts

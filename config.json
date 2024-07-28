@@ -208,7 +208,13 @@
         "S": "general_word_selection_left",
         "t": "known",
         "d": "enter",
-        "x": "ignore"
+        "x": "ignore",
+        "<Command-Key-t>": "scroll_down",
+        "<Command-Key-d>": "scroll_up",
+        "T": "scroll_down_translation",
+        "D": "scroll_up_translation",
+        "<Command-Key-T>": "scroll_down_remark",
+        "<Command-Key-D>": "scroll_up_remark"
     },
     "third_language": "swedish"
 }
