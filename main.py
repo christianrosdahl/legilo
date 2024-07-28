@@ -38,44 +38,40 @@ print_word_lists_at_start = False # Prints word lists in terminal for debugging
 new_browser_tab = True # Use a new browser tab the first time the browser is opened
 data_dir = 'data' # Directory where data (texts and word lists etc.) is saved
 
-# Fonts and colors
-window_background_color = 'lightgray'
-active_color = 'orange'
-learning_color = '#fde367' #'yellow' macyellow:'#facd5a'
-new_color = '#cce6ff' #'#a3daf0'#'lightblue' macblue: '#69aff1'
-known_color = '#b0fc81', #'#9ffa66' #'lightgreen'
-selection_color = '#b0fc81' # Color for selector in phrase mode
-
-# Font
+# Styling for UI
 font = 'Avant Garde' #'Museo Sans Rounded', 'Bookman', 'Georgia', 'Helvetica', 'Avant Garde'
 
-# Main window text settings
-font_size = 18
-main_title_size = 36
-title_size = 20
-text_field_width = 60 # Text field width in number of characters
-text_field_padx = 5
-text_field_pady = 5
+default_colors = {'text_color': 'black',
+				  'text_background': 'white',
+				  'window_background_color': 'green',
+				  'active_color': 'orange',
+				  'learning_color': '#fde367',
+				  'new_color': '#cce6ff',
+				  'known_color': '#b0fc81',
+				  'phrase_mode_marker': '#b0fc81',
+				  'personal_translation_background': 'orange',
+				  'google_translate_background': '#b0fc81',
+				  'field_title_background': 'darkgray',
+				  'field_title_text_color': 'white'}
 
-# Side field text settings
-side_field_fonts = {'title': (font, 14),
-							'field_title_background': 'darkgray',
-							'field_title_text_color': 'white',
-							'word': (font, 20, 'bold'),
-							'status': (font, 12, 'bold'),
-							'translation': (font, 16),
-							'personal_translation_background': 'orange',
-							'google_translate_background': '#b0fc81',
-							'remark': (font, 14),
-							'example': (font, 14, 'bold'),
-							'example_translation': (font, 14, 'italic')}
-side_field_width = 40 # Side field width in number of characters
-side_field_padx = 5
-side_field_pady = 5
-
-
-
-
+styling = {'font': 'Avant Garde',
+		   'font_size': 18,
+		   'main_title_size': 36,
+		   'title_size': 20,
+		   'text_field_width': 60,
+		   'text_field_padx': 5,
+		   'text_field_pady': 5,
+		   'side_field_width': 40,
+		   'side_field_padx': 5,
+		   'side_field_pady': 5,
+		   'side_field_title': (font, 14),
+		   'lookup_word': (font, 20, 'bold'),
+		   'status': (font, 12, 'bold'),
+		   'translation': (font, 16),
+		   'remark': (font, 14),
+		   'example': (font, 14, 'bold'),
+		   'example_translation': (font, 14, 'italic'),
+		   'colors': default_colors}
 
 
 
@@ -441,17 +437,23 @@ def skip_to_word(word_tag, scroll_to_word=False):
 # Mark words
 def mark_word(line, word_num, status):
 	if status == 'new':
-		text.tag_config(str(line) + "." + str(word_num), background=new_color)
+		text.tag_config(str(line) + "." + str(word_num),
+				  background=styling['colors']['new_color'])
 	elif status == 'learning':
-		text.tag_config(str(line) + "." + str(word_num), background=learning_color)
+		text.tag_config(str(line) + "." + str(word_num),
+				  background=styling['colors']['learning_color'])
 	elif status == 'known':
-		text.tag_config(str(line) + "." + str(word_num), background="white")
+		text.tag_config(str(line) + "." + str(word_num),
+				  background=styling['colors']['text_background'])
 	elif status == 'ignored':
-		text.tag_config(str(line) + "." + str(word_num), background="white")
+		text.tag_config(str(line) + "." + str(word_num),
+				  background=styling['colors']['text_background'])
 	elif status == 'active':
-		text.tag_config(str(line) + "." + str(word_num), background=active_color)
+		text.tag_config(str(line) + "." + str(word_num),
+				  background=styling['colors']['active_color'])
 	elif status == 'selection':
-		text.tag_config(str(line) + "." + str(word_num), background=selection_color)
+		text.tag_config(str(line) + "." + str(word_num),
+				  background=styling['colors']['phrase_mode_marker'])
 
 # Mark all instances of a word
 def mark_all_instances(word, status):
@@ -472,29 +474,29 @@ def mark_phrase(line, startword_num, status):
 	for tag in line_tags:
 		if 'l' in tag:
 			is_title_line = True
-	phrasefont_size = font_size
+	phrase_font_size = styling['font_size']
 	if line == 1 and is_title_line:
-		phrasefont_size = main_title_size
+		phrase_font_size = styling['main_title_size']
 	elif is_title_line:
-		phrasefont_size = title_size
+		phrase_font_size = styling['title_size']
 
 	if status == 'ordinary':
 		if is_title_line:
-			font_settings = (font, phrasefont_size, "underline", "bold")
+			font_settings = (font, phrase_font_size, "underline", "bold")
 		else:
-			font_settings = (font, phrasefont_size, "underline")
+			font_settings = (font, phrase_font_size, "underline")
 		text.tag_config("p" + str(line) + "." + str(startword_num), font = font_settings)
 	elif status == 'none':
 		if is_title_line:
-			font_settings = (font, phrasefont_size, "bold")
+			font_settings = (font, phrase_font_size, "bold")
 		else:
-			font_settings = (font, phrasefont_size)
+			font_settings = (font, phrase_font_size)
 		text.tag_config("p" + str(line) + "." + str(startword_num), font = font_settings)
 	elif status == 'active':
 		if is_title_line:
-			font_settings = (font, phrasefont_size, "underline", "italic", "bold")
+			font_settings = (font, phrase_font_size, "underline", "italic", "bold")
 		else:
-			font_settings = (font, phrasefont_size, "underline", "italic")
+			font_settings = (font, phrase_font_size, "underline", "italic")
 		text.tag_config("p" + str(line) + "." + str(startword_num), font = font_settings)
 
 # Mark all instances of an phrase
@@ -672,7 +674,7 @@ def gender_color(gender):
 	gender_colors = {'m': 'blue', 'f': 'red', 'n': 'green', 'c': 'purple'}
 	# Only set gender color if gender is unique and gender_color is defined
 	if not gender in gender_colors:
-		text_word.configure(foreground='black')
+		text_word.configure(foreground=styling['colors']['text_color'])
 		return
 
 	text_word.configure(state='normal')
@@ -688,7 +690,7 @@ def gender_color(gender):
 		else:
 			noun_and_verb = word.split(',')
 			noun_length = len(noun_and_verb[0])
-			text_word.configure(foreground='black')
+			text_word.configure(foreground=styling['colors']['text_color'])
 			text_word.tag_add('noun', '1.0', '1.' + str(noun_length))
 			text_word.tag_configure('noun', foreground=gender_colors[gender])
 	text_word.configure(state='disabled')
@@ -706,22 +708,22 @@ def insert_sentence(sentence, sentence_trans):
 	text_example.insert("1.0", sentence + "\n")
 	text_example.insert("3.0", sentence_trans)
 	text_example.tag_add("sentence", "1.0", "1." + str(len(sentence)))
-	text_example.tag_config("sentence", font = side_field_fonts['example'])
+	text_example.tag_config("sentence", font = styling['example'])
 	text_example.configure(state='disabled')
 
 # Insert formated translation into translation field
 def insert_translation(trans):
 	text_trans.configure(state='normal')
 	# Define tags for formatting
-	(translation_font, translation_font_size) = side_field_fonts['translation']
+	(translation_font, translation_font_size) = styling['translation']
 	text_trans.tag_configure("word", font=(translation_font, translation_font_size, "bold"))
 	text_trans.tag_configure("normal", font=(translation_font, translation_font_size))
 	text_trans.tag_configure("parenthesis", font=(translation_font, translation_font_size))
 	text_trans.tag_configure("type_and_gender", font=(translation_font, translation_font_size, "italic"))
 	text_trans.tag_configure("personal_translation", font=(translation_font, translation_font_size),
-						 background=side_field_fonts['personal_translation_background'])
+						 background=styling['colors']['personal_translation_background'])
 	text_trans.tag_configure("google_translate", font=(translation_font, translation_font_size),
-						 background=side_field_fonts['google_translate_background'])
+						 background=styling['colors']['google_translate_background'])
 	text_trans.tag_configure("definitions", font=(translation_font, translation_font_size), lmargin1=20, spacing1=5)
 	text_trans.tag_configure("synonyms", font=(translation_font, translation_font_size-2, "bold"), lmargin1=40, spacing1=2)
 
@@ -780,11 +782,11 @@ def insert_translation(trans):
 
 def replace_phrase_translation(trans, color):
 	global text_trans
-	global side_field_fonts
+	global styling
 	text_trans.configure(state='normal')
 	text_trans.delete('1.0', "end")
 	text_trans.tag_configure("phrase_trans",
-						  font=side_field_fonts['translation'],
+						  font=styling['translation'],
 						  background=color)
 	text_trans.insert("1.0", trans, "phrase_trans")
 	text_trans.configure(state='disabled')
@@ -882,7 +884,7 @@ def side_field_show(word, info, status, do_pronounce=True):
 		gender_color(gender)
 	else:
 		text_word.configure(state='normal')
-		text_word.configure(fg="black")
+		text_word.configure(foreground=styling['colors']['text_color'])
 		text_word.configure(state='disabled')
 	insert_translation(trans)
 	if 'remark' in info:
@@ -901,7 +903,7 @@ def show_active_word_in_sidefield():
 		clear_side_field()
 		text_word.configure(state='normal')
 		text_word.insert('1.0', active['word'])
-		text_word.configure(fg='black')
+		text_word.configure(foreground=styling['colors']['text_color'])
 		text_word.configure(state='disabled')
 		print_status(active['status'])
 
@@ -1049,7 +1051,7 @@ def clear_side_field():
 
 	text_status.configure(state="normal")
 	text_status.delete("1.0", "end")
-	text_status.configure(bg="white")
+	text_status.configure(bg=styling['colors']['text_background'])
 	text_status.configure(state="disabled")
 
 	text_word.configure(state="normal")
@@ -1130,17 +1132,17 @@ def print_status(status):
 		status = 'new'
 	text_status.insert("1.0", status) # Insert text at line i and character 0
 	if status == 'new' or status == 'ignored':
-		text_status.configure(bg=new_color)
+		text_status.configure(bg=styling['colors']['new_color'])
 	elif status == 'learning':
-		text_status.configure(bg=learning_color)
+		text_status.configure(bg=styling['colors']['learning_color'])
 	elif status == 'known':
-		text_status.configure(bg=known_color)
+		text_status.configure(bg=styling['colors']['known_color'])
 	elif status == 'learning phrase':
-		text_status.configure(bg=learning_color)
+		text_status.configure(bg=styling['colors']['learning_color'])
 	elif status == 'new phrase':
-		text_status.configure(bg=new_color)
+		text_status.configure(bg=styling['colors']['new_color'])
 	else:
-		text_status.configure(bg="white")
+		text_status.configure(bg=styling['colors']['text_background'])
 	text_status.configure(state="disabled")
 
 # Center window on the screen
@@ -1611,7 +1613,7 @@ def add_third_lang_trans(event):
 		# Otherwise, get the third_lang translation
 		else:
 			remark_without_third_lang = text_remark.get('1.0','end')
-			text_remark.tag_configure('third_lang_header', font=(font, side_field_fonts['remark'][1], 'italic'))
+			text_remark.tag_configure('third_lang_header', font=(font, styling['remark'][1], 'italic'))
 			if len(remark_without_third_lang) > 1:
 				title_string = '\n\n' + f'{third_lang.capitalize()} translations: '
 				text_remark.insert('end', title_string, 'third_lang_header')
@@ -2303,18 +2305,21 @@ def create_new(language):
 	width = start_window_size['width']
 	height = start_window_size['height']
 	center_window(new_window, width, height)
-	new_window.configure(bg=window_background_color)
+	new_window.configure(bg=styling['colors']['window_background_color'])
 
 	# Create frames
-	top_frame = Frame(new_window, width=1200, height=50, background=window_background_color)
+	top_frame = Frame(new_window, width=1200, height=50,
+				   background=styling['colors']['window_background_color'])
 	top_frame.pack(side=TOP)
 	top_frame.pack_propagate(0)
 
-	bottom_frame = Frame(new_window, width=1200, height=50, background=window_background_color)
+	bottom_frame = Frame(new_window, width=1200, height=50,
+					  background=styling['colors']['window_background_color'])
 	bottom_frame.pack(side=BOTTOM)
 	bottom_frame.pack_propagate(0)
 
-	main_frame = Frame(new_window, width=1200, height=700, background=window_background_color)
+	main_frame = Frame(new_window, width=1200, height=700,
+					background=styling['colors']['window_background_color'])
 	main_frame.pack(side=LEFT)
 	main_frame.pack_propagate(0)
 
@@ -2438,18 +2443,21 @@ def open_old(language):
 	width = start_window_size['width']
 	height = start_window_size['height']
 	center_window(old_window, width, height)
-	old_window.configure(bg=window_background_color)
+	old_window.configure(bg=styling['colors']['window_background_color'])
 
 	# Create frames
-	top_frame = Frame(old_window, width=1200, height=50, background=window_background_color)
+	top_frame = Frame(old_window, width=1200, height=50,
+				   background=styling['colors']['window_background_color'])
 	top_frame.pack(side=TOP)
 	top_frame.pack_propagate(0)
 
-	bottom_frame = Frame(old_window, width=1200, height=50, background=window_background_color)
+	bottom_frame = Frame(old_window, width=1200, height=50,
+					  background=styling['colors']['window_background_color'])
 	bottom_frame.pack(side=BOTTOM)
 	bottom_frame.pack_propagate(0)
 
-	main_frame = Frame(old_window, width=1200, height=700, background=window_background_color)
+	main_frame = Frame(old_window, width=1200, height=700,
+					background=styling['colors']['window_background_color'])
 	main_frame.pack(side=LEFT)
 	main_frame.pack_propagate(0)
 
@@ -2458,12 +2466,16 @@ def open_old(language):
 	text_title_field.insert('1.0','Open file')
 	text_title_field.tag_add("windowtitle", "1.0", "end")
 	text_title_field.tag_configure("windowtitle", font=(font,30), justify='center')
-	text_title_field.configure(state="disabled", background=window_background_color, highlightbackground=window_background_color)
+	text_title_field.configure(state="disabled",
+							background=styling['colors']['window_background_color'],
+							highlightbackground=styling['colors']['window_background_color'])
 
 	text_field1 = Text(main_frame, width=65, height=1, wrap='word', font=(font,20))
 	text_field1.pack(side=TOP)
 	text_field1.insert('1.0',f'Write name of file in {data_dir}/{language}/texts: ')
-	text_field1.configure(state="disabled", background=window_background_color, highlightbackground=window_background_color)
+	text_field1.configure(state="disabled",
+					   background=styling['colors']['window_background_color'],
+					   highlightbackground=styling['colors']['window_background_color'])
 
 	old_path = Text(main_frame, width=65, height=1, wrap='word', font=(font,20))
 	old_path.pack(side=TOP)
@@ -2471,7 +2483,9 @@ def open_old(language):
 	text_field1 = Text(main_frame, width=65, height=1, wrap='word', font=(font,20))
 	text_field1.pack(side=TOP)
 	text_field1.insert('1.0','Choose one of the latest files: ')
-	text_field1.configure(state="disabled", background=window_background_color, highlightbackground=window_background_color)
+	text_field1.configure(state="disabled",
+					   background=styling['colors']['window_background_color'],
+					   highlightbackground=styling['colors']['window_background_color'])
 
 	old_text = Text(main_frame, width=65, height=50, wrap='word', font=(font,20))
 	old_text.pack(side=TOP)
@@ -2653,7 +2667,7 @@ def run(language, text_file):
 	# Create main window
 	w = Tk()
 	w.title("Legilo")
-	w.configure(bg=window_background_color)
+	w.configure(bg=styling['colors']['window_background_color'])
 	width = main_window_size['width']
 	height = main_window_size['height']
 	center_window(w, width, height)
@@ -2666,25 +2680,25 @@ def run(language, text_file):
 	container.grid_columnconfigure(1, weight=0)
 	container.grid_columnconfigure(2, weight=1)
 
-	left_margin_frame = Frame(container, background=window_background_color)
+	left_margin_frame = Frame(container, background=styling['colors']['window_background_color'])
 	left_margin_frame.grid(row=0, column=0, sticky='nswe')
 	
-	main_frame = Frame(container, background=window_background_color)
+	main_frame = Frame(container, background=styling['colors']['window_background_color'])
 	main_frame.grid(row=0, column=1, sticky='nswe')
 
 	main_frame.grid_rowconfigure(0, weight=1)
 	main_frame.grid_columnconfigure(0, weight=1)
 	
-	right_margin_frame = Frame(container, background=window_background_color)
+	right_margin_frame = Frame(container, background=styling['colors']['window_background_color'])
 	right_margin_frame.grid(row=0, column=2, sticky='nswe')
 
-	text_frame = Frame(main_frame, background=window_background_color)
+	text_frame = Frame(main_frame, background=styling['colors']['window_background_color'])
 	text_frame.grid(row=0, column=0, padx=20, pady=20, sticky='nswe')
 
 	text_frame.grid_rowconfigure(0, weight=1)
 	text_frame.grid_columnconfigure(0, weight=1)
 
-	side_frame = Frame(main_frame, background=window_background_color)
+	side_frame = Frame(main_frame, background=styling['colors']['window_background_color'])
 	side_frame.grid(row=0, column=1, padx=20, pady=20, sticky='nswe')
 
 	side_frame.grid_rowconfigure(0, weight=0)
@@ -2701,67 +2715,89 @@ def run(language, text_file):
 	# Add text field
 	text = scrolledtextwindow.ScrolledText(
 	    master=text_frame,
-		padx=text_field_padx,
-		pady=text_field_pady,
+		padx=styling['text_field_padx'],
+		pady=styling['text_field_pady'],
 	    wrap='word',  # wrap text at full words only
-		width=text_field_width,
-	    bg='white',        # background color of edit area
+		width=styling['text_field_width'],
+		foreground=styling['colors']['text_color'],
+	    background=styling['colors']['text_background'],
 		highlightthickness=0,
 		borderwidth=0, 
-	    font=(font, font_size),
+	    font=(font, styling['font_size']),
 		cursor='arrow'
 	)
 	text.grid(row=0, column=0, sticky='nswe')
 
 	# Add text fields in side field
-	text_status = Text(side_frame, height=1, width=0, padx=side_field_padx, pady=side_field_pady,
-				   wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['status'])
+	text_status = Text(side_frame, height=1, width=0,
+					padx=styling['side_field_padx'], pady=styling['side_field_pady'],
+					wrap='word', highlightthickness=0, borderwidth=0, font=styling['status'],
+					foreground=styling['colors']['text_color'],
+	    			background=styling['colors']['text_background'])
 	text_status.grid(row=0, column=0, sticky='nswe')
 	
-	text_word = Text(side_frame, height=1, width=0, padx=side_field_padx, pady=side_field_pady,
-				 wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['word'])
+	text_word = Text(side_frame, height=1, width=0,
+				  padx=styling['side_field_padx'], pady=styling['side_field_pady'],
+				  wrap='word', highlightthickness=0, borderwidth=0, font=styling['lookup_word'],
+				  foreground=styling['colors']['text_color'],
+				  background=styling['colors']['text_background'])
 	text_word.grid(row=1, column=0, sticky='nswe')
 	
-	text_trans_title = Text(side_frame, height=1, width=0, padx=side_field_padx, pady=side_field_pady,
-					   wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['title'],
-					   background=side_field_fonts['field_title_background'],
-					   foreground=side_field_fonts['field_title_text_color'])
+	text_trans_title = Text(side_frame, height=1, width=0,
+						 padx=styling['side_field_padx'], pady=styling['side_field_pady'],
+						 wrap='word', highlightthickness=0, borderwidth=0, font=styling['side_field_title'],
+						 background=styling['colors']['field_title_background'],
+						 foreground=styling['colors']['field_title_text_color'])
 	text_trans_title.grid(row=2, column=0, sticky='nswe')
 	text_trans_title.insert('1.0', 'Translations: ')
 	text_trans_title.configure(state="disabled")
 	
-	text_personal_trans = Text(side_frame, width=side_field_width, height=5, padx=side_field_padx, pady=side_field_pady,
-				  wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['translation'],
-				  background='orange')
+	text_personal_trans = Text(side_frame, width=styling['side_field_width'], height=5,
+							padx=styling['side_field_padx'], pady=styling['side_field_pady'],
+							wrap='word', highlightthickness=0, borderwidth=0, font=styling['translation'],
+							foreground=styling['colors']['text_color'],
+							background=styling['colors']['personal_translation_background'])
 	text_personal_trans.grid(row=3, column=0, sticky='nswe')
 	text_personal_trans.grid_forget()
 	
-	text_trans = Text(side_frame, width=side_field_width, height=20, padx=side_field_padx, pady=side_field_pady,
-				  wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['translation'])
+	text_trans = Text(side_frame, width=styling['side_field_width'], height=20,
+				   padx=styling['side_field_padx'], pady=styling['side_field_pady'],
+				   wrap='word', highlightthickness=0, borderwidth=0, font=styling['translation'],
+				   foreground=styling['colors']['text_color'],
+				   background=styling['colors']['text_background'])
 	text_trans.grid(row=4, column=0, sticky='nswe')
 	
-	text_remark_title = Text(side_frame, height=1, width=0, padx=side_field_padx, pady=side_field_pady,
-							 wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['title'],
-							 background=side_field_fonts['field_title_background'],
-							 foreground=side_field_fonts['field_title_text_color'])
+	text_remark_title = Text(side_frame, height=1, width=0,
+						  padx=styling['side_field_padx'], pady=styling['side_field_pady'],
+						  wrap='word', highlightthickness=0, borderwidth=0, font=styling['side_field_title'],
+						  foreground=styling['colors']['field_title_text_color'],
+						  background=styling['colors']['field_title_background'])
 	text_remark_title.grid(row=5, column=0, sticky='nswe')
 	text_remark_title.insert('1.0', 'Notes & Remarks: ')
 	text_remark_title.configure(state="disabled")
 
-	text_remark = Text(side_frame, height=10, width=0, padx=side_field_padx, pady=side_field_pady,
-				   wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['remark'])
+	text_remark = Text(side_frame, height=10, width=0,
+					padx=styling['side_field_padx'], pady=styling['side_field_pady'],
+					wrap='word', highlightthickness=0, borderwidth=0, font=styling['remark'],
+					foreground=styling['colors']['text_color'],
+					background=styling['colors']['text_background'])
 	text_remark.grid(row=6, column=0, sticky='nswe')
 	
-	text_example_title = Text(side_frame, height=1, width=0, padx=side_field_padx, pady=side_field_pady,
-						 wrap='word', highlightthickness=0, borderwidth=0,
-						 font=side_field_fonts['title'], background=side_field_fonts['field_title_background'],
-						 foreground=side_field_fonts['field_title_text_color'])
+	text_example_title = Text(side_frame, height=1, width=0,
+						   padx=styling['side_field_padx'], pady=styling['side_field_pady'],
+						   wrap='word', highlightthickness=0, borderwidth=0,
+						   font=styling['side_field_title'],
+						   foreground=styling['colors']['field_title_text_color'],
+						   background=styling['colors']['field_title_background'])
 	text_example_title.grid(row=7, column=0, sticky='nswe')
 	text_example_title.insert('1.0', 'Example Sentence: ')
 	text_example_title.configure(state="disabled")
 	
-	text_example = Text(side_frame, height=4, width=0, padx=side_field_padx, pady=side_field_pady,
-					wrap='word', highlightthickness=0, borderwidth=0, font=side_field_fonts['example_translation'])
+	text_example = Text(side_frame, height=4, width=0,
+					 padx=styling['side_field_padx'], pady=styling['side_field_pady'],
+					 wrap='word', highlightthickness=0, borderwidth=0, font=styling['example_translation'],
+					 foreground=styling['colors']['text_color'],
+					 background=styling['colors']['text_background'])
 	text_example.grid(row=8, column=0, sticky='nswe')
 	freeze_side_field()
 
@@ -2808,20 +2844,20 @@ def run(language, text_file):
 		# Main title
 		if not last_line_char in '.?!:,]*-' and i == 0 and len(line) < 200:
 			text.tag_add('l' + str(i+1), str(i+1) + '.' + str(0), str(i+1) + '.' + 'end')
-			text.tag_config('l' + str(i+1), font=(font, main_title_size, "bold"))
+			text.tag_config('l' + str(i+1), font=(font, styling['main_title_size'], "bold"))
 		# Other titles
 		if (not last_line_char in '.?!:,])}*-;"' and previous_line_empty
 	  		and len(line) < 200 and i < nbr_lines-1 and not '.' in line):
 			has_titles = True
 			text.tag_add('l' + str(i+1), str(i+1) + '.' + str(0), str(i+1) + '.' + 'end')
-			text.tag_config('l' + str(i+1), font=(font, title_size, "bold"))
+			text.tag_config('l' + str(i+1), font=(font, styling['title_size'], "bold"))
 		# Mark preamble
 		if has_titles:
 			for i in range(min(3,nbr_lines)):
 				line = lines[i]
 				if i > 0 and len(line) < 400:
 					text.tag_add('l' + str(i+1), str(i+1) + '.' + str(0), str(i+1) + '.' + 'end')
-					text.tag_config('l' + str(i+1), font=(font, title_size, "bold"))
+					text.tag_config('l' + str(i+1), font=(font, styling['title_size'], "bold"))
 	text.configure(state="disabled")
 
 	# Add opened text to last opened files list and limit its length to 9
