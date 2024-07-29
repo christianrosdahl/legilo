@@ -2473,12 +2473,18 @@ def confirm_new(event):
 	elif editing_new_title:
 		new_window.focus()
 		editing_new_title = False
-		title = new_title.get('1.0','end')
+		title = new_title.get('1.0','end').strip()
 		if 'http://' in title or 'https://' in title:
-			(title, text) = autoread(title)
+			try:
+				(title, text) = autoread(title)
+			except:
+				title = 'Failed to fetch the page.'
+				text = ''
 			# Remove strange space-like sign to not get new lines
 			title = title.replace(' ',' ')
 			text = text.replace(' ',' ')
+			# Require title to be only one line
+			title = title.replace('\n', ' – ')
 			new_title.delete('1.0','end')
 			new_title.insert('1.0',title)
 			new_text.delete('1.0','end')
