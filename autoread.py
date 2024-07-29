@@ -20,6 +20,17 @@ def autoread(url):
     # Remove the <footer> tag from the article content
     for footer in article_tag.find_all('footer'):
         footer.decompose()
+
+    # Remove <div> tags at same level as <p> tags if not containing a <h2>
+    # The purpose is to remove ads and similar within articles
+    p_tags = article_tag.find_all('p')
+    for p_tag in p_tags:
+        # Find all sibling <div> tags and decompose them
+        for sibling in p_tag.find_next_siblings():
+            if sibling.name == 'div' and not sibling.find(['h2']):
+                sibling.decompose()
+            elif sibling.name == 'p':
+                break  # Stop if another <p> tag is encountered
     
     # Find all tags within the article, excluding the removed footer
     text_tags = ['p', 'h2', 'h3', 'h4', 'h5', 'h6']
