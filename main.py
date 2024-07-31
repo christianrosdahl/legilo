@@ -3,6 +3,7 @@
 import os
 import re
 import regex
+import threading
 from datetime import date
 from tkinter import *
 from tkinter import messagebox
@@ -937,9 +938,7 @@ def side_field_show(word, info, status, do_pronounce=True):
 
 	# Pronunciation
 	if sound_on and do_pronounce:
-		w.update_idletasks()
-		w.after(100, pronounce(word, language))
-
+		pronounce(word, language)
 # Show active word and its status in the side field, but no other information
 def show_active_word_in_sidefield():
 	if active:
@@ -1407,65 +1406,86 @@ def mark_sentence_as_phrase(event):
 				new_phrase(word_tag1, word_tag2, do_pronounce=False)
 				break
 
+# Pronounce word using text-to-speech, with a time limit to avoid getting stuck
 def pronounce(word, language):
+	threading.Thread(target=text_to_speech, args=(word, language)).start()
+
+# Pronounce word using text-to-speech
+def text_to_speech(word, language):
+	if mac_voice:
+		text_to_speech_macos(word, language)
+	else:
+		text_to_speech_google(word, language)
+
+lock = threading.Lock()
+# Pronounce using Google's text-to-speech
+def text_to_speech_google(word, language):
 	global active
 	global active_looked_up
 	global text_word
 	global last_pronounced
-	global mac_voice
+	try:
+		with lock: # Ensure only one playback at a time
+			if last_pronounced:
+				if last_pronounced['word'] == word:
+					sound = last_pronounced['sound']
+				elif active and active_looked_up:
+					side_field_word = text_word.get('1.0','end')
+					side_field_word = side_field_word.split(',')
+					side_field_word = side_field_word[0]
+					sound = Speech(side_field_word, get_language_code(language))
+					last_pronounced = {'word': word, 'sound': sound}
+				else:
+					sound = Speech(word, get_language_code(language))
+			else:
+				if active and active_looked_up:
+					side_field_word = text_word.get('1.0','end')
+					side_field_word = side_field_word.split(',')
+					side_field_word = side_field_word[0]
+					sound = Speech(side_field_word, get_language_code(language))
+					last_pronounced = {'word': word, 'sound': sound}
+				else:
+					sound = Speech(word, get_language_code(language))
+			sound.play()
+	except Exception as e:
+			print(f"Error playing sound using Google's text-to-speech: {e}")
 
-	# Mac OS text-to-speak
-	if mac_voice:
-		word = word.replace("'","´")
-		voice = None
-		if language == 'croatian':
-			voice = 'Lana'
-		elif language == 'french':
-			voice = 'Thomas'
-		elif language == 'german':
-			voice = 'Petra'
-		elif language == 'italian':
-			voice = 'Alice'
-		elif language == 'russian':
-			voice = 'Milena'
-		elif language == 'spanish':
-			voice = 'Mónica'
-		elif language == 'swedish':
-			voice = 'Alva'
-		
-		if voice:
-			if active and active_looked_up: # Pronounce nouns with article
-				side_field_word = text_word.get('1.0','end')
-				side_field_word = side_field_word.split(',')
-				side_field_word = side_field_word[0]
-				side_field_word = side_field_word.replace("'","´")
-				subprocess.call(shlex.split('say -v ' + voice + ' ' + str(side_field_word)))
-			else:
-				subprocess.call(shlex.split('say -v ' + voice + ' ' + str(word)))
-		
-	# Google
-	else:
-		if last_pronounced:
-			if last_pronounced['word'] == word:
-				sound = last_pronounced['sound']
-			elif active and active_looked_up:
-				side_field_word = text_word.get('1.0','end')
-				side_field_word = side_field_word.split(',')
-				side_field_word = side_field_word[0]
-				sound = Speech(side_field_word, get_language_code(language))
-				last_pronounced = {'word': word, 'sound': sound}
-			else:
-				sound = Speech(word, get_language_code(language))
-		else:
-			if active and active_looked_up:
-				side_field_word = text_word.get('1.0','end')
-				side_field_word = side_field_word.split(',')
-				side_field_word = side_field_word[0]
-				sound = Speech(side_field_word, get_language_code(language))
-				last_pronounced = {'word': word, 'sound': sound}
-			else:
-				sound = Speech(word, get_language_code(language))
-		sound.play()
+# Pronounce using macOS text-to-speak
+def text_to_speech_macos(word, language):
+	global active
+	global active_looked_up
+	global text_word
+	try:
+		with lock: # Ensure only one playback at a time
+			word = word.replace("'","´")
+			voice = None
+			if language == 'croatian':
+				voice = 'Lana'
+			elif language == 'french':
+				voice = 'Audrey'
+			elif language == 'german':
+				voice = 'Anna'
+			elif language == 'italian':
+				voice = 'Alice'
+			elif language == 'russian':
+				voice = 'Milena'
+			elif language == 'spanish':
+				voice = 'Mónica'
+			elif language == 'swedish':
+				voice = 'Alva'
+
+			if voice:
+				if active and active_looked_up: # Pronounce nouns with article
+					side_field_word = text_word.get('1.0','end')
+					side_field_word = side_field_word.split(',')
+					side_field_word = side_field_word[0]
+					side_field_word = side_field_word.replace("'","´")
+					subprocess.call(shlex.split('say -v ' + voice + ' ' + str(side_field_word)))
+				else:
+					subprocess.call(shlex.split('say -v ' + voice + ' ' + str(word)))
+
+	except Exception as e:
+		print(f"Error playing sound using text-to-speech in macOS: {e}")
 
 def pronounce_active_word(event):
 	global active
@@ -1473,10 +1493,8 @@ def pronounce_active_word(event):
 	global language
 	if active and not editing:
 		pronounce(active['word'], language)
-
 	if active_phrase and not editing:
 		pronounce(text_word.get('1.0','end'), language)
-
 def pronounce_next(event):
 	global w
 	go_to_next(event)
@@ -2364,7 +2382,6 @@ def show_settings(settings):
 	text_settings.configure(state='disabled')
 
 def toggle_pronounce(event):
-	global settings
 	settings['sound_on'] = not settings['sound_on']
 	show_settings(settings)
 
