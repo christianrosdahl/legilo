@@ -13,13 +13,15 @@ from language_code import get_language_code
 from translate import LegiloTranslator
 from sentence import get_first_sentence, get_sentences
 from autoread import autoread
-from google_speech import Speech
 from googletrans import Translator
 import webbrowser
 import pickle # For saving and loading data
-import subprocess # Used for text-to speak with Mac OS
-import shlex # Used for text-to speak with Mac OS
+import subprocess # Used for text-to-speech with Mac OS
+import shlex # Used for text-to-speech with Mac OS
 import json # Used to read config file
+from gtts import gTTS # Generate mp3 files with Google's text-to-speech
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = ''
+import pygame # Play mp3 files from gtts
 
 # General settings
 sound_on = True # Pronounce word when looked up
@@ -1426,27 +1428,14 @@ def text_to_speech_google(word, language):
 	global last_pronounced
 	try:
 		with lock: # Ensure only one playback at a time
-			if last_pronounced:
-				if last_pronounced['word'] == word:
-					sound = last_pronounced['sound']
-				elif active and active_looked_up:
-					side_field_word = text_word.get('1.0','end')
-					side_field_word = side_field_word.split(',')
-					side_field_word = side_field_word[0]
-					sound = Speech(side_field_word, get_language_code(language))
-					last_pronounced = {'word': word, 'sound': sound}
-				else:
-					sound = Speech(word, get_language_code(language))
-			else:
-				if active and active_looked_up:
-					side_field_word = text_word.get('1.0','end')
-					side_field_word = side_field_word.split(',')
-					side_field_word = side_field_word[0]
-					sound = Speech(side_field_word, get_language_code(language))
-					last_pronounced = {'word': word, 'sound': sound}
-				else:
-					sound = Speech(word, get_language_code(language))
-			sound.play()
+			if not (last_pronounced and last_pronounced == word):
+				tts = gTTS(text=word, lang=get_language_code(language))
+				tts.save(data_dir + '/general/last_text_to_speech.mp3')
+				last_pronounced = word
+			pygame.mixer.music.load(data_dir + '/general/last_text_to_speech.mp3')
+			pygame.mixer.music.play()
+			while pygame.mixer.music.get_busy():
+				pygame.time.Clock().tick(10)
 	except Exception as e:
 			print(f"Error playing sound using Google's text-to-speech: {e}")
 
@@ -1720,13 +1709,22 @@ def quit_program():
 	if ans is not None:
 		if ans:
 			save_all()
+		quit_and_clean_for_google_tts()
 		w.destroy()
 		start()
 
 def quit_without_saving(event):
+	quit_and_clean_for_google_tts()
 	w.destroy()
 	print('Quitted without saving progress.')
 	start()
+
+def quit_and_clean_for_google_tts():
+	if sound_on and not mac_voice:
+		pygame.mixer.quit()
+		file_path = data_dir + '/general/last_text_to_speech.mp3'
+		if os.path.exists(file_path):
+			os.remove(file_path)
 
 # Find word from index
 def word_from_index(index):
@@ -2774,6 +2772,9 @@ def run(language, text_file):
 	global legilo_translator
 
 	legilo_translator = LegiloTranslator(language, use_lemma=use_lemma)
+
+	if sound_on and not mac_voice:
+		pygame.mixer.init() # Initialize mixer for playing sounds from Google TTS
 
 	# Word lists
 	known_words = None
