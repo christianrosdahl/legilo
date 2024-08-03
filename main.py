@@ -2030,7 +2030,7 @@ def deactivate_phrase_mode(event=None):
 		selected_tag2 = None
 		phrase_mode = False
 
-def phrase_word_selection_left(event=None):
+def phrase_word_selection_left():
 	global active
 	global selected_phrase_words
 	if active:
@@ -2039,7 +2039,7 @@ def phrase_word_selection_left(event=None):
 		else:
 			move_selection_to_prev(2)
 
-def phrase_word_selection_right(event=None):
+def phrase_word_selection_right():
 	global active
 	global selected_phrase_words
 	if active:
@@ -3161,16 +3161,11 @@ def run(language, text_file):
 	w.bind("<Option-Down>", scroll_down_remark)
 	w.bind("<Option-Up>", scroll_up_remark)
 
-	## Phrase mode
-	# w.bind("<Meta_L>", activate_phrase_mode)
-	# w.bind("<KeyRelease-Meta_L>", deactivate_phrase_mode)
-	w.bind("<Command-Key-Left>", phrase_word_selection_left)
-	w.bind("<Command-Key-Right>", phrase_word_selection_right)
-
 	## General word selection
 	w.bind("<Shift-Left>", general_word_selection_left)
 	w.bind("<Shift-Right>", general_word_selection_right)
 	w.bind("<KeyRelease-Shift_L>", deactivate_general_word_selection_mode)
+	w.bind("<KeyRelease-Shift_R>", deactivate_general_word_selection_mode)
 
 	## Saving
 	w.bind("<Command-Key-s>", save_history)
@@ -3215,8 +3210,6 @@ def configure_keyboard_shortcuts(config):
 		'known': known,
 		'enter': enter,
 		'ignore': ignore,
-		'phrase_word_selection_left': phrase_word_selection_left,
-		'phrase_word_selection_right': phrase_word_selection_right,
 		'general_word_selection_left': general_word_selection_left,
 		'general_word_selection_right': general_word_selection_right,
 		'scroll_down': scroll_down,
