@@ -295,11 +295,11 @@ def handle_active_phrases(save_new=False):
 	global phrases
 	if active_phrase:
 		if active_phrase_is_new and not save_new:
-			mark_phrase(active_phrase['line'], active_phrase['startword_num'], 'none')
+			mark_phrase(active_phrase['line'], active_phrase['start_word_num'], 'none')
 			mark_all_phrase_instances(active_phrase['phrase_words'], 'none')
 		else:
 			add_to_phrases(active_phrase, info_for_showed_word)
-			mark_phrase(active_phrase['line'], active_phrase['startword_num'], 'ordinary')
+			mark_phrase(active_phrase['line'], active_phrase['start_word_num'], 'ordinary')
 			mark_all_phrase_instances(active_phrase['phrase_words'], 'ordinary')
 		active_phrase = False
 		active_phrase_is_new = False
@@ -395,8 +395,8 @@ def handle_selected_phrase_word(selected_by_mouse=False):
 
 		(phrase, info, line, word_num1, word_num2) = find_old_phrase(phrase_tag)
 
-		active_phrase = {'phrase_words' : info['phrase_words'], 'line' : line, 'startword_num' : word_num1, 'endword_num' : word_num2}
-		mark_phrase(active_phrase['line'], active_phrase['startword_num'], 'active')
+		active_phrase = {'phrase_words' : info['phrase_words'], 'line' : line, 'start_word_num' : word_num1, 'end_word_num' : word_num2}
+		mark_phrase(active_phrase['line'], active_phrase['start_word_num'], 'active')
 		deactivate_phrase_mode()
 		side_field_show(phrase, info, 'learning phrase')
 
@@ -509,7 +509,7 @@ def mark_all_instances(word, status):
 			mark_word(line, word_num, status)
 
 # Mark phrase
-def mark_phrase(line, startword_num, status):
+def mark_phrase(line, start_word_num, status):
 	global text
 
 	is_title_line = False
@@ -528,19 +528,19 @@ def mark_phrase(line, startword_num, status):
 			font_settings = (font, phrase_font_size, "underline", "bold")
 		else:
 			font_settings = (font, phrase_font_size, "underline")
-		text.tag_config("p" + str(line) + "." + str(startword_num), font = font_settings)
+		text.tag_config("p" + str(line) + "." + str(start_word_num), font = font_settings)
 	elif status == 'none':
 		if is_title_line:
 			font_settings = (font, phrase_font_size, "bold")
 		else:
 			font_settings = (font, phrase_font_size)
-		text.tag_config("p" + str(line) + "." + str(startword_num), font = font_settings)
+		text.tag_config("p" + str(line) + "." + str(start_word_num), font = font_settings)
 	elif status == 'active':
 		if is_title_line:
 			font_settings = (font, phrase_font_size, "underline", "italic", "bold")
 		else:
 			font_settings = (font, phrase_font_size, "underline", "italic")
-		text.tag_config("p" + str(line) + "." + str(startword_num), font = font_settings)
+		text.tag_config("p" + str(line) + "." + str(start_word_num), font = font_settings)
 
 # Mark all instances of an phrase
 def mark_all_phrase_instances(phrase_words, status):
@@ -1062,7 +1062,7 @@ def add_to_known(word, info):
 def add_to_phrases(phrase, info):
 	global phrases
 	i = phrase['line']-1
-	word_num1 = phrase['startword_num']
+	word_num1 = phrase['start_word_num']
 	first_word = text_words[i][word_num1]
 
 	if not is_in_phrases(phrase['phrase_words']):
@@ -1811,11 +1811,24 @@ def select_sentence(event):
 			sentence_choice = 0
 		n = sentence_choice
 
-	# If active word
-	if active and not editing:
+	# If active word or phrase
+	if active or active_phrase and not editing:
+		if active:
+			active_word = active['word']
+			active_line = active['line']
+			active_word_num = active['word_num']
+		elif active_phrase:
+			word_tag1 = f"{active_phrase['line']}.{active_phrase['start_word_num']}"
+			word_tag2 = f"{active_phrase['line']}.{active_phrase['end_word_num']}"
+			first_word_start = str(text.tag_ranges(word_tag1)[0])
+			lastword_end = str(text.tag_ranges(word_tag2)[1])
+			active_word = text.get(first_word_start, lastword_end)
+			active_line = active_phrase['line']
+			active_word_num = active_phrase['start_word_num']
 		# Get example sentences for word if not already downloaded
-		if not sentence_word == active['word']:
-			(sentence_list, sentence_trans_list) = get_sentences(active['word'], language, 7)
+		if not sentence_word == active_word:
+			(sentence_list, sentence_trans_list) = get_sentences(active_word, language, 7)
+			sentence_word = active_word
 		if n > 0 and n < 8: # Choose example sentence from web
 			sentence = sentence_list[n-1]
 			sentence_trans = sentence_trans_list[n-1]
@@ -1823,8 +1836,8 @@ def select_sentence(event):
 			sentence = ''
 			sentence_trans = ''
 		else: # n == 8 or n == 9: Take text sentence as example sentence
-			line = active['line']
-			word_num = active['word_num']
+			line = active_line
+			word_num = active_word_num
 			tag = str(line) + "." + str(word_num)
 			word_start = int(str(text.tag_ranges(tag)[0]).split('.')[1])
 			word_end = int(str(text.tag_ranges(tag)[1]).split('.')[1])
@@ -2168,13 +2181,13 @@ def new_phrase(word_tag1, word_tag2, do_pronounce=True):
 			info['sentence_trans'] = sentence_trans
 		active = None
 		active_looked_up = False
-		active_phrase = {'phrase_words': phrase_words, 'line': line1, 'startword_num': word_num1, 'endword_num': word_num2, 'status': 'learning'}
+		active_phrase = {'phrase_words': phrase_words, 'line': line1, 'start_word_num': word_num1, 'end_word_num': word_num2, 'status': 'learning'}
 
 		# Add tag to new phrase
-		phrase_start = word_start[active_phrase['line']-1][active_phrase['startword_num']]
-		phrase_end = word_end[active_phrase['line']-1][active_phrase['endword_num']]
-		text.tag_add('p' + str(line1) + "." + str(active_phrase['startword_num']), phrase_start, phrase_end)
-		mark_phrase(active_phrase['line'], active_phrase['startword_num'], 'active')
+		phrase_start = word_start[active_phrase['line']-1][active_phrase['start_word_num']]
+		phrase_end = word_end[active_phrase['line']-1][active_phrase['end_word_num']]
+		text.tag_add('p' + str(line1) + "." + str(active_phrase['start_word_num']), phrase_start, phrase_end)
+		mark_phrase(active_phrase['line'], active_phrase['start_word_num'], 'active')
 
 		side_field_show(phrase, info, 'new phrase', do_pronounce=do_pronounce)
 	else: 
@@ -3087,18 +3100,18 @@ def run(language, text_file):
 									break
 							if matching_phrases:
 								text_phrases.append({'phrase_words' : phrase_words, 'line' : i+1,
-								'startword_num' : j, 'endword_num' : j+len(phrase_words)-1})
+								'start_word_num' : j, 'end_word_num' : j+len(phrase_words)-1})
 								line_phrases.append({'phrase_words' : phrase_words, 'line' : i+1,
-								'startword_num' : j, 'endword_num' : j+len(phrase_words)-1})
+								'start_word_num' : j, 'end_word_num' : j+len(phrase_words)-1})
 								break
 			word_count += 1
 
 		# Add tags to phrases on the line
 		if consider_phrases:
 			for phrase in line_phrases:
-				phrase_start = word_start[i][phrase['startword_num']]
-				phrase_end = word_end[i][phrase['endword_num']]
-				text.tag_add('p' + str(i+1) + "." + str(phrase['startword_num']), phrase_start, phrase_end)
+				phrase_start = word_start[i][phrase['start_word_num']]
+				phrase_end = word_end[i][phrase['end_word_num']]
+				text.tag_add('p' + str(i+1) + "." + str(phrase['start_word_num']), phrase_start, phrase_end)
 
 	# Get sentences from text
 	sentences = {}
@@ -3131,7 +3144,7 @@ def run(language, text_file):
 
 	# Mark phrases in text
 	for phrase in text_phrases:
-		mark_phrase(phrase['line'], phrase['startword_num'], 'ordinary')
+		mark_phrase(phrase['line'], phrase['start_word_num'], 'ordinary')
 
 	# Set program to saved state
 	if state:
