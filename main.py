@@ -282,6 +282,7 @@ def handle_active_words(unqueue_looked_up=True):
 			else:
 				put_back_in_queue(active)
 			mark_all_instances(active['word'], 'learning')
+			update_saved_tag_if_for_active_word()
 		else:
 			put_back_in_queue(active)
 		unset_active_word()
@@ -585,6 +586,19 @@ def unset_active_word():
 	active = None
 	active_looked_up = False
 	clear_side_field()
+
+# Update a possible saved tag configuration corresponding to the active word
+def update_saved_tag_if_for_active_word():
+	global active
+	global saved_tag_config1
+	global saved_tag_config2
+	if active:
+		active_tag = str(active['line']) + '.' + str(active['word_num'])
+		if saved_tag_config1 and saved_tag_config1['tag'] == active_tag:
+			saved_tag_config1['config'] = save_tag_config(active_tag)
+		if saved_tag_config2 and saved_tag_config2['tag'] == active_tag:
+			saved_tag_config2['config'] = save_tag_config(active_tag)
+
 
 # Retrieve tag configuration and convert it to a dictionary
 def save_tag_config(tag_name):
