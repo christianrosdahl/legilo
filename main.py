@@ -1939,6 +1939,8 @@ def definitions_to_list(translations):
 	return def_strings
 
 def activate_general_word_selection_mode():
+	global active
+	global active_looked_up
 	global editing
 	global general_word_selection_mode
 	global selected_tag1
@@ -1946,7 +1948,10 @@ def activate_general_word_selection_mode():
 	if active and not editing:
 		general_word_selection_mode = True
 		selected_tag1 = str(active['line']) + '.' + str(active['word_num'])
-		mark_word(active['line'], active['word_num'], active['status'])
+		if active_looked_up:
+			mark_word(active['line'], active['word_num'], 'learning')
+		else:
+			mark_word(active['line'], active['word_num'], active['status'])
 		saved_tag_config1 = {'tag': selected_tag1, 'config': save_tag_config(selected_tag1)}
 		mark_word(active['line'], active['word_num'], 'active')
 
@@ -2009,6 +2014,8 @@ def toggle_phrase_mode(event):
 			activate_phrase_mode()
 
 def activate_phrase_mode(event=None):
+	global active
+	global active_looked_up
 	global editing
 	global text
 	global phrase_mode
@@ -2025,7 +2032,10 @@ def activate_phrase_mode(event=None):
 
 		if active:
 			selected_tag1 = str(active['line']) + '.' + str(active['word_num'])
-			mark_word(active['line'], active['word_num'], active['status'])
+			if active_looked_up:
+				mark_word(active['line'], active['word_num'], 'learning')
+			else:
+				mark_word(active['line'], active['word_num'], active['status'])
 			saved_tag_config1 = {'tag': selected_tag1, 'config': save_tag_config(selected_tag1)}
 			mark_word(active['line'], active['word_num'], 'selection')
 
@@ -2135,6 +2145,7 @@ def get_next_tag(tag):
 
 def enter_in_phrase_mode():
 	global active
+	global active_looked_up
 	global selected_phrase_words
 	global selected_tag1
 	global selected_tag2
@@ -2145,7 +2156,10 @@ def enter_in_phrase_mode():
 		mark_word(line1, word_num1, 'selection')
 		selected_tag2 = str(active['line']) + '.' + str(active['word_num'])
 		if not selected_tag2 == selected_tag1:
-			mark_word(active['line'], active['word_num'], active['status'])
+			if active_looked_up:
+				mark_word(active['line'], active['word_num'], 'learning')
+			else:
+				mark_word(active['line'], active['word_num'], active['status'])
 		saved_tag_config2 = {'tag': selected_tag2, 'config': save_tag_config(selected_tag2)}
 		mark_word(active['line'], active['word_num'], 'selection')
 
