@@ -1151,7 +1151,7 @@ def put_back_in_queue(word):
 # Put back a word in the word queue sorted according to word index
 def put_back_in_queue_sorted(word):
 	global word_queue
-	insert_index = 0
+	insert_index = len(word_queue)
 	word_index = word['index']
 	for i, queue_word in enumerate(word_queue):
 		if queue_word['index'] > word_index:
