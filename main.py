@@ -276,6 +276,7 @@ def handle_active_words(unqueue_looked_up=True):
 		if active_looked_up:
 			info = get_word_info()
 			add_to_learning(active['word'], info)
+			prev_status = active['status']
 			active['status'] = 'learning'
 			if unqueue_looked_up:
 				removed_from_queue.append(active)
@@ -283,9 +284,19 @@ def handle_active_words(unqueue_looked_up=True):
 				put_back_in_queue(active)
 			mark_all_instances(active['word'], 'learning')
 			update_saved_tag_if_for_active_word()
+			if prev_status in ['known', 'ignored']:
+				queue_words_moved_from_known_to_learning()
 		else:
 			put_back_in_queue(active)
 		unset_active_word()
+
+# Add words that are changed from `known` or `ignored` into `learning` to the queue.
+# This is not needed when changed from `new` to `learning`, since those words are already queued.
+def queue_words_moved_from_known_to_learning():
+	global active
+	word_tag = str(active['line']) + '.' + str(active['word_num'])
+	queue_all_learning_words()
+	skip_to_word(word_tag)
 
 # Handles active phrase when another word or phrase is selected.
 # Saves a new active phrase if `save_new` is True
@@ -357,7 +368,7 @@ def mouse_click(event):
 		if move_back_when_clicking_previous:
 			handle_active_phrases()
 			handle_active_words()
-			go_to_start()
+			queue_all_learning_words()
 
 		skip_to_word(word_tag)
 		look_up(active['word'], active['status'])
@@ -1352,14 +1363,14 @@ def known(event):
 def repeat_learning_words(event):
 	global editing
 	if not editing:
-		go_to_start()
+		queue_all_learning_words()
 		set_next_to_active()
 		if active:
 			active_word_tag = str(active['line']) + '.' + str(active['word_num'])
 			text.see(active_word_tag)
 
 # Put back all learning words in the queue to go through them from start
-def go_to_start():
+def queue_all_learning_words():
 	global word_queue
 	global removed_from_queue
 	global editing
@@ -1964,7 +1975,7 @@ def deactivate_general_word_selection_mode(event):
 		if move_back_when_clicking_previous:
 			handle_active_phrases()
 			handle_active_words()
-			go_to_start()
+			queue_all_learning_words()
 		skip_to_word(selected_tag1)
 		selected_tag1 = None
 		saved_tag_config1 = None
