@@ -1122,7 +1122,7 @@ class MainWindow(QWidget):
             if "source" in item and item["source"] == "personal translation":
                 translation_index_to_remove = i
                 break
-        if translation_index_to_remove:
+        if translation_index_to_remove is not None:
             del trans[translation_index_to_remove]
 
     def toggle_google_translation(self):
@@ -1154,7 +1154,7 @@ class MainWindow(QWidget):
             if "source" in item and item["source"] == "Google Translate":
                 translation_index_to_remove = i
                 break
-        if translation_index_to_remove:
+        if translation_index_to_remove is not None:
             del trans[translation_index_to_remove]
 
     def edit_remark(self):
