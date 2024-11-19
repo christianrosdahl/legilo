@@ -111,7 +111,10 @@ class GeneralWindow(QWidget):
 
         # Create and add the third text field
         self.main_text = TextField(
-            self.styling, styling_key="main_text", unfocus_on_click=False
+            self.styling,
+            styling_key="main_text",
+            unfocus_on_click=False,
+            hide_scrollbar=False,
         )
         self.main_text.setMinimumWidth(self.text_field_width)
         self.main_text.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)

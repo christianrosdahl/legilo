@@ -140,7 +140,9 @@ class MainWindow(QWidget):
         left_column_layout = QVBoxLayout()
 
         # Left text field with 10 px padding
-        self.main_text_field = TextField(self.styling, "left", "main_text")
+        self.main_text_field = TextField(
+            self.styling, "left", "main_text", hide_scrollbar=False
+        )
         self.main_text_field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.main_text_field.setMaximumWidth(self.styling["main_text_max_width"])
         left_column_layout.addWidget(self.main_text_field)
@@ -183,13 +185,17 @@ class MainWindow(QWidget):
         self.personal_trans_text_field.hide()
 
         # Translation text field (resizable)
-        self.translation_text_field = TextField(self.styling, "right", "translation")
+        self.translation_text_field = TextField(
+            self.styling, "right", "translation", hide_scrollbar=False
+        )
         self.translation_text_field.setSizePolicy(
             QSizePolicy.Expanding, QSizePolicy.Expanding
         )
 
         # Remark text field
-        self.remark_text_field = TextField(self.styling, "right", "remark", 10)
+        self.remark_text_field = TextField(
+            self.styling, "right", "remark", 10, hide_scrollbar=False
+        )
         self.remark_text_field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         # Example text field

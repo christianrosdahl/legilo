@@ -13,6 +13,7 @@ class TextField(QTextEdit):
         styling_key=None,
         num_lines=None,
         unfocus_on_click=True,
+        hide_scrollbar=True,
     ):
         super().__init__()
         self.styling = styling
@@ -38,6 +39,10 @@ class TextField(QTextEdit):
         if num_lines:
             self.set_fixed_height_num_lines(num_lines)
         self.unfocus_on_click = unfocus_on_click
+
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        if hide_scrollbar:
+            self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
     def mousePressEvent(self, event):
         # Accept the mouse press event to allow text editing
