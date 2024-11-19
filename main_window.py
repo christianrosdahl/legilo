@@ -275,7 +275,7 @@ class MainWindow(QWidget):
         try:
             file_name = os.path.basename(self.text_path)
             path = f"{self.data_dir}/{self.language}/texts/{file_name}"
-            with open(self.text_path, "w") as file:
+            with open(path, "w") as file:
                 file.write(self.text)
                 if self.active_word_num:
                     file.write("\n\n" + metadata_tag + str(self.active_word_num))
