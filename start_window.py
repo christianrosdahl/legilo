@@ -15,7 +15,6 @@ class StartWindow(GeneralWindow):
 
         self.data_dir = data_dir
         self.settings_dir = data_dir + "/general"
-        self.config_path = config_path
         self.config = self.get_config(config_path)
         self.options = {"o": "open", "n": "new"}
         self.change_settings_keys = {"p": "pronounce", "d": "dark_mode"}
@@ -44,7 +43,7 @@ class StartWindow(GeneralWindow):
                     self.new_text_window = NewTextWindow(
                         self.data_dir,
                         self.selected_language,
-                        self.config_path,
+                        self.config,
                         self.settings,
                         self.settings["dark_mode"],
                     )
@@ -55,7 +54,7 @@ class StartWindow(GeneralWindow):
                     self.open_file_window = OpenFileWindow(
                         self.data_dir,
                         self.selected_language,
-                        self.config_path,
+                        self.config,
                         self.settings,
                         dark_mode=True,
                     )

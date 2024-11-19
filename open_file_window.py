@@ -1,4 +1,3 @@
-import json
 import os
 
 from PyQt5.QtCore import Qt
@@ -9,14 +8,13 @@ from main_window import MainWindow
 
 
 class OpenFileWindow(GeneralWindow):
-    def __init__(self, data_dir, language, config_path, settings, dark_mode=False):
+    def __init__(self, data_dir, language, config, settings, dark_mode=False):
         super().__init__(dark_mode=dark_mode, show_app_name=True, title_height=40)
 
         self.data_dir = data_dir
         self.language = language
-        self.config_path = config_path
+        self.config = config
         self.settings = settings
-        self.config = self.get_config(config_path)
         self.selected = None
         self.file_path = None
         self.text_dir = f"{self.data_dir}/{language}/texts"
@@ -35,7 +33,7 @@ class OpenFileWindow(GeneralWindow):
                     self.data_dir,
                     self.language,
                     self.file_path,
-                    self.config_path,
+                    self.config,
                     self.settings,
                 )
                 self.main_window.show()
@@ -57,15 +55,6 @@ class OpenFileWindow(GeneralWindow):
             self.show_options()
 
         return super().on_key_press(event)
-
-    def get_config(self, config_file_path):
-        try:
-            with open(config_file_path, "r") as file:
-                return json.load(file)
-        except FileNotFoundError:
-            print(f"Error: The config file '{config_file_path}' was not found.")
-        except json.JSONDecodeError:
-            print(f"Error: The config file '{config_file_path}' contains invalid JSON.")
 
     def show_options(self):
         self.main_text.clear()

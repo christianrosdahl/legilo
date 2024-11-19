@@ -1,4 +1,3 @@
-import json
 import os
 import platform
 import re
@@ -32,16 +31,15 @@ from word_with_article import word_with_article
 
 
 class MainWindow(QWidget):
-    def __init__(self, data_dir, language, text_path, config_file_path, settings):
+    def __init__(self, data_dir, language, text_path, config, settings):
         super().__init__()
         self.data_dir = data_dir
         self.language = language
         self.text_path = text_path
-        self.config_path = config_file_path
+        self.config = config
         self.settings = settings
         self.save_progress = True
         self.open_urls_in_same_tab = True
-        self.config = self.get_config(config_file_path)
         self.styling = get_styling(settings["dark_mode"])
         text, active_word_num = self.get_text_from_file()
         self.text = text
@@ -252,15 +250,6 @@ class MainWindow(QWidget):
             self.main_text_field.scroll_to_index(text_idx)
         else:
             self.main_text_field.scroll_to_top()
-
-    def get_config(self, config_file_path):
-        try:
-            with open(config_file_path, "r") as file:
-                return json.load(file)
-        except FileNotFoundError:
-            print(f"Error: The config file '{config_file_path}' was not found.")
-        except json.JSONDecodeError:
-            print(f"Error: The config file '{config_file_path}' contains invalid JSON.")
 
     def get_text_from_file(self):
         metadata_tag = "# active_word_num = "

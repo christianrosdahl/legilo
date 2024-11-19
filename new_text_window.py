@@ -11,14 +11,14 @@ from main_window import MainWindow
 
 
 class NewTextWindow(GeneralWindow):
-    def __init__(self, data_dir, language, config_path, settings, dark_mode=False):
+    def __init__(self, data_dir, language, config, settings, dark_mode=False):
         super().__init__(dark_mode=dark_mode, title_height=110, text_field_width=800)
 
         self.horizontal_padding = 0
 
         self.data_dir = data_dir
         self.language = language
-        self.config_path = config_path
+        self.config = config
         self.settings = settings
 
         instructions = (
@@ -59,7 +59,7 @@ class NewTextWindow(GeneralWindow):
                     self.data_dir,
                     self.language,
                     file_path,
-                    self.config_path,
+                    self.config,
                     self.settings,
                 )
                 self.main_window.show()
