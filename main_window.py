@@ -121,6 +121,7 @@ class MainWindow(QWidget):
         return super().eventFilter(source, event)  # Pass the event to the parent class
 
     def closeEvent(self, event):
+        self.handle_active()
         self.quit_and_clean_for_tts()
         if self.save_progress:
             self.data.save()
