@@ -12,7 +12,11 @@ class OpenFileWindow(GeneralWindow):
         self, start_window, data_dir, language, config, settings, dark_mode=False
     ):
         super().__init__(
-            config, dark_mode=dark_mode, show_app_name=True, title_height=40
+            config,
+            start_window,
+            dark_mode=dark_mode,
+            show_app_name=True,
+            title_height=40,
         )
 
         self.start_window = start_window

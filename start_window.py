@@ -13,7 +13,7 @@ class StartWindow(GeneralWindow):
     def __init__(self, data_dir, config_path):
         self.config = self.get_config(config_path)
         super().__init__(
-            self.config, dark_mode=True, show_app_name=True, title_height=40
+            self.config, self, dark_mode=True, show_app_name=True, title_height=40
         )
 
         self.data_dir = data_dir

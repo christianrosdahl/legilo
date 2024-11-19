@@ -282,12 +282,12 @@ class MainWindow(QWidget):
             print(f"An error occurred: {e}")
 
     def on_key_press(self, key, modifiers):
-        # Close program with Cmd/Ctrl + W
+        # Close window with Cmd/Ctrl + W
         if key == Qt.Key_W and modifiers & Qt.ControlModifier:
             self.close()
             return True
 
-        # Close program without saving for Cmd/Ctrl + X
+        # Close window without saving for Cmd/Ctrl + X
         if key == Qt.Key_X and modifiers & Qt.ControlModifier:
             self.save_progress = False
             self.close()

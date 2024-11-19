@@ -57,7 +57,7 @@ Select one of the listed recent texts by pressing the number before it, or press
 - <kbd>⇧ Shift</kbd> + <kbd>↓</kbd> / <kbd>⇧ Shift</kbd> + <kbd>↑</kbd>: Scroll the translation.
 - <kbd>⌥ Option</kbd> + <kbd>↓</kbd> / <kbd>⌥ Option</kbd> + <kbd>↑</kbd>: Scroll the remark.
 - <kbd>A</kbd>: Look up the sentence containing the marked word as a phrase (see "Phrase mode" below).
-- <kbd>⌘ Command</kbd> + <kbd>W</kbd>: Save all data and close the text. You will get back to the start window where you can select another text or close the program by repeating the command. Clicking the close button in the upper corner of the window has the same effect as this command.
+- <kbd>⌘ Command</kbd> + <kbd>W</kbd>: Save all data and close the text window. You will get back to the start window where you can select another text or close the program by repeating the command. Clicking the close button in the upper corner of the window has the same effect as this command.
 
 ## Phrase mode
 
@@ -92,7 +92,7 @@ As default in the `config.json` file, the following resources are added:
 
 - <kbd>⌘ Command</kbd> + <kbd>S</kbd>: Save your current progress (collections of words and phrases according to their labels) and the current state (the currently marked word). This is done automatically when closing the window for the application.
 - <kbd>⌘ Command</kbd> + <kbd>R</kbd>: Save your current progress (collections of words and phrases according to their labels) as readable text files (the normal saving yields non-readable files).
-- <kbd>⌘ Command</kbd> + <kbd>X</kbd>: Close the program without saving your progress.
+- <kbd>⌘ Command</kbd> + <kbd>X</kbd>: Close the window without saving your progress.
 
 ## Configuration
 

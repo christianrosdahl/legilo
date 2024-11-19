@@ -16,6 +16,7 @@ class GeneralWindow(QWidget):
     def __init__(
         self,
         config,
+        start_window,
         dark_mode=False,
         title_height=70,
         show_app_name=False,
@@ -24,6 +25,7 @@ class GeneralWindow(QWidget):
         super().__init__()
 
         self.config = config
+        self.start_window = start_window
         self.window_width = 800
         self.window_height = 1000
         self.vertical_padding = 50
@@ -61,9 +63,11 @@ class GeneralWindow(QWidget):
             key = event.key()
             modifiers = event.modifiers()
 
-            # Close program with Cmd/Ctrl + W
+            # Close window with Cmd/Ctrl + W
             if key == Qt.Key_W and modifiers & Qt.ControlModifier:
                 self.close()
+                if self.start_window != self:
+                    self.start_window.show()
                 return True
 
             self.on_key_press(event)
