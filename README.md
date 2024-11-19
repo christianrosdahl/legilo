@@ -107,3 +107,5 @@ In the file `config.json`, you can set the following things:
   - `"phrase_word_delimiter"`: The delimiter used instead of space in the URL of the resource when looking up phrases.
 - `"third_language"`: Extra language for which translations can be added to the remark.
 - `"use_lemmatizer"` (can have values `true` or `false`): Use natural language processing models to find the dictionary form of a word so that it can be looked up. When this is activated, the program will download the models for a language the first time it is used with that language, which might take a few minutes. It might make the program a few seconds slower to start after that as well, since the models have to be loaded.
+- `"font"`: Font to use for all text in the program.
+- `"font_size"`: Font size for the main text in the reader. Other text sizes are adapted relative to this.

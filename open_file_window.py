@@ -11,7 +11,9 @@ class OpenFileWindow(GeneralWindow):
     def __init__(
         self, start_window, data_dir, language, config, settings, dark_mode=False
     ):
-        super().__init__(dark_mode=dark_mode, show_app_name=True, title_height=40)
+        super().__init__(
+            config, dark_mode=dark_mode, show_app_name=True, title_height=40
+        )
 
         self.start_window = start_window
         self.data_dir = data_dir

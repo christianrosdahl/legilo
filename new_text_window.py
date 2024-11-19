@@ -14,7 +14,9 @@ class NewTextWindow(GeneralWindow):
     def __init__(
         self, start_window, data_dir, language, config, settings, dark_mode=False
     ):
-        super().__init__(dark_mode=dark_mode, title_height=110, text_field_width=800)
+        super().__init__(
+            config, dark_mode=dark_mode, title_height=110, text_field_width=800
+        )
 
         self.horizontal_padding = 0
 

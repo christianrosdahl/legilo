@@ -41,7 +41,7 @@ class MainWindow(QWidget):
         self.settings = settings
         self.save_progress = True
         self.open_urls_in_same_tab = True
-        self.styling = get_styling(settings["dark_mode"])
+        self.styling = get_styling(self.config, settings["dark_mode"])
         text, active_word_num = self.get_text_from_file()
         self.text = text
         self.data = DataHandler(data_dir, language)

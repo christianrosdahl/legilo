@@ -11,11 +11,13 @@ from open_file_window import OpenFileWindow
 
 class StartWindow(GeneralWindow):
     def __init__(self, data_dir, config_path):
-        super().__init__(dark_mode=True, show_app_name=True, title_height=40)
+        self.config = self.get_config(config_path)
+        super().__init__(
+            self.config, dark_mode=True, show_app_name=True, title_height=40
+        )
 
         self.data_dir = data_dir
         self.settings_dir = data_dir + "/general"
-        self.config = self.get_config(config_path)
         self.options = {"o": "open", "n": "new"}
         self.change_settings_keys = {"p": "pronounce", "d": "dark_mode"}
         self.settings = None

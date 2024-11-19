@@ -175,5 +175,7 @@
     }
   ],
   "third_language": "swedish",
-  "use_lemmatizer": true
+  "use_lemmatizer": true,
+  "font": "Helvetica Neue",
+  "font_size": 18
 }

@@ -15,6 +15,7 @@ from text_field import TextField
 class GeneralWindow(QWidget):
     def __init__(
         self,
+        config,
         dark_mode=False,
         title_height=70,
         show_app_name=False,
@@ -22,13 +23,14 @@ class GeneralWindow(QWidget):
     ):
         super().__init__()
 
+        self.config = config
         self.window_width = 800
         self.window_height = 1000
         self.vertical_padding = 50
         self.text_field_width = text_field_width
         self.title_height = title_height
         self.show_app_name = show_app_name
-        self.styling = get_styling(dark_mode)
+        self.styling = get_styling(self.config, dark_mode)
         self.setup_layout()
 
         self.setWindowTitle("Legilo")

@@ -1,5 +1,10 @@
-def get_styling(dark_mode=False):
+def get_styling(config, dark_mode=False):
     font = "Helvetica Neue"  #'Avenir', 'Museo Sans Rounded', 'Bookman', 'Georgia'
+    font_size = 18
+    if "font" in config:
+        font = config["font"]
+    if "font_size" in config:
+        font_size = config["font_size"]
 
     default_colors = {
         "text_color": "black",
@@ -55,8 +60,6 @@ def get_styling(dark_mode=False):
     colors = default_colors
     if dark_mode:
         colors = dark_mode_colors
-
-    font_size = 18
 
     styling = {
         "font": font,
