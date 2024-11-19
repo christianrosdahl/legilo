@@ -31,8 +31,9 @@ from word_with_article import word_with_article
 
 
 class MainWindow(QWidget):
-    def __init__(self, data_dir, language, text_path, config, settings):
+    def __init__(self, start_window, data_dir, language, text_path, config, settings):
         super().__init__()
+        self.start_window = start_window
         self.data_dir = data_dir
         self.language = language
         self.text_path = text_path
@@ -124,10 +125,11 @@ class MainWindow(QWidget):
         if self.save_progress:
             self.data.save()
             self.save_text_with_active_word()
-            print("Legilo was closed and your progress is saved.")
+            print("The text was closed and your progress is saved.")
         else:
-            print("Legilo was closed without saving your progress.")
+            print("The text was closed without saving your progress.")
         event.accept()
+        self.start_window.show()
 
     def setup_layout(self):
         """Define layout for main window"""

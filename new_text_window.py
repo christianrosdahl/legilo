@@ -11,11 +11,14 @@ from main_window import MainWindow
 
 
 class NewTextWindow(GeneralWindow):
-    def __init__(self, data_dir, language, config, settings, dark_mode=False):
+    def __init__(
+        self, start_window, data_dir, language, config, settings, dark_mode=False
+    ):
         super().__init__(dark_mode=dark_mode, title_height=110, text_field_width=800)
 
         self.horizontal_padding = 0
 
+        self.start_window = start_window
         self.data_dir = data_dir
         self.language = language
         self.config = config
@@ -56,6 +59,7 @@ class NewTextWindow(GeneralWindow):
                 self.save_text_to_file(text, file_path)
                 self.close()
                 self.main_window = MainWindow(
+                    self.start_window,
                     self.data_dir,
                     self.language,
                     file_path,

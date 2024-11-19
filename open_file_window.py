@@ -8,9 +8,12 @@ from main_window import MainWindow
 
 
 class OpenFileWindow(GeneralWindow):
-    def __init__(self, data_dir, language, config, settings, dark_mode=False):
+    def __init__(
+        self, start_window, data_dir, language, config, settings, dark_mode=False
+    ):
         super().__init__(dark_mode=dark_mode, show_app_name=True, title_height=40)
 
+        self.start_window = start_window
         self.data_dir = data_dir
         self.language = language
         self.config = config
@@ -30,6 +33,7 @@ class OpenFileWindow(GeneralWindow):
             if self.selected:
                 self.close()
                 self.main_window = MainWindow(
+                    self.start_window,
                     self.data_dir,
                     self.language,
                     self.file_path,

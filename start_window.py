@@ -38,9 +38,10 @@ class StartWindow(GeneralWindow):
     def on_key_press(self, event):
         if event.key() in [Qt.Key_Return, Qt.Key_Enter]:
             if self.selected_language and self.selected_action:
-                self.close()
+                self.hide()
                 if self.selected_action == "new":
                     self.new_text_window = NewTextWindow(
+                        self,
                         self.data_dir,
                         self.selected_language,
                         self.config,
@@ -52,6 +53,7 @@ class StartWindow(GeneralWindow):
                     self.new_text_window.main_text.edit()
                 elif self.selected_action == "open":
                     self.open_file_window = OpenFileWindow(
+                        self,
                         self.data_dir,
                         self.selected_language,
                         self.config,
