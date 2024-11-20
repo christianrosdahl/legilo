@@ -37,8 +37,7 @@ class OpenFileWindow(GeneralWindow):
     def on_key_press(self, event):
         if event.key() in [Qt.Key_Return, Qt.Key_Enter]:
             if self.selected:
-                self.close()
-                self.main_window = MainWindow(
+                self.start_window.main_window = MainWindow(
                     self.start_window,
                     self.data_dir,
                     self.language,
@@ -46,8 +45,9 @@ class OpenFileWindow(GeneralWindow):
                     self.config,
                     self.settings,
                 )
-                self.main_window.show()
-                self.main_window.setFocus()
+                self.start_window.main_window.show()
+                self.start_window.main_window.setFocus()
+                self.close()
 
         key_char = event.text().lower()
         options = ["o"]

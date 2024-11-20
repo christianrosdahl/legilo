@@ -69,6 +69,7 @@ class MainWindow(QWidget):
         self.scrolling_in_text = False
         self.do_not_pronounce_next = False
         self.looking_up_new_phrase = False
+        self.edit_text_after_closing_window = False
 
         # Setup window
         self.setWindowTitle("Legilo")
@@ -129,8 +130,11 @@ class MainWindow(QWidget):
             print("The text was closed and your progress is saved.")
         else:
             print("The text was closed without saving your progress.")
+        if not self.edit_text_after_closing_window:
+            self.start_window.show()
+        else:
+            self.start_window.new_text(self.text_path, self.text)
         event.accept()
-        self.start_window.show()
 
     def setup_layout(self):
         """Define layout for main window"""
@@ -274,8 +278,8 @@ class MainWindow(QWidget):
         metadata_tag = "# active_word_num = "
         try:
             file_name = os.path.basename(self.text_path)
-            path = f"{self.data_dir}/{self.language}/texts/{file_name}"
-            with open(path, "w") as file:
+            self.text_path = f"{self.data_dir}/{self.language}/texts/{file_name}"
+            with open(self.text_path, "w") as file:
                 file.write(self.text)
                 if self.active_word_num:
                     file.write("\n\n" + metadata_tag + str(self.active_word_num))
@@ -285,6 +289,12 @@ class MainWindow(QWidget):
     def on_key_press(self, key, modifiers):
         # Close window with Cmd/Ctrl + W
         if key == Qt.Key_W and modifiers & Qt.ControlModifier:
+            self.close()
+            return True
+
+        # Close window, save, and edit opened text with Cmd/Ctrl + E
+        if key == Qt.Key_E and modifiers & Qt.ControlModifier:
+            self.edit_text_after_closing_window = True
             self.close()
             return True
 

@@ -12,7 +12,15 @@ from main_window import MainWindow
 
 class NewTextWindow(GeneralWindow):
     def __init__(
-        self, start_window, data_dir, language, config, settings, dark_mode=False
+        self,
+        start_window,
+        data_dir,
+        language,
+        config,
+        settings,
+        dark_mode=False,
+        text_path=None,
+        text=None,
     ):
         super().__init__(
             config,
@@ -29,16 +37,26 @@ class NewTextWindow(GeneralWindow):
         self.language = language
         self.config = config
         self.settings = settings
+        self.text_path = text_path
+        self.text = text
 
-        instructions = (
-            "Alt 1. Paste you text below and press [Enter] to proceed.\n"
-            + "Alt 2. Paste an URL below and press [Enter] to fetch text.\n\n"
-            + "(Use [Shift] + [Enter] to make a new line.)"
-        )
+        if self.text:
+            instructions = (
+                "Edit the text below and press [Enter] to continue.\n\n"
+                + "(Use [Shift] + [Enter] to make a new line.)"
+            )
+        else:
+            instructions = (
+                "Alt. 1: Paste you text below and press [Enter] to proceed.\n"
+                + "Alt. 2: Paste an URL below and press [Enter] to fetch text.\n\n"
+                + "(Use [Shift] + [Enter] to make a new line.)"
+            )
 
         self.title_text.insert_text(instructions, styling=self.styling["main_text"])
         self.main_text.set_font_size(self.styling["new_text_size"])
 
+        if self.text:
+            self.main_text.insert_text(self.text)
         self.main_text.edit()
 
     def on_key_press(self, event):
@@ -60,20 +78,23 @@ class NewTextWindow(GeneralWindow):
                 self.main_text.insert_text(text)
                 self.main_text.edit()
             else:
-                file_name = self.make_file_name(first_line)
-                file_path = f"{self.data_dir}/{self.language}/texts/{file_name}"
-                self.save_text_to_file(text, file_path)
-                self.close()
-                self.main_window = MainWindow(
+                if not self.text_path:
+                    file_name = self.make_file_name(first_line)
+                    self.text_path = (
+                        f"{self.data_dir}/{self.language}/texts/{file_name}"
+                    )
+                self.save_text_to_file(text, self.text_path)
+                self.start_window.main_window = MainWindow(
                     self.start_window,
                     self.data_dir,
                     self.language,
-                    file_path,
+                    self.text_path,
                     self.config,
                     self.settings,
                 )
-                self.main_window.show()
-                self.main_window.setFocus()
+                self.start_window.main_window.show()
+                self.start_window.main_window.setFocus()
+                self.close()
 
         return super().on_key_press(event)
 

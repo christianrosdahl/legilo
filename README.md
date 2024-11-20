@@ -58,6 +58,7 @@ Select one of the listed recent texts by pressing the number before it, or press
 - <kbd>⌥ Option</kbd> + <kbd>↓</kbd> / <kbd>⌥ Option</kbd> + <kbd>↑</kbd>: Scroll the remark.
 - <kbd>A</kbd>: Look up the sentence containing the marked word as a phrase (see "Phrase mode" below).
 - <kbd>⌘ Command</kbd> + <kbd>W</kbd>: Save all data and close the text window. You will get back to the start window where you can select another text or close the program by repeating the command. Clicking the close button in the upper corner of the window has the same effect as this command.
+- <kbd>⌘ Command</kbd> + <kbd>E</kbd>: Edit the opened text.
 
 ## Phrase mode
 

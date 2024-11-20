@@ -65,9 +65,9 @@ class GeneralWindow(QWidget):
 
             # Close window with Cmd/Ctrl + W
             if key == Qt.Key_W and modifiers & Qt.ControlModifier:
-                self.close()
                 if self.start_window != self:
                     self.start_window.show()
+                self.close()
                 return True
 
             self.on_key_press(event)

@@ -42,28 +42,9 @@ class StartWindow(GeneralWindow):
             if self.selected_language and self.selected_action:
                 self.hide()
                 if self.selected_action == "new":
-                    self.new_text_window = NewTextWindow(
-                        self,
-                        self.data_dir,
-                        self.selected_language,
-                        self.config,
-                        self.settings,
-                        self.settings["dark_mode"],
-                    )
-                    self.new_text_window.show()
-                    self.new_text_window.setFocus()
-                    self.new_text_window.main_text.edit()
+                    self.new_text()
                 elif self.selected_action == "open":
-                    self.open_file_window = OpenFileWindow(
-                        self,
-                        self.data_dir,
-                        self.selected_language,
-                        self.config,
-                        self.settings,
-                        dark_mode=True,
-                    )
-                    self.open_file_window.show()
-                    self.open_file_window.setFocus()
+                    self.open_text()
 
         key_char = event.text().lower()
         if key_char in self.keys_to_languages:
@@ -80,6 +61,33 @@ class StartWindow(GeneralWindow):
             self.show_options()
 
         return super().on_key_press(event)
+
+    def new_text(self, text_path=None, text=None):
+        self.new_text_window = NewTextWindow(
+            self,
+            self.data_dir,
+            self.selected_language,
+            self.config,
+            self.settings,
+            self.settings["dark_mode"],
+            text_path,
+            text,
+        )
+        self.new_text_window.show()
+        self.new_text_window.setFocus()
+        self.new_text_window.main_text.edit()
+
+    def open_text(self):
+        self.open_file_window = OpenFileWindow(
+            self,
+            self.data_dir,
+            self.selected_language,
+            self.config,
+            self.settings,
+            dark_mode=True,
+        )
+        self.open_file_window.show()
+        self.open_file_window.setFocus()
 
     def get_config(self, config_file_path):
         try:
