@@ -263,6 +263,8 @@ class MainWindow(QWidget):
         with open(self.text_path, "r") as file:
             lines = file.readlines()
             text = "".join([line for line in lines if not metadata_tag in line]).strip()
+            text = self.fix_paragraph_spacing(text)
+            text = self.fix_title(text)
             metadata = [line for line in lines if metadata_tag in line]
             if len(metadata) == 0:
                 active_word_num = False
@@ -273,6 +275,27 @@ class MainWindow(QWidget):
                     active_word_num = None
 
             return text, active_word_num
+
+    def fix_paragraph_spacing(self, text):
+        """Make sure that paragrahs are separated by two newlines"""
+        return re.sub(r"(?<!\n)\n(?!\n)", "\n\n", text)
+
+    def fix_title(self, text):
+        """Add a title to the text if missing"""
+        max_title_len = 100
+        regex_sentence = r".*?[.!?](?:\s|$)|.*?(?:\n|$)"
+        first_line = text.split("\n")[0]
+        num_sentences_first_line = len(re.findall(regex_sentence, first_line))
+
+        if num_sentences_first_line > 1 and len(first_line) >= max_title_len:
+            sentences = re.finditer(regex_sentence, text)
+            first_sentence = next(sentences).group().strip()
+            # Remove period in title
+            if len(first_sentence) > 0 and first_sentence[-1] == ".":
+                first_sentence = first_sentence[:-1]
+            text = first_sentence + "\n\n" + text
+
+        return text
 
     def save_text_with_active_word(self):
         metadata_tag = "# active_word_num = "
