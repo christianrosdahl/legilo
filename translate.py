@@ -383,5 +383,6 @@ class LegiloTranslator:
             translation = translation.replace("verb ", "")
             translation = translation.replace("infinitive ", "")
             lemma = self.find_lemma_after_of(translation)
-            lemma = remove_pronunciation_accents(self.language, lemma)
+            if lemma:
+                lemma = remove_pronunciation_accents(self.language, lemma)
         return lemma
