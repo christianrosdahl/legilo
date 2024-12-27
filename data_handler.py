@@ -1,5 +1,6 @@
 import os
 import pickle
+import unicodedata
 
 
 class DataHandler:
@@ -10,10 +11,16 @@ class DataHandler:
         self.known_words = {}
         self.learning_words = {}
         self.ignored_words = []
+        self.personal_translations = {}
         self.phrases = {}
         self.last_opened_files = []
 
         self.load()
+
+        # Convert data from old format
+        if len(self.personal_translations) == 0:
+            self.convert_personal_translations_from_old_format()
+            self.clean_lemmas_for_words()
 
     def add_to_known(self, word, info=None):
         """Add word to known words"""
@@ -37,7 +44,18 @@ class DataHandler:
             del self.known_words[word]
         elif word in self.learning_words:
             del self.learning_words[word]
+        if word in self.personal_translations:
+            del self.personal_translations[word]
         self.ignored_words.append(word)
+
+    def add_personal_translation(self, word, personal_translation):
+        """Add personal translation for word"""
+        self.personal_translations[word] = personal_translation
+
+    def remove_personal_translation(self, word):
+        """Remove personal translation for word"""
+        if word in self.personal_translations:
+            del self.personal_translations[word]
 
     def remove_word(self, word):
         """Remove word from data"""
@@ -47,15 +65,18 @@ class DataHandler:
             del self.learning_words[word]
         elif word in self.known_words:
             del self.known_words[word]
+        if word in self.personal_translations:
+            del self.personal_translations[word]
 
     def add_to_phrases(self, info):
         phrase_words = info["phrase_words"]
-        if not self.is_in_phrases(phrase_words):
-            first_word = phrase_words[0]
-            if first_word in self.phrases:
-                self.phrases[first_word].append(info)
-            else:
-                self.phrases[first_word] = [info]
+        if self.is_in_phrases(phrase_words):
+            self.remove_from_phrases(info)
+        first_word = phrase_words[0]
+        if first_word in self.phrases:
+            self.phrases[first_word].append(info)
+        else:
+            self.phrases[first_word] = [info]
 
     def remove_from_phrases(self, info):
         phrase_words = info["phrase_words"]
@@ -85,6 +106,18 @@ class DataHandler:
                     return phrase
         return None
 
+    def get_all_words(self, include_translations=False):
+        all_words = set()
+        all_words |= self.known_words.keys()
+        all_words |= self.learning_words.keys()
+        all_words |= self.personal_translations.keys()
+        if include_translations:
+            for word in all_words:
+                if word in self.personal_translations:
+                    all_words.remove(word)
+                    all_words.add(word + ": " + self.personal_translations[word])
+        return all_words
+
     def load(self):
         """Load all the word lists"""
         try:
@@ -100,6 +133,10 @@ class DataHandler:
         except:
             self.ignored_words = []
         try:
+            self.personal_translations = self.load_from_history("personal_translations")
+        except:
+            self.personal_translations = {}
+        try:
             self.phrases = self.load_from_history("phrases")
         except:
             self.phrases = {}
@@ -109,6 +146,7 @@ class DataHandler:
         self.save_to_history(self.known_words, "known_words")
         self.save_to_history(self.learning_words, "learning_words")
         self.save_to_history(self.ignored_words, "ignored_words")
+        self.save_to_history(self.personal_translations, "personal_translations")
         self.save_to_history(self.phrases, "phrases")
         self.save_to_history(self.last_opened_files, "last_opened_files")
 
@@ -119,6 +157,7 @@ class DataHandler:
         self.save_list_as_txt(self.known_words, "known_words")
         self.save_list_as_txt(self.learning_words, "learning_words")
         self.save_list_as_txt(self.ignored_words, "ignored_words")
+        self.save_list_as_txt(self.personal_translations, "personal_translations")
         self.save_list_as_txt(self.learning_words.keys(), "learning_words_list")
         self.save_list_as_txt(self.phrases, "phrases")
 
@@ -168,3 +207,66 @@ class DataHandler:
             name + ".txt",
             self.data_dir + "/" + self.language + "/" + "txt_word_lists",
         )
+
+    def convert_personal_translations_from_old_format(self):
+        self.convert_old_personal_translations_from_dict(self.known_words)
+        self.convert_old_personal_translations_from_dict(self.learning_words)
+        self.convert_old_personal_translations_from_phrases()
+
+    def convert_old_personal_translations_from_dict(self, dictionary):
+        for word, info in dictionary.items():
+            if not info:
+                continue
+            if not "trans" in info:
+                continue
+            trans = info["trans"]
+            for item in trans:
+                if not "source" in item or not "definitions" in item:
+                    continue
+                if not item["source"] == "personal translation":
+                    continue
+                definition = item["definitions"][0]
+                if not "definition" in definition:
+                    continue
+                personal_trans = definition["definition"]
+                self.add_personal_translation(word, personal_trans)
+
+    def convert_old_personal_translations_from_phrases(self):
+        all_phrase_infos = []
+        for phrase_infos in self.phrases.values():
+            all_phrase_infos += phrase_infos
+
+        phrase_dict = {}
+        for phrase_info in all_phrase_infos:
+            if not "phrase_words" in phrase_info:
+                continue
+            phrase = " ".join(phrase_info["phrase_words"])
+            phrase_dict[phrase] = phrase_info
+
+        self.convert_old_personal_translations_from_dict(phrase_dict)
+
+    def clean_lemmas_for_words(self):
+        for dictionary in [self.known_words, self.learning_words]:
+            self.clean_lemmas_for_dict(dictionary)
+
+    def clean_lemmas_for_dict(self, dictionary):
+        """
+        Remove lemmas that are equal to the looked up word.
+        Also make sure that the lemmas are unicode normalized, so that we don't get
+        several lemmas that look the same but have different unicode representation for
+        letters with accents.
+        """
+        for word, info in dictionary.items():
+            if not info:
+                continue
+            if not "lemmas" in info:
+                continue
+            lemmas = info["lemmas"]
+            lemmas = {unicodedata.normalize("NFC", lemma) for lemma in lemmas}
+            word = unicodedata.normalize("NFC", word)
+            if word in lemmas:
+                lemmas.remove(word)
+            lemmas_lower = {lemma.lower() for lemma in lemmas}
+            if word.lower() in lemmas_lower:
+                lemmas.remove(word)
+            dictionary[word]["lemmas"] = lemmas

@@ -1,5 +1,6 @@
 import os
 import re
+import unicodedata
 import warnings
 
 import requests
@@ -74,9 +75,12 @@ class LegiloTranslator:
         else:
             self.nlp = None
 
-    def translate(self, word, always_google_trans=False, is_phrase=False):
+    def translate(self, word, google_trans="auto", is_phrase=False, lemmas=None):
+        input_lemmas = lemmas
+        lemmas = set()
         word = remove_pronunciation_accents(self.language, word)
-        results = self.parse_from_wiktionary(word)
+        results, wiktionary_lemmas = self.parse_from_wiktionary(word)
+        lemmas |= wiktionary_lemmas
 
         # Handle that nouns must be looked up with capital letter in German
         if self.language == "German" and len(word) > 0:
@@ -84,41 +88,60 @@ class LegiloTranslator:
                 capitalized_word = word.upper()
             else:
                 capitalized_word = word[0].upper() + word[1:]
-            results += self.parse_from_wiktionary(capitalized_word)
+            capitalized_results, wiktionary_lemmas = self.parse_from_wiktionary(
+                capitalized_word
+            )
+            results += capitalized_results
+            lemmas |= wiktionary_lemmas
 
         if self.use_lemma and not is_phrase:
             lemma = self.get_lemma(word)
-            lemmas_from_wiktionary = self.get_lemmas_from_results(results)
             lookup_words_from_result = self.get_lookup_words_from_results(results)
             if (
                 lemma.lower() != word.lower()
-                and not lemma.lower() in lemmas_from_wiktionary
                 and not lemma.lower() in lookup_words_from_result
             ):
-                results = results + self.parse_from_wiktionary(lemma)
+                lemmas.add(lemma)
 
-        if len(results) == 0:
-            results = self.get_google_translation(word)
+        if input_lemmas != None:
+            lemmas = input_lemmas
+
+        lemmas = {unicodedata.normalize("NFC", lemma) for lemma in lemmas}
+
+        for lemma in lemmas:
+            results += self.parse_from_wiktionary(lemma)[0]
 
         # If the specific form wasn't found in Wiktionary, add traslation of this first.
-        # If 'always_google_trans' is True, this is done anyway.
+        # This is the default behavior, for google_trans == 'auto'.
+        # If google_trans == True, a Google translation is added anyway.
+        # If google_trans == False, no Google translation is added.
         if (
-            word.lower() not in self.get_lookup_words_from_results(results)
-            or always_google_trans
-        ):
+            google_trans == "auto"
+            and word.lower() not in self.get_lookup_words_from_results(results)
+        ) or google_trans == True:
             results = self.get_google_translation(word) + results
 
-        return results
+        return results, lemmas
 
     def get_info(
-        self, word, include_word_info=True, include_etymology=True, is_phrase=False
+        self,
+        word,
+        include_word_info=True,
+        include_etymology=True,
+        include_google_trans="auto",
+        is_phrase=False,
+        word_lemmas=None,
     ):
         """Get word info, including translation, on the format used in Legilo"""
         remark_line_marker = "\u2022 "
-        translation = self.translate(word, is_phrase=is_phrase)
+        translation, lemmas = self.translate(
+            word,
+            is_phrase=is_phrase,
+            google_trans=include_google_trans,
+            lemmas=word_lemmas,
+        )
         wordtypes = set()
         genders = set()
-        lemmas = set()
         remarks = []
         etymologies = []
         for i, item in enumerate(translation):
@@ -134,10 +157,6 @@ class LegiloTranslator:
                     genders.add("n")
                 if "c" in gender_string_parts:
                     genders.add("c")
-            if "word" in item and item["word"] != word:
-                lemmas.add(item["word"])
-            if "lemma" in item:
-                lemmas.add(item["lemma"])
             if "word_info" in item and include_word_info:
                 if "word" in item:
                     remark_line = (
@@ -156,8 +175,7 @@ class LegiloTranslator:
             info["word_type"] = ", ".join(wordtypes)
         if len(genders) > 0:
             info["gender"] = ", ".join(genders)
-        if len(lemmas) > 0:
-            info["lemmas"] = lemmas
+        info["lemmas"] = lemmas
         if include_etymology and len(etymologies) > 0:
             remarks += etymologies
         if len(remarks) > 0:
@@ -187,13 +205,6 @@ class LegiloTranslator:
                 return words[i + 1]
         return None
 
-    def get_lemmas_from_results(self, results):
-        lemmas = set()
-        for item in results:
-            if "lemma" in item:
-                lemmas.add(item["lemma"].lower())
-        return lemmas
-
     def get_lookup_words_from_results(self, results):
         words = set()
         for item in results:
@@ -216,12 +227,14 @@ class LegiloTranslator:
         ]
         return results
 
-    def parse_from_wiktionary(self, word, lookup_wiktionary_lemmas=True):
+    def parse_from_wiktionary(self, word):
+        lemmas = set()
+
         url = f"https://en.wiktionary.org/wiki/{word}"
         response = requests.get(url)
 
         if response.status_code != 200:
-            return []
+            return [], lemmas
 
         soup = BeautifulSoup(response.content, "html.parser")
 
@@ -233,7 +246,7 @@ class LegiloTranslator:
             if current_language_section:
                 break
         if not current_language_section:
-            return []
+            return [], lemmas
         # Extract the content under the current language section until the next h2 tag
         content = []
         current_element = language_section.find_next_sibling()
@@ -246,7 +259,6 @@ class LegiloTranslator:
         found_word = False
         look_for_etymology = False
         found_etymology = None
-        lemmas = set()
         for element in content:
             if look_for_etymology and element.name == "div":
                 look_for_etymology = False
@@ -317,13 +329,7 @@ class LegiloTranslator:
                     if found_word:
                         results[-1]["definitions"].append(definition_entry)
 
-        if lookup_wiktionary_lemmas and len(lemmas) > 0:
-            for lemma in lemmas:
-                results_for_lemmas = self.parse_from_wiktionary(
-                    lemma, lookup_wiktionary_lemmas=False
-                )
-                results += results_for_lemmas
-        return results
+        return results, lemmas
 
     def is_etymology(self, element):
         if element.name == "div" and "mw-heading" in element.get("class", []):

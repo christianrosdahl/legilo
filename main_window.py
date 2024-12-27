@@ -2,6 +2,7 @@ import os
 import platform
 import re
 import threading
+import unicodedata
 import webbrowser
 
 from gtts import gTTS  # Generate mp3 files with Google's text-to-speech
@@ -56,6 +57,7 @@ class MainWindow(QWidget):
         self.active_info = None
         self.active_looked_up = False
         self.editing_personal_trans = False
+        self.editing_lemmas = False
         self.editing_remark = False
         self.has_gone_through_whole_text = False
         self.phrase_selection_mode = False
@@ -108,7 +110,7 @@ class MainWindow(QWidget):
 
     def eventFilter(self, source, event):
         """Event filter to capture key presses"""
-        if self.editing_personal_trans or self.editing_remark:
+        if self.editing_personal_trans or self.editing_remark or self.editing_lemmas:
             enter_pressed = event.type() == event.KeyPress and event.key() in [
                 Qt.Key_Return,
                 Qt.Key_Enter,
@@ -189,6 +191,19 @@ class MainWindow(QWidget):
         self.personal_trans_text_field.setFont(font)
         self.personal_trans_text_field.hide()
 
+        # Edit lemma text field
+        self.lemma_text_field = TextField(self.styling, "right", "translation", 6)
+        self.lemma_text_field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.lemma_text_field.set_background_color(
+            self.styling["colors"]["lemma_background"]
+        )
+        self.lemma_text_field.set_text_color(self.styling["colors"]["lemma_text"])
+        font = QFont(
+            self.styling["translation"]["font"], self.styling["translation"]["size"]
+        )
+        self.lemma_text_field.setFont(font)
+        self.lemma_text_field.hide()
+
         # Translation text field (resizable)
         self.translation_text_field = TextField(
             self.styling, "right", "translation", hide_scrollbar=False
@@ -226,6 +241,7 @@ class MainWindow(QWidget):
         right_column_layout.addWidget(self.word_text_field)
         right_column_layout.addWidget(self.translations_title)
         right_column_layout.addWidget(self.personal_trans_text_field)
+        right_column_layout.addWidget(self.lemma_text_field)
         right_column_layout.addWidget(self.translation_text_field)
         right_column_layout.addWidget(self.notes_title)
         right_column_layout.addWidget(self.remark_text_field)
@@ -263,6 +279,7 @@ class MainWindow(QWidget):
         with open(self.text_path, "r") as file:
             lines = file.readlines()
             text = "".join([line for line in lines if not metadata_tag in line]).strip()
+            text = unicodedata.normalize("NFC", text)
             text = self.fix_paragraph_spacing(text)
             text = self.fix_title(text)
             metadata = [line for line in lines if metadata_tag in line]
@@ -347,6 +364,11 @@ class MainWindow(QWidget):
                 key == Qt.Key_Return and not modifiers & Qt.ShiftModifier
             ) or key == Qt.Key_Up:
                 self.update_personal_translation()
+        elif self.editing_lemmas:
+            if (
+                key == Qt.Key_Return and not modifiers & Qt.ShiftModifier
+            ) or key == Qt.Key_Up:
+                self.update_lemmas()
         elif self.editing_remark:
             if (
                 key == Qt.Key_Return and not modifiers & Qt.ShiftModifier
@@ -391,6 +413,8 @@ class MainWindow(QWidget):
                 self.set_active_to_ignored()
             elif key == ord("I"):
                 self.edit_personal_translation()
+            elif key == ord("U"):
+                self.edit_lemmas()
             elif key == ord("R"):
                 self.edit_remark()
             elif key == ord("O"):
@@ -552,6 +576,12 @@ class MainWindow(QWidget):
         if self.active_word_num:
             return self.get_word(self.active_word_num)
         return None
+
+    def get_active_word_or_phrase(self):
+        if self.active_phrase:
+            phrase_words = self.active_phrase["words"]
+            return " ".join(phrase_words)
+        return self.get_active_word()
 
     def highlight_word(self, word_num, foreground, background):
         """Highlight a word by its word number"""
@@ -763,9 +793,10 @@ class MainWindow(QWidget):
                 #     self.word_text_field.insert_text(word + ", ", style)
 
                 has_unique_gender = "gender" in info and len(info["gender"]) == 1
-                word_is_variant = "lemmas" in info and (
-                    len(info["lemmas"]) > 1 or list(info["lemmas"])[0].lower() != word
-                )
+                word_is_variant = "lemmas" in info and not word in [
+                    lemma.lower() for lemma in info["lemmas"]
+                ]
+
                 if self.language == "german":
                     word = word.capitalize()
                 if has_unique_gender:
@@ -809,10 +840,16 @@ class MainWindow(QWidget):
         self.category_text_field.set_background_color(background)
         self.category_text_field.insert_text(category, style)
 
-    def show_translation(self, show_personal_trans=True, show_google_trans=True):
+    def show_translation(
+        self, show_personal_trans=True, show_google_trans=True, show_lemmas=True
+    ):
         self.translation_text_field.clear()
         trans = self.active_info["trans"]
+        lemmas = set()
+        if "lemmas" in self.active_info:
+            lemmas = self.active_info["lemmas"]
         style = self.styling["translation"]
+        style_italic = {**style, "italic": True}
         style_word = {**style, "bold": True}
         style_parenthesis = {**style}
         style_type_and_gender = {**style, "italic": True}
@@ -833,16 +870,40 @@ class MainWindow(QWidget):
             "bold": True,
         }
 
-        personal_trans = None
+        # Show lemmas and possible personal translations for them
+        if show_lemmas:
+            if len(lemmas) > 0:
+                self.translation_text_field.insert_text("Form of ", style_italic)
+            lemmas_with_translation = {}
+            lemmas_without_translation = []
+            for lemma in lemmas:
+                personal_lemma_trans = self.get_personal_translation(lemma)
+                if personal_lemma_trans:
+                    lemmas_with_translation[lemma] = personal_lemma_trans
+                else:
+                    lemmas_without_translation.append(lemma)
+
+            count = 0
+            for lemma, lemma_trans in lemmas_with_translation.items():
+                self.translation_text_field.insert_text(f"{lemma}", style_word)
+                self.translation_text_field.insert_text(": ", style)
+                self.translation_text_field.insert_text(lemma_trans, style)
+                if count < len(lemmas) - 1:
+                    self.translation_text_field.insert_text(", ", style)
+                count += 1
+            for lemma in lemmas_without_translation:
+                self.translation_text_field.insert_text(f"{lemma}", style_word)
+                if count < len(lemmas) - 1:
+                    self.translation_text_field.insert_text(", ", style)
+                count += 1
+
+            if len(lemmas) > 0:
+                self.translation_text_field.insert_text("\n\n", style)
+
+        # Show Wiktionary translations
         google_trans = None
         for i, item in enumerate(trans):
-            if "source" in item and item["source"] == "personal translation":
-                if "definitions" in item:
-                    definition = item["definitions"][0]
-                    if "definition" in definition:
-                        personal_trans = definition["definition"]
-
-            elif "source" in item and item["source"] == "Google Translate":
+            if "source" in item and item["source"] == "Google Translate":
                 if "definitions" in item:
                     definition = item["definitions"][0]
                     if "definition" in definition:
@@ -894,14 +955,23 @@ class MainWindow(QWidget):
                                 new_line=True,
                                 indent=10,
                             )
-                if i < len(trans) - 1:
+                has_more_wiktionary_translations = (
+                    i < len(trans) - 1
+                    and "source" in trans[i + 1]
+                    and trans[i + 1]["source"] == "Wiktionary"
+                )
+                if has_more_wiktionary_translations:
                     self.translation_text_field.insert_text("\n\n", style)
 
+        # Show Google translation if available
         if show_google_trans and google_trans:
             self.translation_text_field.insert_text("\n\n", style, first=True)
             self.translation_text_field.insert_text(
                 google_trans, style_google_translate, first=True
             )
+
+        # Show personal translation if available
+        personal_trans = self.get_personal_translation()
         if show_personal_trans and personal_trans:
             self.translation_text_field.insert_text("\n\n", style, first=True)
             self.translation_text_field.insert_text(
@@ -1115,46 +1185,83 @@ class MainWindow(QWidget):
         self.personal_trans_text_field.hide()
         self.editing_personal_trans = False
 
-        self.delete_personal_translation()
-        trans = self.active_info["trans"]
-        word = self.get_active_word()
+        word_or_phrase = self.get_active_word_or_phrase()
+        self.data.remove_personal_translation(word_or_phrase)
         if len(new_trans) > 0:
-            trans.append(
-                {
-                    "word": word,
-                    "definitions": [{"definition": new_trans}],
-                    "source": "personal translation",
-                }
-            )
-
+            self.data.add_personal_translation(word_or_phrase, new_trans)
         self.show_translation()
 
-    def get_personal_translation(self):
-        trans = self.active_info["trans"]
-        for item in trans:
-            if "source" in item and item["source"] == "personal translation":
-                if "definitions" in item:
-                    return item["definitions"][0]["definition"]
+    def edit_lemmas(self):
+        if not self.active_looked_up:
+            return
+        self.editing_lemmas = True
+        lemmas = None
+        first_line = True
+        if "lemmas" in self.active_info:
+            lemmas = self.active_info["lemmas"]
+            for lemma in lemmas:
+                if not first_line:
+                    self.lemma_text_field.insert_text("\n")
+                if lemma in self.data.personal_translations:
+                    trans = self.data.personal_translations[lemma]
+                    self.lemma_text_field.insert_text(f"{lemma}: {trans}")
+                else:
+                    self.lemma_text_field.insert_text(f"{lemma}")
+                first_line = False
+        self.show_translation(show_lemmas=False)
+        self.lemma_text_field.show()
+        self.lemma_text_field.edit()
+
+    def update_lemmas(self):
+        lemma_data = self.lemma_text_field.toPlainText()
+        previous_lemmas = None
+        if "lemmas" in self.active_info:
+            previous_lemmas = self.active_info["lemmas"]
+        lemmas = set()
+        for line in lemma_data.split("\n"):
+            line_parts = line.split(":")
+            lemma = line_parts[0].strip()
+            lemma = unicodedata.normalize("NFC", lemma)
+            if len(lemma) == 0:
+                continue
+            if len(line_parts) > 1:
+                trans = line_parts[1].strip()
+                if len(trans) > 0:
+                    self.data.add_personal_translation(lemma, trans)
+                else:
+                    self.data.remove_personal_translation(lemma)
+            else:
+                self.data.remove_personal_translation(lemma)
+            lemmas.add(lemma)
+        self.active_info["lemmas"] = lemmas
+        if lemmas != previous_lemmas:
+            word = self.active_info["dict_word"]
+            is_phrase = False
+            if self.active_phrase:
+                is_phrase = True
+            old_info = self.active_info
+            new_info = self.legilo_translator.get_info(
+                word,
+                is_phrase=is_phrase,
+                include_google_trans=self.has_google_translation(),
+                word_lemmas=lemmas,
+            )
+            for key, value in old_info.items():
+                if not key in new_info:
+                    new_info[key] = value
+            self.active_info = new_info
+        self.lemma_text_field.stop_edit()
+        self.lemma_text_field.clear()
+        self.lemma_text_field.hide()
+        self.editing_lemmas = False
+        self.show_translation()
+
+    def get_personal_translation(self, word=None):
+        if not word:
+            word = self.get_active_word_or_phrase()
+        if word in self.data.personal_translations:
+            return self.data.personal_translations[word]
         return None
-
-    def has_personal_translation(self):
-        """Check if word translations list contains a personal translation"""
-        trans = self.active_info["trans"]
-        for item in trans:
-            if "source" in item and item["source"] == "personal translation":
-                return True
-        return False
-
-    def delete_personal_translation(self):
-        """Delete personal translation from translations list, if available"""
-        trans = self.active_info["trans"]
-        translation_index_to_remove = None
-        for i, item in enumerate(trans):
-            if "source" in item and item["source"] == "personal translation":
-                translation_index_to_remove = i
-                break
-        if translation_index_to_remove is not None:
-            del trans[translation_index_to_remove]
 
     def toggle_google_translation(self):
         if not self.active_looked_up:
