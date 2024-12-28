@@ -1212,7 +1212,8 @@ class MainWindow(QWidget):
                     self.lemma_text_field.insert_text(f"{lemma}")
                 first_line = False
         self.show_translation(show_lemmas=False)
-        self.lemma_text_field.set_suggestions(self.data.get_all_words(True))
+        suggestions = self.data.get_all_words(True, [self.get_active_word_or_phrase()])
+        self.lemma_text_field.set_suggestions(suggestions)
         self.lemma_text_field.show()
         self.lemma_text_field.edit()
 

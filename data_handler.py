@@ -106,11 +106,15 @@ class DataHandler:
                     return phrase
         return None
 
-    def get_all_words(self, include_translations=False):
+    def get_all_words(self, include_translations=False, exclude_words=None):
         all_words = set()
         all_words |= self.known_words.keys()
         all_words |= self.learning_words.keys()
         all_words |= self.personal_translations.keys()
+        if exclude_words:
+            for word in exclude_words:
+                if word in all_words:
+                    all_words.remove(word)
         if include_translations:
             for word in all_words:
                 if word in self.personal_translations:
