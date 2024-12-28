@@ -57,6 +57,17 @@ class TextField(QTextEdit):
         ):
             self.stop_edit()
             self.parent().setFocus()
+            event.accept()
+
+        elif (
+            event.key() in [Qt.Key_Return, Qt.Key_Enter]
+            and event.modifiers() == Qt.ShiftModifier
+        ):
+            cursor = self.textCursor()
+            cursor.insertBlock()  # Insert a new block (like pressing Enter)
+            event.accept()
+            return
+
         # Remove whole line by pressing Cmd/Ctrl + Backspace
         elif (
             event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_Backspace
@@ -65,6 +76,7 @@ class TextField(QTextEdit):
             cursor.select(cursor.LineUnderCursor)
             cursor.removeSelectedText()
             event.accept()
+
         # Call the default handler for other key events
         super().keyPressEvent(event)
 

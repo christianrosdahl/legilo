@@ -8,6 +8,7 @@ def get_styling(config, dark_mode=False):
 
     default_colors = {
         "text_color": "black",
+        "text_autocomplete_color": "darkgray",
         "text_background": "white",
         "window_background_color": "lightgray",
         "active_text": "black",
@@ -33,6 +34,7 @@ def get_styling(config, dark_mode=False):
 
     dark_mode_colors = {
         "text_color": "#F8F8F2",
+        "text_autocomplete_color": "lightgray",
         "text_background": "#282c24",
         "window_background_color": "#20241c",
         "active_text": "#FD971F",

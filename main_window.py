@@ -22,6 +22,7 @@ os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = ""
 import pygame  # Play mp3 files from gtts
 from googletrans import Translator
 
+from autocomplete_line_text_field import AutocompleteLineTextField
 from data_handler import DataHandler
 from language_code import get_language_code
 from sentence import get_first_sentence, get_sentences
@@ -192,7 +193,9 @@ class MainWindow(QWidget):
         self.personal_trans_text_field.hide()
 
         # Edit lemma text field
-        self.lemma_text_field = TextField(self.styling, "right", "translation", 6)
+        self.lemma_text_field = AutocompleteLineTextField(
+            self.styling, "right", "translation", 6
+        )
         self.lemma_text_field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.lemma_text_field.set_background_color(
             self.styling["colors"]["lemma_background"]
@@ -1209,6 +1212,7 @@ class MainWindow(QWidget):
                     self.lemma_text_field.insert_text(f"{lemma}")
                 first_line = False
         self.show_translation(show_lemmas=False)
+        self.lemma_text_field.set_suggestions(self.data.get_all_words(True))
         self.lemma_text_field.show()
         self.lemma_text_field.edit()
 
