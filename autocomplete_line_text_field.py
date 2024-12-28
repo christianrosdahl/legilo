@@ -1,4 +1,4 @@
-from PyQt5.QtGui import QTextCursor, QTextCharFormat, QColor
+from PyQt5.QtGui import QInputMethodEvent, QTextCursor, QTextCharFormat, QColor
 from PyQt5.QtCore import Qt
 
 from text_field import TextField
@@ -22,6 +22,7 @@ class AutocompleteLineTextField(TextField):
         self.suggestions = set()
         self.current_suggestion = ""
         self.block_updates = True  # Flag to prevent recursion
+        self.is_dead_key_active = False
         self.textChanged.connect(self.update_suggestion)
 
     def edit(self):
@@ -37,7 +38,7 @@ class AutocompleteLineTextField(TextField):
         self.suggestions = suggestions
 
     def update_suggestion(self):
-        if self.block_updates:
+        if self.block_updates or self.is_dead_key_active:
             return
 
         self.block_updates = True  # Prevent recursion
@@ -121,6 +122,15 @@ class AutocompleteLineTextField(TextField):
         else:
             self.remove_suggestion()
             super().keyPressEvent(event)
+
+    def inputMethodEvent(self, event: QInputMethodEvent):
+        # Detect if the input event corresponds to a dead key
+        if event.commitString() == "" and event.preeditString() != "":
+            self.is_dead_key_active = True
+            self.remove_suggestion()
+        else:
+            self.is_dead_key_active = False
+        super().inputMethodEvent(event)
 
     def mousePressEvent(self, event):
         self.remove_suggestion()
