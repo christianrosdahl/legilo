@@ -1,6 +1,13 @@
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QColor, QFont, QFontMetrics, QTextCharFormat, QTextCursor
-from PyQt5.QtWidgets import QTextEdit
+from PyQt5.QtCore import QEvent, Qt, QTimer
+from PyQt5.QtGui import (
+    QColor,
+    QFont,
+    QFontMetrics,
+    QKeySequence,
+    QTextCharFormat,
+    QTextCursor,
+)
+from PyQt5.QtWidgets import QApplication, QTextEdit
 
 
 class TextField(QTextEdit):
@@ -17,6 +24,7 @@ class TextField(QTextEdit):
     ):
         super().__init__()
         self.styling = styling
+        self.editing = False
 
         if position == "left":
             self.setMaximumWidth(self.styling["main_text_max_width"])
@@ -43,6 +51,9 @@ class TextField(QTextEdit):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         if hide_scrollbar:
             self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        # Paste text without keeping formatting
+        self.installEventFilter(self)
 
     def mousePressEvent(self, event):
         # Accept the mouse press event to allow text editing
@@ -80,6 +91,23 @@ class TextField(QTextEdit):
         # Call the default handler for other key events
         super().keyPressEvent(event)
 
+    def eventFilter(self, source, event):
+        # Intercept paste events
+        if source == self and event.type() == QEvent.KeyPress:
+            if event.matches(QKeySequence.Paste):
+                # Handle Ctrl+V or Cmd+V
+                self.pastePlainText()
+                return True  # Event handled
+        return super().eventFilter(source, event)
+
+    def pastePlainText(self):
+        if not self.editing:
+            return
+        # Access the clipboard and get plain text
+        clipboard = QApplication.clipboard()
+        plain_text = clipboard.text()
+        self.insertPlainText(plain_text)
+
     def set_fixed_height_num_lines(self, num_lines):
         font_metrics = QFontMetrics(self.font())
         line_height = font_metrics.lineSpacing()
@@ -104,8 +132,10 @@ class TextField(QTextEdit):
         self.setReadOnly(False)
         self.setFocus()
         self.moveCursor(QTextCursor.End)
+        self.editing = True
 
     def stop_edit(self):
+        self.editing = False
         self.setReadOnly(True)
         self.parent().setFocus()
 
