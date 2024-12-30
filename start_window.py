@@ -28,30 +28,33 @@ class StartWindow(GeneralWindow):
             forbidden_keys=forbidden_keys
         )
 
-        self.selected_language = None
-        self.selected_action = None
+        self.load_settings()
+        if not "selected_language" in self.settings:
+            self.settings["selected_language"] = None
+        if not "selected_action" in self.settings:
+            self.settings["selected_action"] = None
 
         self.title_text.insert_text(
             "Press keyboard keys to select below:", styling=self.styling["main_text"]
         )
-        self.load_settings()
         self.show_options()
 
     def on_key_press(self, event):
+        self.save_settings()
         if event.key() in [Qt.Key_Return, Qt.Key_Enter]:
-            if self.selected_language and self.selected_action:
+            if self.settings["selected_language"] and self.settings["selected_action"]:
                 self.hide()
-                if self.selected_action == "new":
+                if self.settings["selected_action"] == "new":
                     self.new_text()
-                elif self.selected_action == "open":
+                elif self.settings["selected_action"] == "open":
                     self.open_text()
 
         key_char = event.text().lower()
         if key_char in self.keys_to_languages:
-            self.selected_language = self.keys_to_languages[key_char]
+            self.settings["selected_language"] = self.keys_to_languages[key_char]
             self.show_options()
         elif key_char in self.options:
-            self.selected_action = self.options[key_char]
+            self.settings["selected_action"] = self.options[key_char]
             self.show_options()
         elif key_char in self.change_settings_keys:
             if self.change_settings_keys[key_char] == "pronounce":
@@ -66,7 +69,7 @@ class StartWindow(GeneralWindow):
         self.new_text_window = NewTextWindow(
             self,
             self.data_dir,
-            self.selected_language,
+            self.settings["selected_language"],
             self.config,
             self.settings,
             self.settings["dark_mode"],
@@ -81,7 +84,7 @@ class StartWindow(GeneralWindow):
         self.open_file_window = OpenFileWindow(
             self,
             self.data_dir,
-            self.selected_language,
+            self.settings["selected_language"],
             self.config,
             self.settings,
             dark_mode=True,
@@ -121,22 +124,22 @@ class StartWindow(GeneralWindow):
         self.main_text.insert_text("Select language:")
         for key, language in self.keys_to_languages.items():
             line = f"\n[{key.upper()}] {language.capitalize()}"
-            is_selected = language == self.selected_language
+            is_selected = language == self.settings["selected_language"]
             self.main_text.insert_text(line, bold=is_selected)
 
         self.main_text.insert_text("\n\nSelect option:")
         for key, action in self.options.items():
             line = f"\n[{key.upper()}] {action.capitalize()}"
-            is_selected = action == self.selected_action
+            is_selected = action == self.settings["selected_action"]
             self.main_text.insert_text(line, bold=is_selected)
 
-        if self.selected_language and self.selected_action:
+        if self.settings["selected_language"] and self.settings["selected_action"]:
             line = "\n\nPress [Enter] to "
-            if self.selected_action == "new":
+            if self.settings["selected_action"] == "new":
                 line += "create a new text in "
-            elif self.selected_action == "open":
+            elif self.settings["selected_action"] == "open":
                 line += "open a saved text in "
-            line += self.selected_language.capitalize()
+            line += self.settings["selected_language"].capitalize()
             self.main_text.insert_text(line)
 
         self.main_text.insert_text("\n\nSettings:")
@@ -172,10 +175,8 @@ class StartWindow(GeneralWindow):
 
     def toggle_pronounce(self):
         self.settings["sound_on"] = not self.settings["sound_on"]
-        self.save_settings()
         self.show_options()
 
     def toggle_dark_mode(self):
         self.settings["dark_mode"] = not self.settings["dark_mode"]
-        self.save_settings()
         self.show_options()
