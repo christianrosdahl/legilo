@@ -116,3 +116,4 @@ In the file `config.json`, you can set the following things:
 - `"font_size"`: Font size for the main text in the reader. Other text sizes are adapted relative to this.
 - `"page_size"`: Maximum number of characters per page. This is applied when creating a new text. The text is then divided into pages with this max size.
 - `"short_text_limit"`: Maximum number of characters for a text to be classified as short. If a new text is short, it is not divided into several pages, but imported as one page.
+- `"autoscroll"` (can have values `true` or `false`): When going to next or previous word, scroll the page automatically to keep the active word in the center of the upper half of the text field if possible.

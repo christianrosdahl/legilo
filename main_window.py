@@ -56,10 +56,13 @@ class MainWindow(QWidget):
         self.open_urls_in_same_tab = True
         self.page_size = 1800
         self.short_text_limit = 5000
+        self.autoscroll = True
         if "page_size" in self.config:
             self.page_size = self.config["page_size"]
         if "short_text_limit" in self.config:
             self.short_text_limit = self.config["short_text_limit"]
+        if "autoscroll" in self.config:
+            self.autoscroll = self.config["autoscroll"]
 
         # Get text pages
         full_text, active_word_num, page_index, page_size = self.get_text_from_file()
@@ -133,7 +136,7 @@ class MainWindow(QWidget):
 
         self.open_page(self.page_index)
 
-    def open_page(self, page_index, mark_last_active=True):
+    def open_page(self, page_index, mark_last_active=True, scroll_to_active=True):
         if self.opening_page:
             # Avoid recursion caused by self.page_selector.setCurrentIndex()
             # calling open_page()
@@ -173,7 +176,9 @@ class MainWindow(QWidget):
             if last_active_page_index == page_index:
                 self.set_active_word_num(active_word_num)
 
-        self.scroll_to_active_word()
+        if scroll_to_active:
+            self.scroll_to_active_word()
+
         self.opening_page = False
 
     def eventFilter(self, source, event):
@@ -1331,7 +1336,7 @@ class MainWindow(QWidget):
                 return text_phrase
         return None
 
-    def go_to_next(self, skip_known=True, save=True):
+    def go_to_next(self, skip_known=True, save=True, autoscroll_if_enabled=True):
         if self.phrase_selection_mode:
             self.phrase_selection_next()
             return
@@ -1352,12 +1357,14 @@ class MainWindow(QWidget):
             self.has_gone_through_whole_page = True
             if self.page_index < len(self.pages) - 1:
                 self.set_active_word_num(None)
-                self.open_page(self.page_index + 1)
-                self.go_to_next(skip_known)
+                self.open_page(self.page_index + 1, scroll_to_active=False)
+                self.go_to_next(skip_known, autoscroll_if_enabled=False)
                 return
         self.set_active_word_num(next_word_num)
+        if self.autoscroll and autoscroll_if_enabled:
+            self.scroll_to_active_word()
 
-    def go_to_previous(self, skip_known=True, save=True):
+    def go_to_previous(self, skip_known=True, save=True, autoscroll_if_enabled=True):
         if self.phrase_selection_mode:
             self.phrase_selection_previous()
             return
@@ -1391,7 +1398,8 @@ class MainWindow(QWidget):
                 else:
                     previous_word_num = self.num_text_words
         self.set_active_word_num(previous_word_num)
-        self.scroll_to_active_word()
+        if self.autoscroll and autoscroll_if_enabled:
+            self.scroll_to_active_word()
 
     def phrase_selection_next(self):
         current_word_num = self.phrase_selection_mode_word

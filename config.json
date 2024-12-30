@@ -179,5 +179,6 @@
   "font": "Helvetica Neue",
   "font_size": 18,
   "page_size": 1800,
-  "short_text_limit": 1800
+  "short_text_limit": 1800,
+  "autoscroll": true
 }
