@@ -47,6 +47,9 @@ Select one of the listed recent texts by pressing the number before it, or press
 - Click on a word to skip to it directly. All new words before it will be automatically labeled as known.
 - <kbd>⇧ Shift</kbd> + <kbd>→</kbd> Mark the next word, regardless of whether it is a known, ignored, new or learning word.
 - <kbd>⇧ Shift</kbd> + <kbd>←</kbd> Mark the previous word, regardless of whether it is a known, ignored, new or learning word.
+- <kbd>⌘ Command</kbd> + <kbd>→</kbd> Show next page.
+- <kbd>⌘ Command</kbd> + <kbd>⏎ Enter</kbd> Mark all new words on current page as known and show next page.
+- <kbd>⌘ Command</kbd> + <kbd>←</kbd> Show previous page.
 - <kbd>I</kbd>: Insert (or edit) your own translation for a looked-up word. Press <kbd>⏎ Enter</kbd> / <kbd>↑</kbd> to save it. If the input is empty, the personal translation is removed.
 - <kbd>U</kbd>: Edit lemmas (associated base forms of the word) and their translations for a looked-up word. An editable text field is enabled where one lemma is listed per line (press <kbd>⇧ Shift</kbd> + <kbd>⏎ Enter</kbd> to make a new line). Each lemma can be associated with a translation by writing `<lemma>: <translation>` in the line of the lemma. If the line doesn't contain a colon, no translation is saved for the corresponding lemma. A suggestion for autocompletion of a line will be shown if available. Press <kbd>⇥ Tab</kbd> to accept the suggestion. Press <kbd>⏎ Enter</kbd> / <kbd>↑</kbd> to save associated lemmas and possible translations.
 - <kbd>O</kbd>: Add (or remove) a Google translation for a looked-up word.
@@ -111,3 +114,5 @@ In the file `config.json`, you can set the following things:
 - `"use_lemmatizer"` (can have values `true` or `false`): Use natural language processing models to find the dictionary form of a word so that it can be looked up. When this is activated, the program will download the models for a language the first time it is used with that language, which might take a few minutes. It might make the program a few seconds slower to start after that as well, since the models have to be loaded.
 - `"font"`: Font to use for all text in the program.
 - `"font_size"`: Font size for the main text in the reader. Other text sizes are adapted relative to this.
+- `"page_size"`: Maximum number of characters per page. This is applied when creating a new text. The text is then divided into pages with this max size.
+- `"short_text_limit"`: Maximum number of characters for a text to be classified as short. If a new text is short, it is not divided into several pages, but imported as one page.

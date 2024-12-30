@@ -177,5 +177,7 @@
   "third_language": "swedish",
   "use_lemmatizer": true,
   "font": "Helvetica Neue",
-  "font_size": 18
+  "font_size": 18,
+  "page_size": 1800,
+  "short_text_limit": 1800
 }

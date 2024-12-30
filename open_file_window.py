@@ -37,6 +37,7 @@ class OpenFileWindow(GeneralWindow):
     def on_key_press(self, event):
         if event.key() in [Qt.Key_Return, Qt.Key_Enter]:
             if self.selected:
+                event.accept()
                 self.start_window.main_window = MainWindow(
                     self.start_window,
                     self.data_dir,

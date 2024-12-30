@@ -9,9 +9,11 @@ from gtts import gTTS  # Generate mp3 files with Google's text-to-speech
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor, QFont, QTextCharFormat, QTextCursor
 from PyQt5.QtWidgets import (
+    QComboBox,
     QDesktopWidget,
     QHBoxLayout,
     QLabel,
+    QPushButton,
     QSizePolicy,
     QSpacerItem,
     QVBoxLayout,
@@ -41,11 +43,7 @@ class MainWindow(QWidget):
         self.text_path = text_path
         self.config = config
         self.settings = settings
-        self.save_progress = True
-        self.open_urls_in_same_tab = True
         self.styling = get_styling(self.config, settings["dark_mode"])
-        text, active_word_num = self.get_text_from_file()
-        self.text = text
         self.data = DataHandler(data_dir, language)
         self.legilo_translator = LegiloTranslator(
             language,
@@ -53,14 +51,46 @@ class MainWindow(QWidget):
             lemmatizer_dir=f"{self.data_dir}/general/stanza",
         )
 
+        # Settings
+        self.save_progress = True
+        self.open_urls_in_same_tab = True
+        self.page_size = 1800
+        self.short_text_limit = 5000
+        if "page_size" in self.config:
+            self.page_size = self.config["page_size"]
+        if "short_text_limit" in self.config:
+            self.short_text_limit = self.config["short_text_limit"]
+
+        # Get text pages
+        full_text, active_word_num, page_index, page_size = self.get_text_from_file()
+        self.full_text = full_text
+        is_one_page_text = active_word_num != None and page_size == None
+        is_short_text = len(self.full_text) <= self.short_text_limit
+        if not page_index:
+            page_index = 0
+        if page_size:
+            self.page_size = page_size
+        if is_one_page_text or is_short_text:
+            self.page_size = None
+            self.pages = [full_text]
+            page_index = 0
+        else:
+            self.pages = self.get_pages(self.full_text, self.page_size)
+        self.text = self.pages[0]
+
+        # State variables
+        self.page_is_open = False
+        self.page_index = page_index
         self.active_word_num = active_word_num
         self.active_phrase = None
         self.active_info = None
         self.active_looked_up = False
+        self.editing_main_text = False
         self.editing_personal_trans = False
         self.editing_lemmas = False
         self.editing_remark = False
-        self.has_gone_through_whole_text = False
+        self.marker_left_page_in_direction = None
+        self.has_gone_through_whole_page = False
         self.phrase_selection_mode = False
         self.phrase_selection_mode_word = None
         self.selected_phrase_words = set()
@@ -70,9 +100,13 @@ class MainWindow(QWidget):
         self.last_word_translated_to_thind_lang = None
         self.has_opened_new_browser_tab = False
         self.scrolling_in_text = False
+        self.opening_page = False
         self.do_not_pronounce_next = False
         self.looking_up_new_phrase = False
         self.edit_text_after_closing_window = False
+        self.last_active_word_num_with_page = None
+
+        self.update_last_active_word_num_with_page()
 
         # Setup window
         self.setWindowTitle("Legilo")
@@ -84,16 +118,6 @@ class MainWindow(QWidget):
             + "; }"
         )
         self.setup_layout()
-        self.insert_main_text()
-
-        # Get metadata for words, sentences and phrases in text
-        self.text_words = self.get_text_words()
-        self.num_text_words = len(self.text_words)
-        self.text_sentences = self.get_text_sentences()
-        self.text_phrases = self.get_text_phrases()
-
-        self.mark_all_words()
-        self.mark_all_phrases()
 
         # Set focus policy to accept keyboard input
         self.setFocusPolicy(Qt.StrongFocus)
@@ -104,10 +128,53 @@ class MainWindow(QWidget):
         # Connect cursor position change to highlight word by click
         self.main_text_field.cursorPositionChanged.connect(self.on_click)
 
-        self.scroll_to_active_word()
-
         if self.settings["sound_on"]:
             pygame.mixer.init()  # Initialize mixer for playing sounds from Google TTS
+
+        self.open_page(self.page_index)
+
+    def open_page(self, page_index, mark_last_active=True):
+        if self.opening_page:
+            # Avoid recursion caused by self.page_selector.setCurrentIndex()
+            # calling open_page()
+            return
+        self.opening_page = True
+
+        if self.page_is_open:
+            self.handle_active()
+        self.page_index = page_index
+        self.page_is_open = True
+        self.marker_left_page_in_direction = None
+        self.has_gone_through_whole_page = False
+
+        self.active_word_num = None
+        self.active_phrase = None
+        self.active_info = None
+
+        self.page_label.setText(f"{self.page_index + 1} of {len(self.pages)}")
+        self.page_selector.setCurrentIndex(self.page_index)
+
+        self.text = self.pages[page_index]
+        is_first_page = page_index == 0
+        self.insert_main_text(is_first_page)
+
+        # Get metadata for words, sentences and phrases in text
+        self.text_words = self.get_text_words()
+        self.num_text_words = len(self.text_words)
+        self.text_sentences = self.get_text_sentences()
+        self.text_phrases = self.get_text_phrases()
+
+        self.mark_all_words()
+        self.mark_all_phrases()
+
+        if mark_last_active and self.last_active_word_num_with_page:
+            active_word_num = self.last_active_word_num_with_page["word_num"]
+            last_active_page_index = self.last_active_word_num_with_page["page_index"]
+            if last_active_page_index == page_index:
+                self.set_active_word_num(active_word_num)
+
+        self.scroll_to_active_word()
+        self.opening_page = False
 
     def eventFilter(self, source, event):
         """Event filter to capture key presses"""
@@ -136,8 +203,20 @@ class MainWindow(QWidget):
         if not self.edit_text_after_closing_window:
             self.start_window.show()
         else:
-            self.start_window.new_text(self.text_path, self.text)
+            self.start_window.new_text(self.text_path, self.full_text)
         event.accept()
+
+    def get_pages(self, text, page_size):
+        pages = []
+        lines = text.split("\n")
+        page = ""
+        for line in lines:
+            if len(page) > 0 and len(page) + len(line) >= page_size:
+                pages.append(page.strip())
+                page = ""
+            page += line + "\n"
+        pages.append(page.strip())
+        return pages
 
     def setup_layout(self):
         """Define layout for main window"""
@@ -154,6 +233,7 @@ class MainWindow(QWidget):
         self.main_text_field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.main_text_field.setMaximumWidth(self.styling["main_text_max_width"])
         left_column_layout.addWidget(self.main_text_field)
+        self.add_navigation_bar(left_column_layout)
         left_column_layout.setContentsMargins(10, 10, 10, 10)
 
         # Right column layout
@@ -261,6 +341,89 @@ class MainWindow(QWidget):
 
         self.setLayout(main_layout)
 
+    def add_navigation_bar(self, parent):
+        # Navigation row encapsulated in a widget
+        navigation_widget = QWidget()
+        navigation_widget.setMaximumWidth(self.styling["main_text_max_width"])
+        navigation_layout = QHBoxLayout(navigation_widget)
+        navigation_layout.setAlignment(Qt.AlignVCenter)
+
+        # Label informing about the number of known words
+        known_words_label_layout = QHBoxLayout()
+        self.known_words_label = QLabel()
+        self.known_words_label.setStyleSheet(
+            f"color: {self.styling['colors']['text_color']};"
+        )
+        self.update_num_known_words_label()
+        known_words_label_layout.addWidget(self.known_words_label)
+        navigation_layout.addLayout(known_words_label_layout)
+
+        navigation_layout.addSpacerItem(
+            QSpacerItem(10, 10, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        )
+
+        # Main navigation buttons for going to previous or next page
+        main_navigation_buttons_layout = QHBoxLayout()
+
+        self.prev_button = QPushButton("←")
+        self.prev_button.clicked.connect(self.show_previous_page)
+        main_navigation_buttons_layout.addWidget(self.prev_button)
+
+        page_label_width = 80
+        self.page_label = QLabel(f"{self.page_index + 1} of {len(self.pages)}")
+        self.page_label.setAlignment(Qt.AlignCenter)
+        self.page_label.setFixedWidth(page_label_width)
+        self.page_label.setStyleSheet(f"color: {self.styling['colors']['text_color']};")
+        main_navigation_buttons_layout.addWidget(self.page_label)
+
+        self.next_button = QPushButton("→")
+        self.next_button.clicked.connect(self.show_next_page)
+        main_navigation_buttons_layout.addWidget(self.next_button)
+        navigation_layout.addLayout(main_navigation_buttons_layout)
+
+        navigation_layout.addSpacerItem(
+            QSpacerItem(10, 10, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        )
+
+        # Button for setting all new words on page to known and going to next page
+        new_to_known_button_layout = QHBoxLayout()
+        self.new_to_known_button = QPushButton("new to known + →")
+        self.new_to_known_button.clicked.connect(
+            self.show_next_page_and_set_new_to_known
+        )
+        new_to_known_button_layout.addWidget(self.new_to_known_button)
+        navigation_layout.addLayout(new_to_known_button_layout)
+
+        navigation_layout.addSpacerItem(
+            QSpacerItem(10, 10, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        )
+
+        # Menu for selecting any page
+        self.page_selector = QComboBox()
+        self.page_selector.addItems([f"Page {i+1}" for i in range(len(self.pages))])
+        self.page_selector.setCurrentIndex(self.page_index)
+        self.page_selector.currentIndexChanged.connect(self.open_page)
+        navigation_layout.addWidget(self.page_selector)
+
+        parent.addWidget(navigation_widget)
+
+    def show_previous_page(self):
+        if self.page_index > 0:
+            self.open_page(self.page_index - 1)
+
+    def show_next_page(self):
+        if self.page_index < len(self.pages) - 1:
+            self.open_page(self.page_index + 1)
+
+    def show_next_page_and_set_new_to_known(self):
+        self.handle_active()
+        self.has_gone_through_whole_page = True
+        self.set_active_word_num(None)
+        self.show_next_page()
+
+    def update_num_known_words_label(self):
+        self.known_words_label.setText(f"Known Words: {self.data.num_known_words()}")
+
     def center_on_screen(self):
         """Center the window on the screen"""
         screen = QDesktopWidget().screenGeometry()
@@ -278,23 +441,48 @@ class MainWindow(QWidget):
             self.main_text_field.scroll_to_top()
 
     def get_text_from_file(self):
-        metadata_tag = "# active_word_num = "
         with open(self.text_path, "r") as file:
             lines = file.readlines()
-            text = "".join([line for line in lines if not metadata_tag in line]).strip()
+            text = "".join([line for line in lines if not self.is_metadata(line)])
+            text = text.strip()
             text = unicodedata.normalize("NFC", text)
             text = self.fix_paragraph_spacing(text)
             text = self.fix_title(text)
-            metadata = [line for line in lines if metadata_tag in line]
-            if len(metadata) == 0:
-                active_word_num = False
+            metadata = next((line for line in lines if self.is_metadata(line)), None)
+            if not metadata:
+                active_word_num = None
+                page_index = None
+                page_size = None
             else:
-                try:
-                    active_word_num = int(metadata[0][len(metadata_tag) :])
-                except Exception as e:
-                    active_word_num = None
+                metadata = metadata.strip()
+                active_word_num, page_index, page_size = self.parse_metadata(metadata)
+            return text, active_word_num, page_index, page_size
 
-            return text, active_word_num
+    def is_metadata(self, line):
+        return "#METADATA" in line or "# active_word_num" in line
+
+    def parse_metadata(self, metadata_line):
+        metadata_line = metadata_line.replace("#METADATA ", "")
+        metadata_line = metadata_line.replace("# ", "")
+        active_word_num = None
+        page_index = None
+        page_size = None
+        tags_and_values = metadata_line.split(", ")
+        for tag_and_value in tags_and_values:
+            tag_and_value = tag_and_value.split(" = ")
+            if len(tag_and_value) == 2:
+                tag, value = tag_and_value
+                try:
+                    value = int(value)
+                except Exception as e:
+                    value = None
+                if tag == "active_word_num":
+                    active_word_num = value
+                elif tag == "page_index":
+                    page_index = value
+                elif tag == "page_size":
+                    page_size = value
+        return active_word_num, page_index, page_size
 
     def fix_paragraph_spacing(self, text):
         """Make sure that paragrahs are separated by two newlines"""
@@ -318,14 +506,30 @@ class MainWindow(QWidget):
         return text
 
     def save_text_with_active_word(self):
-        metadata_tag = "# active_word_num = "
+        metadata = None
+        items = []
+
+        if self.last_active_word_num_with_page:
+            last_active_word_num = self.last_active_word_num_with_page["word_num"]
+            last_active_page_index = self.last_active_word_num_with_page["page_index"]
+            items.append(f"active_word_num = {last_active_word_num}")
+            items.append(f"page_index = {last_active_page_index}")
+        elif not self.page_index == None:
+            items.append(f"page_index = {self.page_index}")
+
+        if not self.page_size == None:
+            items.append(f"page_size = {self.page_size}")
+
+        if len(items) > 0:
+            metadata = "#METADATA " + ", ".join(items)
+
         try:
             file_name = os.path.basename(self.text_path)
             self.text_path = f"{self.data_dir}/{self.language}/texts/{file_name}"
             with open(self.text_path, "w") as file:
-                file.write(self.text)
-                if self.active_word_num:
-                    file.write("\n\n" + metadata_tag + str(self.active_word_num))
+                file.write(self.full_text)
+                if metadata:
+                    file.write("\n\n" + metadata)
         except Exception as e:
             print(f"An error occurred: {e}")
 
@@ -381,16 +585,23 @@ class MainWindow(QWidget):
             if key in [Qt.Key_Right, Qt.Key_Space]:
                 if modifiers & Qt.ShiftModifier:
                     self.go_to_next(skip_known=False)
+                elif modifiers & Qt.ControlModifier:
+                    self.show_next_page()
                 else:
                     self.go_to_next()
             elif key == Qt.Key_Left:
                 if modifiers & Qt.ShiftModifier:
                     self.go_to_previous(skip_known=False)
+                elif modifiers & Qt.ControlModifier:
+                    self.show_previous_page()
                 else:
                     self.go_to_previous()
             elif key in [Qt.Key_Up, Qt.Key_Return]:
                 if modifiers & Qt.ControlModifier:
-                    self.main_text_field.scroll_up()
+                    if key == Qt.Key_Up:
+                        self.main_text_field.scroll_up()
+                    elif key == Qt.Key_Return:
+                        self.show_next_page_and_set_new_to_known()
                 elif modifiers & Qt.ShiftModifier:
                     self.translation_text_field.scroll_up()
                 elif modifiers & Qt.AltModifier:
@@ -442,16 +653,19 @@ class MainWindow(QWidget):
                 except ValueError:
                     pass
 
-    def insert_main_text(self):
+    def insert_main_text(self, is_first_page=True):
+        self.editing_main_text = True
+        self.main_text_field.clear()
         lines = self.text.split("\n")
         first_line = True
         for line in lines:
-            if first_line:
+            if not first_line:
+                line = "\n" + line
+            if is_first_page and first_line:
                 self.main_text_field.insert_text(
                     line, self.styling["main_text_main_title"]
                 )
             else:
-                line = "\n" + line
                 if self.line_is_title(line):
                     self.main_text_field.insert_text(
                         line, self.styling["main_text_title"]
@@ -459,6 +673,7 @@ class MainWindow(QWidget):
                 else:
                     self.main_text_field.insert_text(line, self.styling["main_text"])
             first_line = False
+        self.editing_main_text = False
 
     def line_is_title(self, line):
         if len(line) > 50:
@@ -597,14 +812,15 @@ class MainWindow(QWidget):
         end_idx = word_metadata["end_idx"]
 
         # Highlight the word
+        self.editing_main_text = True
         cursor = self.main_text_field.textCursor()
-        cursor.select(QTextCursor.Document)
         cursor.setPosition(start_idx)
         cursor.setPosition(end_idx, QTextCursor.KeepAnchor)
         fmt = cursor.charFormat()
         fmt.setForeground(QColor(foreground))
         fmt.setBackground(QColor(background))
         cursor.setCharFormat(fmt)
+        self.editing_main_text = False
 
     def mark_word(self, word_num, marker="category"):
         colors = self.styling["colors"]
@@ -661,6 +877,7 @@ class MainWindow(QWidget):
             self.mark_word(self.active_word_num)
 
     def mark_phrase(self, text_phrase, category):
+        self.editing_main_text = True
         start_idx = text_phrase["start_idx"]
         end_idx = text_phrase["end_idx"]
 
@@ -689,6 +906,7 @@ class MainWindow(QWidget):
             cursor.setCharFormat(fmt)
 
             cursor.setPosition(cursor.position(), QTextCursor.MoveAnchor)
+        self.editing_main_text = False
 
     def mark_active_phrase(self):
         if self.active_phrase:
@@ -1025,15 +1243,26 @@ class MainWindow(QWidget):
             previous_word_num = self.active_word_num
         else:
             previous_word_num = 1
+
         self.active_word_num = active_word_num
         if self.active_word_num:
             self.set_new_to_known(previous_word_num, self.active_word_num - 1)
             self.mark_active_word()
-        elif self.has_gone_through_whole_text:
+        elif self.has_gone_through_whole_page:
             self.set_new_to_known(previous_word_num, self.num_text_words)
-        elif not self.active_word_num == 1:
-            self.set_new_to_known(1, self.active_word_num - 1)
+        self.update_last_active_word_num_with_page()
         self.active_info = None
+
+        self.update_num_known_words_label()
+
+    def update_last_active_word_num_with_page(self):
+        if self.active_word_num:
+            self.last_active_word_num_with_page = {
+                "word_num": self.active_word_num,
+                "page_index": self.page_index,
+            }
+        else:
+            self.last_active_word_num_with_page = None
 
     def set_phrase_selection_mode_word(self, word_num):
         current_word_num = self.phrase_selection_mode_word
@@ -1045,6 +1274,8 @@ class MainWindow(QWidget):
 
     def on_click(self):
         """Look up clicked word and mark previous new words as known"""
+        if self.editing_main_text:
+            return
         cursor = self.main_text_field.textCursor()
         pos = cursor.position()
         if not self.scrolling_in_text:
@@ -1113,8 +1344,17 @@ class MainWindow(QWidget):
             next_word_num = self.next_marked_word_num(self.active_word_num)
         else:
             next_word_num = self.next_word_num(self.active_word_num)
+
+        if self.active_word_num and not next_word_num:
+            self.marker_left_page_in_direction = "right"
+
         if not next_word_num:
-            self.has_gone_through_whole_text = True
+            self.has_gone_through_whole_page = True
+            if self.page_index < len(self.pages) - 1:
+                self.set_active_word_num(None)
+                self.open_page(self.page_index + 1)
+                self.go_to_next(skip_known)
+                return
         self.set_active_word_num(next_word_num)
 
     def go_to_previous(self, skip_known=True, save=True):
@@ -1128,7 +1368,30 @@ class MainWindow(QWidget):
             previous_word_num = self.previous_marked_word_num(self.active_word_num)
         else:
             previous_word_num = self.previous_word_num(self.active_word_num)
+
+        if self.active_word_num and not previous_word_num:
+            self.marker_left_page_in_direction = "left"
+
+        if not previous_word_num:
+            if self.marker_left_page_in_direction == "left":
+                if self.page_index > 0:
+                    self.open_page(self.page_index - 1, mark_last_active=False)
+                else:
+                    self.set_active_word_num(None)
+                    return
+
+            first_new_word = self.get_first_new_word()
+            if first_new_word:
+                previous_word_num = first_new_word
+            else:
+                if skip_known:
+                    last_marked_word = self.get_last_marked_word()
+                    if last_marked_word:
+                        previous_word_num = last_marked_word
+                else:
+                    previous_word_num = self.num_text_words
         self.set_active_word_num(previous_word_num)
+        self.scroll_to_active_word()
 
     def phrase_selection_next(self):
         current_word_num = self.phrase_selection_mode_word
@@ -1139,6 +1402,24 @@ class MainWindow(QWidget):
         current_word_num = self.phrase_selection_mode_word
         previous_word_num = self.previous_word_num(current_word_num)
         self.set_phrase_selection_mode_word(previous_word_num)
+
+    def get_first_new_word(self):
+        for word_num in range(1, self.num_text_words + 1):
+            if self.is_new(self.get_word(word_num)):
+                return word_num
+        return None
+
+    def get_first_marked_word(self):
+        for word_num in range(1, self.num_text_words + 1):
+            if self.is_marked(self.get_word(word_num)):
+                return word_num
+        return None
+
+    def get_last_marked_word(self):
+        for word_num in reversed(range(1, self.num_text_words + 1)):
+            if self.is_marked(self.get_word(word_num)):
+                return word_num
+        return None
 
     def set_active_to_known(self):
         if self.active_phrase:
@@ -1316,9 +1597,12 @@ class MainWindow(QWidget):
     def next_word_num(self, active_word_num):
         if active_word_num:
             next_word_num = active_word_num + 1
-        else:
+        elif not self.has_gone_through_whole_page:
             next_word_num = 1
+        else:
+            return None
         if next_word_num > self.num_text_words:
+            self.has_gone_through_whole_page = True
             return None
         return next_word_num
 
@@ -1333,11 +1617,14 @@ class MainWindow(QWidget):
     def next_marked_word_num(self, active_word_num):
         if active_word_num:
             next_word_num = active_word_num + 1
-        else:
+        elif not self.has_gone_through_whole_page:
             next_word_num = 1
+        else:
+            return None
 
         while True:
             if next_word_num > self.num_text_words:
+                self.has_gone_through_whole_page = True
                 return None
             if self.is_marked(self.get_word(next_word_num)):
                 return next_word_num

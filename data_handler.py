@@ -122,6 +122,9 @@ class DataHandler:
                     all_words.add(word + ": " + self.personal_translations[word])
         return all_words
 
+    def num_known_words(self):
+        return len(self.known_words)
+
     def load(self):
         """Load all the word lists"""
         try:
@@ -153,8 +156,6 @@ class DataHandler:
         self.save_to_history(self.personal_translations, "personal_translations")
         self.save_to_history(self.phrases, "phrases")
         self.save_to_history(self.last_opened_files, "last_opened_files")
-
-        print(f"Number of known words: {len(self.known_words)}")
 
     def save_as_txt(self):
         """Save all the word lists as txt files"""
