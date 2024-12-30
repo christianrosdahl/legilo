@@ -174,6 +174,9 @@ class MainWindow(QWidget):
             active_word_num = self.last_active_word_num_with_page["word_num"]
             last_active_page_index = self.last_active_word_num_with_page["page_index"]
             if last_active_page_index == page_index:
+                first_new_word = self.get_first_new_word()
+                if first_new_word and first_new_word < active_word_num:
+                    active_word_num = first_new_word
                 self.set_active_word_num(active_word_num)
 
         if scroll_to_active:
