@@ -521,11 +521,11 @@ class MainWindow(QWidget):
             last_active_word_num = self.last_active_word_num_with_page["word_num"]
             last_active_page_index = self.last_active_word_num_with_page["page_index"]
             items.append(f"active_word_num = {last_active_word_num}")
-            items.append(f"page_index = {last_active_page_index}")
-        elif not self.page_index == None:
+            if not self.page_size == None:
+                items.append(f"page_index = {last_active_page_index}")
+                items.append(f"page_size = {self.page_size}")
+        elif not self.page_index == None and not self.page_size == None:
             items.append(f"page_index = {self.page_index}")
-
-        if not self.page_size == None:
             items.append(f"page_size = {self.page_size}")
 
         if len(items) > 0:
