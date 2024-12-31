@@ -9,10 +9,13 @@ from gtts import gTTS  # Generate mp3 files with Google's text-to-speech
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor, QFont, QTextCharFormat, QTextCursor
 from PyQt5.QtWidgets import (
+    QAction,
     QComboBox,
     QDesktopWidget,
     QHBoxLayout,
     QLabel,
+    QMenuBar,
+    QMessageBox,
     QPushButton,
     QSizePolicy,
     QSpacerItem,
@@ -121,6 +124,7 @@ class MainWindow(QWidget):
             + "; }"
         )
         self.setup_layout()
+        self.add_window_menu()
 
         # Set focus policy to accept keyboard input
         self.setFocusPolicy(Qt.StrongFocus)
@@ -200,6 +204,10 @@ class MainWindow(QWidget):
         return super().eventFilter(source, event)  # Pass the event to the parent class
 
     def closeEvent(self, event):
+        self.main_layout.setMenuBar(None)
+        self.menu_bar.deleteLater()
+        self.menu_bar = None
+
         self.handle_active()
         self.quit_and_clean_for_tts()
         if self.save_progress:
@@ -348,6 +356,7 @@ class MainWindow(QWidget):
         main_layout.addItem(right_spacer)
 
         self.setLayout(main_layout)
+        self.main_layout = main_layout
 
     def add_navigation_bar(self, parent):
         # Navigation row encapsulated in a widget
@@ -414,6 +423,257 @@ class MainWindow(QWidget):
         navigation_layout.addWidget(self.page_selector)
 
         parent.addWidget(navigation_widget)
+
+    def add_window_menu(self):
+        menu_bar = QMenuBar(self)
+
+        file_menu = menu_bar.addMenu("File")
+        edit_menu = menu_bar.addMenu("Edit")
+        marked_word_menu = menu_bar.addMenu("Marked Word")
+        translation_menu = menu_bar.addMenu("Translation")
+        external_lookup_menu = menu_bar.addMenu("External Lookup")
+        phrase_mode_menu = menu_bar.addMenu("Phrases")
+
+        save_action = QAction("Save progress", self)
+        save_action.setShortcut("Ctrl+S")
+        save_action.triggered.connect(self.save_data_and_active_word)
+
+        save_as_txt_action = QAction("Save words as text files", self)
+        save_as_txt_action.setShortcut("Ctrl+R")
+        save_as_txt_action.triggered.connect(self.save_data_as_text_files)
+
+        close_and_save_action = QAction("Close window and save", self)
+        close_and_save_action.setShortcut("Ctrl+W")
+        close_and_save_action.triggered.connect(self.close)
+
+        close_without_saving_action = QAction("Close window without saving", self)
+        close_without_saving_action.setShortcut("Ctrl+X")
+        close_without_saving_action.triggered.connect(self.close_without_saving)
+
+        close_and_edit_action = QAction("Edit text", self)
+        close_and_edit_action.setShortcut("Ctrl+E")
+        close_and_edit_action.triggered.connect(self.close_and_edit)
+
+        look_up_action = QAction("Look up word", self)
+        look_up_action.setShortcut(Qt.Key_Return)
+        look_up_action.triggered.connect(self.look_up)
+
+        mark_as_known_action = QAction("Mark word as known", self)
+        mark_as_known_action.setShortcut(Qt.Key_Down)
+        mark_as_known_action.triggered.connect(self.set_active_to_known)
+
+        mark_as_ignored_action = QAction("Mark word as ignored", self)
+        mark_as_ignored_action.setShortcut(Qt.Key_Backspace)
+        mark_as_ignored_action.triggered.connect(self.set_active_to_ignored)
+
+        pronounce_marked_word_action = QAction("Pronounce marked word", self)
+        pronounce_marked_word_action.setShortcut("P")
+        pronounce_marked_word_action.triggered.connect(self.pronounce_active)
+
+        look_up_sentence_action = QAction("Translate marked word sentence", self)
+        look_up_sentence_action.setShortcut("A")
+        look_up_sentence_action.triggered.connect(self.look_up_current_sentence)
+
+        edit_personal_translation_action = QAction("Edit personal translation", self)
+        edit_personal_translation_action.setShortcut("I")
+        edit_personal_translation_action.triggered.connect(
+            self.edit_personal_translation
+        )
+
+        edit_lemmas_action = QAction("Edit lemmas for word", self)
+        edit_lemmas_action.setShortcut("U")
+        edit_lemmas_action.triggered.connect(self.edit_lemmas)
+
+        edit_remark_action = QAction("Edit remark", self)
+        edit_remark_action.setShortcut("R")
+        edit_remark_action.triggered.connect(self.edit_remark)
+
+        toggle_google_trans_action = QAction("Add/remove Google translation", self)
+        toggle_google_trans_action.setShortcut("O")
+        toggle_google_trans_action.triggered.connect(self.toggle_google_translation)
+
+        add_third_lang_trans_action = QAction(
+            "Add/remove third language translation", self
+        )
+        add_third_lang_trans_action.setShortcut("H")
+        add_third_lang_trans_action.triggered.connect(self.add_third_lang_trans)
+
+        ex_sentence_1_action = QAction("Select example sentence 1", self)
+        ex_sentence_1_action.setShortcut("1")
+        ex_sentence_1_action.triggered.connect(lambda: self.select_example_sentence(1))
+
+        ex_sentence_2_action = QAction("Select example sentence 2", self)
+        ex_sentence_2_action.setShortcut("2")
+        ex_sentence_2_action.triggered.connect(lambda: self.select_example_sentence(2))
+
+        ex_sentence_3_action = QAction("Select example sentence 3", self)
+        ex_sentence_3_action.setShortcut("3")
+        ex_sentence_3_action.triggered.connect(lambda: self.select_example_sentence(3))
+
+        ex_sentence_4_action = QAction("Select example sentence 4", self)
+        ex_sentence_4_action.setShortcut("4")
+        ex_sentence_4_action.triggered.connect(lambda: self.select_example_sentence(4))
+
+        ex_sentence_5_action = QAction("Select example sentence 5", self)
+        ex_sentence_5_action.setShortcut("5")
+        ex_sentence_5_action.triggered.connect(lambda: self.select_example_sentence(5))
+
+        ex_sentence_6_action = QAction("Select example sentence 6", self)
+        ex_sentence_6_action.setShortcut("6")
+        ex_sentence_6_action.triggered.connect(lambda: self.select_example_sentence(6))
+
+        ex_sentence_7_action = QAction("Select example sentence 7", self)
+        ex_sentence_7_action.setShortcut("7")
+        ex_sentence_7_action.triggered.connect(lambda: self.select_example_sentence(7))
+
+        ex_sentence_8_action = QAction("Select example sentence 8", self)
+        ex_sentence_8_action.setShortcut("8")
+        ex_sentence_8_action.triggered.connect(lambda: self.select_example_sentence(8))
+
+        ex_sentence_9_action = QAction("Use current sentence as example sentence", self)
+        ex_sentence_9_action.setShortcut("9")
+        ex_sentence_9_action.triggered.connect(lambda: self.select_example_sentence(9))
+
+        ex_sentence_0_action = QAction("Remove example sentence", self)
+        ex_sentence_0_action.setShortcut("0")
+        ex_sentence_0_action.triggered.connect(lambda: self.select_example_sentence(0))
+
+        phrase_mode_action = QAction("Activate/deactivate phrase selection mode", self)
+        phrase_mode_action.setShortcut("E")
+        phrase_mode_action.triggered.connect(self.toggle_phrase_selection_mode)
+
+        wiktionary_lookup_action = QAction("Wiktionary", self)
+        wiktionary_lookup_action.setShortcut("W")
+        wiktionary_lookup_action.triggered.connect(
+            lambda: self.open_external_resource("w")
+        )
+
+        google_lookup_action = QAction("Google", self)
+        google_lookup_action.setShortcut("G")
+        google_lookup_action.triggered.connect(lambda: self.open_external_resource("g"))
+
+        google_images_lookup_action = QAction("Google Images", self)
+        google_images_lookup_action.setShortcut("F")
+        google_images_lookup_action.triggered.connect(
+            lambda: self.open_external_resource("f")
+        )
+
+        wikipedia_lookup_action = QAction("Wikipedia", self)
+        wikipedia_lookup_action.setShortcut("Q")
+        wikipedia_lookup_action.triggered.connect(
+            lambda: self.open_external_resource("q")
+        )
+
+        dictionary_lookup_action = QAction("Language-specific dictionary", self)
+        dictionary_lookup_action.setShortcut("L")
+        dictionary_lookup_action.triggered.connect(
+            lambda: self.open_external_resource("l")
+        )
+
+        verb_lookup_action = QAction("Verb conjugation", self)
+        verb_lookup_action.setShortcut("V")
+        verb_lookup_action.triggered.connect(lambda: self.open_external_resource("v"))
+
+        context_reverso_lookup_action = QAction("Context Reverso", self)
+        context_reverso_lookup_action.setShortcut("C")
+        context_reverso_lookup_action.triggered.connect(
+            lambda: self.open_external_resource("c")
+        )
+
+        wiktionary_lookup_lemma_action = QAction("Wiktionary (Lemma)", self)
+        wiktionary_lookup_lemma_action.setShortcut(Qt.ShiftModifier + Qt.Key_W)
+        wiktionary_lookup_lemma_action.triggered.connect(
+            lambda: self.open_external_resource("w", True)
+        )
+
+        google_lookup_lemma_action = QAction("Google (Lemma)", self)
+        google_lookup_lemma_action.setShortcut(Qt.ShiftModifier + Qt.Key_G)
+        google_lookup_lemma_action.triggered.connect(
+            lambda: self.open_external_resource("g", True)
+        )
+
+        google_images_lookup_lemma_action = QAction("Google Images (Lemma)", self)
+        google_images_lookup_lemma_action.setShortcut(Qt.ShiftModifier + Qt.Key_F)
+        google_images_lookup_lemma_action.triggered.connect(
+            lambda: self.open_external_resource("f", True)
+        )
+
+        wikipedia_lookup_lemma_action = QAction("Wikipedia (Lemma)", self)
+        wikipedia_lookup_lemma_action.setShortcut(Qt.ShiftModifier + Qt.Key_Q)
+        wikipedia_lookup_lemma_action.triggered.connect(
+            lambda: self.open_external_resource("q", True)
+        )
+
+        dictionary_lookup_lemma_action = QAction(
+            "Language-specific dictionary (Lemma)", self
+        )
+        dictionary_lookup_lemma_action.setShortcut(Qt.ShiftModifier + Qt.Key_L)
+        dictionary_lookup_lemma_action.triggered.connect(
+            lambda: self.open_external_resource("l", True)
+        )
+
+        verb_lookup_lemma_action = QAction("Verb conjugation (Lemma)", self)
+        verb_lookup_lemma_action.setShortcut(Qt.ShiftModifier + Qt.Key_V)
+        verb_lookup_lemma_action.triggered.connect(
+            lambda: self.open_external_resource("v", True)
+        )
+
+        context_reverso_lookup_lemma_action = QAction("Context Reverso (Lemma)", self)
+        context_reverso_lookup_lemma_action.setShortcut(Qt.ShiftModifier + Qt.Key_C)
+        context_reverso_lookup_lemma_action.triggered.connect(
+            lambda: self.open_external_resource("c", True)
+        )
+
+        file_menu.addAction(save_action)
+        file_menu.addAction(save_as_txt_action)
+        file_menu.addSeparator()
+        file_menu.addAction(close_and_save_action)
+        file_menu.addAction(close_without_saving_action)
+
+        edit_menu.addAction(close_and_edit_action)
+
+        marked_word_menu.addAction(look_up_action)
+        marked_word_menu.addAction(mark_as_known_action)
+        marked_word_menu.addAction(mark_as_ignored_action)
+        marked_word_menu.addAction(pronounce_marked_word_action)
+        marked_word_menu.addAction(look_up_sentence_action)
+
+        translation_menu.addAction(edit_personal_translation_action)
+        translation_menu.addAction(edit_lemmas_action)
+        translation_menu.addAction(edit_remark_action)
+        translation_menu.addAction(toggle_google_trans_action)
+        translation_menu.addAction(add_third_lang_trans_action)
+        translation_menu.addSeparator()
+        translation_menu.addAction(ex_sentence_1_action)
+        translation_menu.addAction(ex_sentence_2_action)
+        translation_menu.addAction(ex_sentence_3_action)
+        translation_menu.addAction(ex_sentence_4_action)
+        translation_menu.addAction(ex_sentence_5_action)
+        translation_menu.addAction(ex_sentence_6_action)
+        translation_menu.addAction(ex_sentence_7_action)
+        translation_menu.addAction(ex_sentence_8_action)
+        translation_menu.addAction(ex_sentence_9_action)
+        translation_menu.addAction(ex_sentence_0_action)
+
+        phrase_mode_menu.addAction(phrase_mode_action)
+
+        external_lookup_menu.addAction(wiktionary_lookup_action)
+        external_lookup_menu.addAction(dictionary_lookup_action)
+        external_lookup_menu.addAction(verb_lookup_action)
+        external_lookup_menu.addAction(context_reverso_lookup_action)
+        external_lookup_menu.addAction(google_lookup_action)
+        external_lookup_menu.addAction(google_images_lookup_action)
+        external_lookup_menu.addAction(wikipedia_lookup_action)
+        external_lookup_menu.addSeparator()
+        external_lookup_menu.addAction(wiktionary_lookup_lemma_action)
+        external_lookup_menu.addAction(dictionary_lookup_lemma_action)
+        external_lookup_menu.addAction(verb_lookup_lemma_action)
+        external_lookup_menu.addAction(context_reverso_lookup_lemma_action)
+        external_lookup_menu.addAction(google_lookup_lemma_action)
+        external_lookup_menu.addAction(google_images_lookup_lemma_action)
+        external_lookup_menu.addAction(wikipedia_lookup_lemma_action)
+
+        self.menu_bar = menu_bar
 
     def show_previous_page(self):
         if self.page_index > 0:
@@ -547,29 +807,24 @@ class MainWindow(QWidget):
             self.close()
             return True
 
-        # Close window, save, and edit opened text with Cmd/Ctrl + E
-        if key == Qt.Key_E and modifiers & Qt.ControlModifier:
-            self.edit_text_after_closing_window = True
-            self.close()
-            return True
-
         # Close window without saving for Cmd/Ctrl + X
         if key == Qt.Key_X and modifiers & Qt.ControlModifier:
-            self.save_progress = False
-            self.close()
+            self.close_without_saving()
+            return True
+
+        # Close window, save, and edit opened text with Cmd/Ctrl + E
+        if key == Qt.Key_E and modifiers & Qt.ControlModifier:
+            self.close_and_edit()
             return True
 
         # Save data and active word with Cmd/Ctrl + S
         if key == Qt.Key_S and modifiers & Qt.ControlModifier:
-            self.data.save()
-            self.save_text_with_active_word()
-            print("Data and active word were saved to file.")
+            self.save_data_and_active_word()
             return True
 
         # Save data as text files with Cmd/Ctrl + R
         if key == Qt.Key_R and modifiers & Qt.ControlModifier:
-            self.data.save_as_txt()
-            print("Data was saved to text file.")
+            self.save_data_as_text_files()
             return True
 
         number_keys = [ord(f"{i}") for i in range(0, 10)]
@@ -660,6 +915,32 @@ class MainWindow(QWidget):
                         self.open_external_resource(key_char)
                 except ValueError:
                     pass
+
+    def close_without_saving(self):
+        reply = QMessageBox.question(
+            self,
+            "Close without Saving",
+            "Do you really want to close without saving?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+
+        if reply == QMessageBox.Yes:
+            self.save_progress = False
+            self.close()
+
+    def close_and_edit(self):
+        self.edit_text_after_closing_window = True
+        self.close()
+
+    def save_data_and_active_word(self):
+        self.data.save()
+        self.save_text_with_active_word()
+        print("Data and active word were saved to file.")
+
+    def save_data_as_text_files(self):
+        self.data.save_as_txt()
+        print("Data was saved to text file.")
 
     def insert_main_text(self, is_first_page=True):
         self.editing_main_text = True
@@ -963,6 +1244,8 @@ class MainWindow(QWidget):
         self.active_looked_up = True
 
     def look_up(self):
+        if self.editing_text_field():
+            return
         if self.active_phrase:
             self.look_up_phrase()
         elif self.active_word_num:
@@ -1433,16 +1716,20 @@ class MainWindow(QWidget):
         return None
 
     def set_active_to_known(self):
+        if self.editing_text_field():
+            return
         if self.active_phrase:
             self.delete_active_phrase()
             self.active_phrase = None
             self.mark_active_word()
-        else:
+        elif self.active_word_num:
             self.save_active_word_as("known")
             self.go_to_next(save=False)
 
     def set_active_to_ignored(self):
-        if not self.active_phrase:
+        if self.editing_text_field():
+            return
+        if not self.active_phrase and self.active_word_num:
             self.save_active_word_as("ignored")
             self.go_to_next(save=False)
 
@@ -1462,8 +1749,11 @@ class MainWindow(QWidget):
                 elif category == "new":
                     self.save_active_word_as("known")
 
+    def editing_text_field(self):
+        return self.editing_personal_trans or self.editing_lemmas or self.editing_remark
+
     def edit_personal_translation(self):
-        if not self.active_looked_up:
+        if not self.active_looked_up or self.editing_text_field():
             return
         self.editing_personal_trans = True
         personal_translation = self.get_personal_translation()
@@ -1487,7 +1777,7 @@ class MainWindow(QWidget):
         self.show_translation()
 
     def edit_lemmas(self):
-        if not self.active_looked_up:
+        if not self.active_looked_up or self.editing_text_field():
             return
         self.editing_lemmas = True
         lemmas = None
@@ -1561,7 +1851,7 @@ class MainWindow(QWidget):
         return None
 
     def toggle_google_translation(self):
-        if not self.active_looked_up:
+        if not self.active_looked_up or self.editing_text_field():
             return
 
         if self.has_google_translation():
@@ -1593,7 +1883,7 @@ class MainWindow(QWidget):
             del trans[translation_index_to_remove]
 
     def edit_remark(self):
-        if not self.active_looked_up:
+        if not self.active_looked_up or self.editing_text_field():
             return
         self.editing_remark = True
         self.remark_text_field.edit()
@@ -1747,7 +2037,7 @@ class MainWindow(QWidget):
             self.pronounce(self.get_active_word(), self.language)
 
     def select_example_sentence(self, example_num):
-        if not self.active_looked_up:
+        if not self.active_looked_up or self.editing_text_field():
             return
         if self.active_phrase:
             word = self.active_phrase["phrase_text"]
@@ -1827,6 +2117,9 @@ class MainWindow(QWidget):
         return self.get_part_of_text(start_idx, end_idx)
 
     def toggle_phrase_selection_mode(self):
+        if self.editing_text_field():
+            return
+
         if self.phrase_selection_mode:
             self.deactivate_phrase_selection_mode()
             self.hide_phrase_mode_info()
@@ -1863,6 +2156,9 @@ class MainWindow(QWidget):
         self.translation_text_field.clear()
 
     def add_third_lang_trans(self):
+        if self.editing_text_field():
+            return
+
         if self.active_looked_up:
             word = self.active_info["dict_word"]
             trans = self.active_info["trans"]
@@ -1937,6 +2233,9 @@ class MainWindow(QWidget):
         return def_strings
 
     def look_up_current_sentence(self):
+        if self.editing_text_field():
+            return
+
         if self.active_word_num and not self.phrase_selection_mode:
             self.activate_phrase_selection_mode()
             text_sentence = self.text_sentences[self.active_word_num]
@@ -1972,6 +2271,9 @@ class MainWindow(QWidget):
             self.has_opened_new_browser_tab = True
 
     def open_external_resource(self, pressed_key, lemma=False):
+        if self.editing_text_field():
+            return
+
         if self.language in self.config["languages"]:
             resources = self.config["languages"][self.language].get(
                 "external_resources"

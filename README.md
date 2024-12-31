@@ -41,6 +41,8 @@ Select one of the listed recent texts by pressing the number before it, or press
 
 ## Basic navigation
 
+Most of the keyboard commands below (except for e.g. basic navigation back and forth by the arrow keys) can also be found in the window menu of the reader window. The menu items also contain the corresponding keyboard shortcuts as a reference.
+
 - <kbd>→</kbd> / <kbd>Space</kbd>: Mark the next new or learning word. If the currently marked word is new, and hasn't been looked up, it is marked as known when going to the next word. If it has been looked up, it is saved as a learning word (to prevent this, you can explicitly mark it as known by pressing <kbd>↓</kbd>).
 - <kbd>↑</kbd> / <kbd>⏎ Enter</kbd>:
   - If the dictionary is closed: Look up the marked word in the dictionary.
