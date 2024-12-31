@@ -2,7 +2,7 @@
 
 Legilo is a reading tool (in fact, that's the meaning of the name in Esperanto) that facilitates language practicing by allowing you to read any text in the language you are learning and making it easy to identify and look up words and expressions that you don't know yet. The UI is illustrated below:
 
-![Legilo UI example](images/example.png)
+<img src="images/example.png" alt="Legilo UI example" width="900">
 
 # How does it work?
 
@@ -10,15 +10,19 @@ The application allows you to import any text you want in your target language. 
 
 New words are words that haven't been seen previously in any text. Learning words are words that you have seen in some text before, and looked up, but that you don't consider that you know yet. Known words are words that you have skipped without looking up or that you have marked explicitly as known. Ignored words are words that you consider irrelevant, e.g. names, words in another language or numbers. This category is similar to known words, but the words will be stored in a separate list, without translations, and will not be counted into the sum of your known words (that is shown when closing the program).
 
-When reading a text, you iterate through the new and learning words using the keyboard (see below). The current word is marked with an orange background. You can look up a marked word easily or change the label of it using the keyboard as well.
+When reading a text, you iterate through the new and learning words using the keyboard (see below), or words by clicking them. The current word is marked with an orange background. You can look up a marked word easily or change the label of it using the keyboard as well.
+
+**Language support**: I have tested the app with Spanish, German, French, Italian, Russian, Croatian, and Swedish. However, it should also work well for many other languages. Just add the language you want to learn to the `config.json` file (see "Configuration" below) and try it out!
 
 # How to use it?
 
 ## Disclaimer
 
-The program has only been tested for macOS, and it is unclear if it will work on other operating systems without further modifications. I made the program for my personal use, with the main focus of getting it to do what it should rathen than optimizing the code, and there are no guarantees that it will work well for anyone else. However, you are very welcome to try it out at your own risk.
+The program has only been tested for macOS, and it is unclear if it will work on other operating systems without further modifications. I made the program for my personal use, with the main focus on getting it to do what it should rather than optimizing the code, and there are no guarantees that it will work well for anyone else. However, you are very welcome to try it out at your own risk.
 
 ## Get started
+
+To run the progam, you need a sufficiently new version of Python (it was tested with version 3.11). You can check your Python version by typing `python3 --version` in the terminal and, if necessary, download a new version [here](https://www.python.org/downloads/).
 
 Start by downloading the files, e.g. using `git clone` or clicking the green button "Code" at the top of this page, choosing "Download ZIP" and unzipping the downloaded files. Then navigate to the folder in the terminal (type `cd <path to the folder with the files>`). After that, you type `./run.sh` and press <kbd>⏎ Enter</kbd>. This will activate a Python virtual environment (it is created if it doesn't exist already), and make sure that all necessary dependencies are installed in this virtual environment. After that, the program UI will open up in a window. The first time you run the program for a new language, it can take a while to start. This is due to that it will download some natural language processing models that are used to find the dictionary form (lemma) of words, so that variants of a word can be looked up. You can skip this feature (and thus the downloading of the models) by setting `"use_lemmatizer": false` in `config.json`.
 
@@ -66,7 +70,9 @@ Select one of the listed recent texts by pressing the number before it, or press
 
 ## Phrase mode
 
-Phrase mode allows you to look up and save translations for phrases or expressions consisting of several words. A saved phrase will show up underlined in any future occurrence, and you can see the translation again by selecting it in phrase mode.
+Phrase mode allows you to look up and save translations for phrases or expressions consisting of several words (see example image below). A saved phrase will show up underlined in any future occurrence, and you can see the translation again by selecting it in phrase mode.
+
+<img src="images/phrase_mode.png" alt="Phrase mode example" width="700">
 
 - Press <kbd>E</kbd> to activate or deactivate phrase mode. When phrase mode is active, the word marker will change colors from orange to green.
 - Translate a new phrase:
@@ -117,3 +123,37 @@ In the file `config.json`, you can set the following things:
 - `"page_size"`: Maximum number of characters per page. This is applied when creating a new text. The text is then divided into pages with this max size.
 - `"short_text_limit"`: Maximum number of characters for a text to be classified as short. If a new text is short, it is not divided into several pages, but imported as one page.
 - `"autoscroll"` (can have values `true` or `false`): When going to next or previous word, scroll the page automatically to keep the active word in the center of the upper half of the text field if possible.
+
+## Background and key features
+
+Legilo was inspired by the web and mobile app [LingQ](https://www.lingq.com/) that is based on the same principle of marking new and learning words in texts and facilitating looking up translations for them and phrases in the text. It is a commercial product that has a lot of features that this app doesn't have, such as incorporation of audio files for the text, easy import of material from many sources, built-in content suitable for different language learning levels, as well as the possibility to practice learning words with flashcards etc. However, for me personally, there were some important features that I was missing in LingQ. That's why I decided to implement my own app. These features are described below.
+
+### Key features
+
+#### Simple lookup from Wiktionary
+
+[Wiktionary](https://en.wiktionary.org/) is a great free dictionary that has a lot of content for many languages. It's usually my favorite dictionary to use when learning languages, and I wanted to be able to incorporate the definitions from Wiktionary directly into the lookup section of the app. While it's sometimes sufficient to just get a plain translation of a word from e.g. Google Translate or some similar system, in many cases, I want to get some more information about a word. This might include e.g. several different translations with more nuanced explanations, the gender of a noun, information about what verb conjugation, grammatical number or case the word is, and what base word it is related to.
+
+#### Association with lemmas (base forms of a word)
+
+To connect different forms of a word (e.g. different verb conjugations, different gender variants, plural forms or cases) we want to be able to associate each word with its base form, or lemma. One or several lemmas can be added to a word. After the associations, the translations of the lemmas are included when looking up the variant. If the Wiktionary entry of the word variant refers to the lemma (e.g. by saying "third-person singular present tense of {lemma}"), it is fetched automatically. If that isn't the case, we use a lemmatizer from the natural language processing package [Stanza](https://stanfordnlp.github.io/stanza/) to try to find a lemma. If, despite this, no lemma is found or you want to modify the suggested lemma or add another one, you can easily do that.
+
+#### Showing etymology
+
+Sometimes it's helpful or just fun to look at the etymology of a word. It might increase the understanding of the word by associating it to other words and make it easier to remember. If the Wiktionary article for a word contains an etymology, this is included in the "Notes & Remarks" section of the the lookup column.
+
+#### Example sentences
+
+Sometimes it's useful to see a word used in another example sentence than in the current text to better understand its meaning. To this end, an example sentence with translation for the looked-up word is fetched and shown at the bottom of the lookup column. It can easily be changed to another example sentence by pressing the number keys.
+
+#### Customizable external resources
+
+I want to easily, by just pressing a keyboard key, be able to look up a word in one out of several customizable external resources. These could e.g. be alternative dictionaries, verb conjugators, Google, Wikipedia, or Google Images to get a visual association of the word. Such resources can easily be defined in the `config.json` file. When pressing the associated key, it opens up the lookup result in a new tab in the browser. If using macOS, subsequent lookups are made in the last opened tab, so that you don't have to close the tab before switching back to the app to avoid having many tabs open. Since it in some resources isn't possible to look up specific word variants, but only lemma forms, you can choose to open an external resource for one of the associated lemmas instead, by holding down <kbd>⇧ Shift</kbd> while pressing the associated key.
+
+#### Fully controllable by keyboard
+
+I want to be able to do everything in the app by just using the keyboard, not having to click with a mouse or trackpad. The option of selecting words or sentences by clicking does exist, since it can be easier if you want to select something far away from the currently marked word, but everything in the program can be done with keyboard commands only.
+
+### Alternative similar apps
+
+As previously mentioned, I made this app mainly for myself, and the code quality and reliability is far from what you would expect for a professional product. If you want to use a reading tool that is simple and reliable, and the features listed above aren't essential to you, [LingQ](https://www.lingq.com/) is probably the best option. Another commercial reading tool, that offers a free option, which seems interesting but that I don't have any experience with, is [Readlang](https://readlang.com/). After implementing Legilo, I also found out that there are some other people who were in a similar situation as me and decided to implement their own reading tools and sharing them for free. I haven't tried out any of these myself, but [Lute (version 3)](https://github.com/LuteOrg/lute-v3) seems to be the best option out of these that I have found. A cool feature that distinguishes it from other alternatives is that you can associate a word with an image. Some other similar options include [LWT (improved version)](https://github.com/HugoFara/lwt), [LWT (original version)](https://sourceforge.net/projects/learning-with-texts/), and [FLTR](https://sourceforge.net/projects/foreign-language-text-reader/).
