@@ -99,10 +99,10 @@ As default in the `config.json` file, the following resources are added:
 - <kbd>V</kbd> Some language-specific verb conjugator (for most languages)
 - <kbd>C</kbd> Context Reverso (for most languages)
 
-## Advanced commands (mostly used for debugging purposes)
+## Saving, exporting word lists or closing without saving
 
 - <kbd>⌘ Command</kbd> + <kbd>S</kbd>: Save your current progress (collections of words and phrases according to their labels) and the current state (the currently marked word). This is done automatically when closing the window for the application.
-- <kbd>⌘ Command</kbd> + <kbd>R</kbd>: Save your current progress (collections of words and phrases according to their labels) as readable text files (the normal saving yields non-readable files).
+- <kbd>⌘ Command</kbd> + <kbd>R</kbd>: Save your current progress (collections of words and phrases according to their labels) as readable text files (the normal saving yields non-readable files). Simple lists containing only one word per line for known, new and learning words are saved to the data folder.
 - <kbd>⌘ Command</kbd> + <kbd>X</kbd>: Close the window without saving your progress.
 
 ## Configuration

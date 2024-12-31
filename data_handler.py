@@ -159,12 +159,15 @@ class DataHandler:
 
     def save_as_txt(self):
         """Save all the word lists as txt files"""
-        self.save_list_as_txt(self.known_words, "known_words")
-        self.save_list_as_txt(self.learning_words, "learning_words")
-        self.save_list_as_txt(self.ignored_words, "ignored_words")
-        self.save_list_as_txt(self.personal_translations, "personal_translations")
-        self.save_list_as_txt(self.learning_words.keys(), "learning_words_list")
-        self.save_list_as_txt(self.phrases, "phrases")
+        self.save_object_as_txt(self.known_words, "known_words_dict")
+        self.save_object_as_txt(self.learning_words, "learning_words_dict")
+        self.save_object_as_txt(
+            self.personal_translations, "personal_translations_dict"
+        )
+        self.save_object_as_txt(self.phrases, "phrases_dict")
+        self.save_list_as_txt(list(self.known_words.keys()), "known_words_list")
+        self.save_list_as_txt(list(self.learning_words.keys()), "learning_words_list")
+        self.save_list_as_txt(self.ignored_words, "ignored_words_list")
 
     def save_to_file(self, obj, name, directory):
         # Create directory if it doesn't exist
@@ -179,15 +182,13 @@ class DataHandler:
         with open(directory + "/" + name + ".pkl", "rb") as f:
             return pickle.load(f)
 
-    def save_to_txt(self, title, text, file_name, directory):
+    def save_to_txt(self, text, file_name, directory):
         """Save to .txt file"""
         # Create directory if it doesn't exist
         if not os.path.exists(directory):
             os.makedirs(directory)
 
         file = open(directory + "/" + file_name, "w")
-        file.write(title)
-        file.write("\n")
         file.write(text)
         file.close()
 
@@ -204,11 +205,18 @@ class DataHandler:
         )
         return obj
 
-    def save_list_as_txt(self, obj, name):
-        """Save word list as txt file"""
+    def save_object_as_txt(self, obj, name):
+        """Save word list object as txt file"""
         self.save_to_txt(
-            name,
             str(obj),
+            name + ".txt",
+            self.data_dir + "/" + self.language + "/" + "txt_word_dicts",
+        )
+
+    def save_list_as_txt(self, list, name):
+        """Save word list as txt file with one word per line"""
+        self.save_to_txt(
+            "\n".join(list),
             name + ".txt",
             self.data_dir + "/" + self.language + "/" + "txt_word_lists",
         )
