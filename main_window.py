@@ -715,6 +715,7 @@ class MainWindow(QWidget):
                 text = "".join([line for line in lines if not self.is_metadata(line)])
                 text = text.strip()
                 text = unicodedata.normalize("NFC", text)
+                text = self.remove_line_breaks_in_paragrahs(text)
                 text = self.fix_paragraph_spacing(text)
                 text = self.fix_title(text)
                 metadata = next(
@@ -770,9 +771,28 @@ class MainWindow(QWidget):
                     page_size = value
         return active_word_num, page_index, page_size
 
+    def remove_line_breaks_in_paragrahs(self, text):
+        """
+        Remove line breaks inside of paragraphs. Only applied if the number of double
+        line breaks is over a specified threshold, to handle the case when the text
+        consists mainly of single-spaced paragraphs that shouldn't be merged.
+        """
+        min_num_double_line_breaks = 10
+        num_double_line_breaks = len(re.findall(r"\n\n", text))
+        if num_double_line_breaks >= min_num_double_line_breaks:
+            # Replace single line breaks (not part of a double line break) with a space
+            text = re.sub(r"(?<!\n)\n(?!\n)", " ", text)
+        return text
+
     def fix_paragraph_spacing(self, text):
-        """Make sure that paragrahs are separated by two newlines"""
-        return re.sub(r"(?<!\n)\n(?!\n)", "\n\n", text)
+        """
+        If all paragraphs are separated by single line breaks, they are replaced by
+        double line breaks.
+        """
+        has_double_line_break = re.search(r"\n\n", text)
+        if not has_double_line_break:
+            text = re.sub(r"(?<!\n)\n(?!\n)", "\n\n", text)
+        return text
 
     def fix_title(self, text):
         """Add a title to the text if missing"""

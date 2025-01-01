@@ -62,4 +62,7 @@ def autoread(url):
     # Require headline to be only one line
     headline = headline.replace("\n", " — ")
 
+    # Replace single linebreaks with double linebreaks
+    article_text = re.sub(r"(?<!\n)\n(?!\n)", "\n\n", article_text)
+
     return headline, article_text
