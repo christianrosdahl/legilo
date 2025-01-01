@@ -455,7 +455,7 @@ class MainWindow(QWidget):
         close_and_edit_action.triggered.connect(self.close_and_edit)
 
         look_up_action = QAction("Look up word", self)
-        look_up_action.setShortcut(Qt.Key_Return)
+        look_up_action.setShortcut(Qt.Key_Up)
         look_up_action.triggered.connect(self.look_up)
 
         mark_as_known_action = QAction("Mark word as known", self)
