@@ -1089,7 +1089,11 @@ class MainWindow(QWidget):
         cursor = self.main_text_field.textCursor()
         cursor.setPosition(start_idx)
         cursor.setPosition(end_idx, QTextCursor.KeepAnchor)
-        return cursor.selectedText().strip()
+        text = cursor.selectedText()
+        text = text.replace("\u2028", " ").replace("\u2029", " ")
+        text = re.sub(r"\s+", " ", text)
+        text = text.strip()
+        return text
 
     def get_text_phrase_for_word_num(self, word_num):
         for text_phrase in self.text_phrases:
