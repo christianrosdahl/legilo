@@ -709,22 +709,40 @@ class MainWindow(QWidget):
             self.main_text_field.scroll_to_top()
 
     def get_text_from_file(self):
-        with open(self.text_path, "r") as file:
-            lines = file.readlines()
-            text = "".join([line for line in lines if not self.is_metadata(line)])
-            text = text.strip()
-            text = unicodedata.normalize("NFC", text)
-            text = self.fix_paragraph_spacing(text)
-            text = self.fix_title(text)
-            metadata = next((line for line in lines if self.is_metadata(line)), None)
-            if not metadata:
-                active_word_num = None
-                page_index = None
-                page_size = None
-            else:
-                metadata = metadata.strip()
-                active_word_num, page_index, page_size = self.parse_metadata(metadata)
-            return text, active_word_num, page_index, page_size
+        try:
+            with open(self.text_path, "r") as file:
+                lines = file.readlines()
+                text = "".join([line for line in lines if not self.is_metadata(line)])
+                text = text.strip()
+                text = unicodedata.normalize("NFC", text)
+                text = self.fix_paragraph_spacing(text)
+                text = self.fix_title(text)
+                metadata = next(
+                    (line for line in lines if self.is_metadata(line)), None
+                )
+                if not metadata:
+                    active_word_num = None
+                    page_index = None
+                    page_size = None
+                else:
+                    metadata = metadata.strip()
+                    active_word_num, page_index, page_size = self.parse_metadata(
+                        metadata
+                    )
+                return text, active_word_num, page_index, page_size
+        except Exception as e:
+            self.show_error_dialog(
+                "Failed to read text from file. "
+                + f"The file must be a txt-file.\n\n{e}"
+            )
+            return "", None, None, None
+
+    def show_error_dialog(self, message):
+        error_dialog = QMessageBox()
+        error_dialog.setIcon(QMessageBox.Critical)
+        error_dialog.setWindowTitle("Error")
+        error_dialog.setText(message)
+        error_dialog.exec_()
 
     def is_metadata(self, line):
         return "#METADATA" in line or "# active_word_num" in line
@@ -776,6 +794,9 @@ class MainWindow(QWidget):
     def save_text_with_active_word(self):
         metadata = None
         items = []
+
+        if len(self.full_text) == 0:
+            return
 
         if self.last_active_word_num_with_page:
             last_active_word_num = self.last_active_word_num_with_page["word_num"]
