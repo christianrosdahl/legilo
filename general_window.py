@@ -21,6 +21,7 @@ class GeneralWindow(QWidget):
         title_height=70,
         show_app_name=False,
         text_field_width=500,
+        vertical_padding=50,
     ):
         super().__init__()
 
@@ -28,7 +29,7 @@ class GeneralWindow(QWidget):
         self.start_window = start_window
         self.window_width = 800
         self.window_height = 1000
-        self.vertical_padding = 50
+        self.vertical_padding = vertical_padding
         self.text_field_width = text_field_width
         self.title_height = title_height
         self.show_app_name = show_app_name

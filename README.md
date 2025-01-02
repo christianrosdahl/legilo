@@ -34,6 +34,7 @@ Choose language by pressing the indicated key (the letter within `[]`) for each 
 
 - Alt. 1 (Manual text insertion): Paste a text in the text field, modify it if you want, and press <kbd>⏎ Enter</kbd> to continue. If you want to add a new line in the text, this can be done by <kbd>⇧ Shift</kbd> + <kbd>⏎ Enter</kbd>.
 - Alt. 2 (Automatic text fetching): Paste a URL in the text field and press <kbd>⏎ Enter</kbd>. If the site could be fetched, the text will appear in the text field. Edit it as you want and then press <kbd>⏎ Enter</kbd> to continue.
+- Alt. 3 (Import text from an e-book or PDF): Press <kbd>⌘ Command</kbd> + <kbd>I</kbd> to open a file selector and select an EPUB or PDF file. If the text could be fetched, the text will appear in the text field. Edit it as you want and then press <kbd>⏎ Enter</kbd> to continue. Note that text extraction from PDF files in general is difficult and not always possible. Thus, EPUB files are preferable if available.
 
 ## Old text
 

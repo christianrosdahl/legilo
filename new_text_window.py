@@ -8,6 +8,7 @@ from PyQt5.QtCore import Qt
 from autoread import autoread
 from general_window import GeneralWindow
 from main_window import MainWindow
+from text_from_ebook import get_text_from_epub_or_pdf
 
 
 class NewTextWindow(GeneralWindow):
@@ -26,11 +27,10 @@ class NewTextWindow(GeneralWindow):
             config,
             start_window,
             dark_mode=dark_mode,
-            title_height=110,
+            title_height=130,
             text_field_width=800,
+            vertical_padding=10,
         )
-
-        self.horizontal_padding = 0
 
         self.start_window = start_window
         self.data_dir = data_dir
@@ -48,7 +48,9 @@ class NewTextWindow(GeneralWindow):
         else:
             instructions = (
                 "Alt. 1: Paste you text below and press [Enter] to proceed.\n"
-                + "Alt. 2: Paste an URL below and press [Enter] to fetch text.\n\n"
+                + "Alt. 2: Paste an URL below and press [Enter] to fetch text.\n"
+                + "Alt. 3: Press [⌘]/[Ctrl] + [I] to import text from an EPUB or PDF "
+                + "file.\n\n"
                 + "(Use [Shift] + [Enter] to make a new line.)"
             )
 
@@ -95,6 +97,13 @@ class NewTextWindow(GeneralWindow):
                 self.start_window.main_window.show()
                 self.start_window.main_window.setFocus()
                 self.close()
+
+        elif event.key() == Qt.Key_I and event.modifiers() & Qt.ControlModifier:
+            text = get_text_from_epub_or_pdf(self)
+            if text:
+                self.main_text.clear()
+                self.main_text.insert_text(text)
+                self.main_text.edit()
 
         return super().on_key_press(event)
 
