@@ -27,7 +27,7 @@ os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = ""
 import pygame  # Play mp3 files from gtts
 from googletrans import Translator
 
-from autocomplete_line_text_field import AutocompleteLineTextField
+from edit_lemmas_text_field import EditLemmasTextField
 from data_handler import DataHandler
 from language_code import get_language_code
 from sentence import get_first_sentence, get_sentences
@@ -289,8 +289,11 @@ class MainWindow(QWidget):
         self.personal_trans_text_field.hide()
 
         # Edit lemma text field
-        self.lemma_text_field = AutocompleteLineTextField(
+        self.lemma_text_field = EditLemmasTextField(
             self.styling, "right", "translation", 6
+        )
+        self.lemma_text_field.colonTyped.connect(
+            lambda: self.update_lemmas(stop_editing=False)
         )
         self.lemma_text_field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.lemma_text_field.set_background_color(
@@ -1844,7 +1847,7 @@ class MainWindow(QWidget):
         self.lemma_text_field.show()
         self.lemma_text_field.edit()
 
-    def update_lemmas(self):
+    def update_lemmas(self, stop_editing=True):
         lemma_data = self.lemma_text_field.toPlainText()
         previous_lemmas = None
         if "lemmas" in self.active_info:
@@ -1882,10 +1885,11 @@ class MainWindow(QWidget):
                 if not key in new_info:
                     new_info[key] = value
             self.active_info = new_info
-        self.lemma_text_field.stop_edit()
-        self.lemma_text_field.clear()
-        self.lemma_text_field.hide()
-        self.editing_lemmas = False
+        if stop_editing:
+            self.lemma_text_field.stop_edit()
+            self.lemma_text_field.clear()
+            self.lemma_text_field.hide()
+            self.editing_lemmas = False
         self.show_translation()
 
     def get_personal_translation(self, word=None):
