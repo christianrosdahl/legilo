@@ -126,6 +126,6 @@ class OpenFileWindow(GeneralWindow):
 
     def select_file(self):
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Open File", self.text_dir, "All Files (*.*)"
+            self, "Open File", self.text_dir, "Text Files (*.txt)"
         )
         return file_path
