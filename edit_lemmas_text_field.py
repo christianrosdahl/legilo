@@ -19,9 +19,16 @@ class EditLemmasTextField(AutocompleteLineTextField):
         num_lines=None,
         unfocus_on_click=True,
         hide_scrollbar=True,
+        use_wiktionary=True,
     ):
         super().__init__(
-            styling, position, styling_key, num_lines, unfocus_on_click, hide_scrollbar
+            styling,
+            position,
+            styling_key,
+            num_lines,
+            unfocus_on_click,
+            hide_scrollbar,
+            use_wiktionary,
         )
 
     def keyPressEvent(self, event):

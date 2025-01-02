@@ -1,3 +1,5 @@
+import requests
+
 from PyQt5.QtGui import QInputMethodEvent, QTextCursor, QTextCharFormat, QColor
 from PyQt5.QtCore import Qt
 
@@ -15,10 +17,12 @@ class AutocompleteLineTextField(TextField):
         num_lines=None,
         unfocus_on_click=True,
         hide_scrollbar=True,
+        use_wiktionary=False,
     ):
         super().__init__(
             styling, position, styling_key, num_lines, unfocus_on_click, hide_scrollbar
         )
+        self.use_wiktionary = use_wiktionary
         self.suggestions = set()
         self.current_suggestion = ""
         self.block_updates = True  # Flag to prevent recursion
@@ -37,7 +41,7 @@ class AutocompleteLineTextField(TextField):
     def set_suggestions(self, suggestions):
         self.suggestions = suggestions
 
-    def update_suggestion(self):
+    def update_suggestion(self, get_from_wiktionary=False):
         if self.block_updates or self.is_dead_key_active:
             return
 
@@ -61,6 +65,9 @@ class AutocompleteLineTextField(TextField):
             return
 
         self.setTextCursor(cursor)
+
+        if self.use_wiktionary and get_from_wiktionary and len(line_before_cursor) > 0:
+            self.add_wiktionary_suggestion(line_before_cursor)
 
         # Find a matching suggestion
         matching = next(
@@ -112,13 +119,17 @@ class AutocompleteLineTextField(TextField):
         self.block_updates = False  # Re-enable updates
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Tab and self.current_suggestion:
-            accepted_suggestion = self.current_suggestion
-            self.remove_suggestion()
-            # Accept the current suggestion
-            cursor = self.textCursor()
-            cursor.insertText(accepted_suggestion)
-            self.current_suggestion = ""
+        if event.key() == Qt.Key_Tab:
+            if self.current_suggestion:
+                accepted_suggestion = self.current_suggestion
+                self.remove_suggestion()
+                # Accept the current suggestion
+                cursor = self.textCursor()
+                cursor.insertText(accepted_suggestion)
+                self.current_suggestion = ""
+            else:
+                self.remove_suggestion()
+                self.update_suggestion(get_from_wiktionary=True)
         else:
             self.remove_suggestion()
             super().keyPressEvent(event)
@@ -135,3 +146,32 @@ class AutocompleteLineTextField(TextField):
     def mousePressEvent(self, event):
         self.remove_suggestion()
         super().mousePressEvent(event)
+
+    def add_wiktionary_suggestion(self, text):
+        wiktionary_suggestion = self.get_wiktionary_suggestion(text)
+        if not wiktionary_suggestion:
+            return
+        if not any(suggestion.startswith(text) for suggestion in self.suggestions):
+            self.suggestions.add(wiktionary_suggestion)
+
+    def get_wiktionary_suggestion(self, text):
+        """
+        Return the first found Wiktionary title starting with but not equal to `text`
+        """
+        url = "https://en.wiktionary.org/w/api.php"
+        params = {
+            "action": "query",
+            "list": "allpages",
+            "apprefix": text,  # Pages starting with 'text'
+            "aplimit": 2,  # Limit the number of results
+            "format": "json",
+        }
+        response = requests.get(url, params=params).json()
+        titles = [
+            page["title"]
+            for page in response["query"]["allpages"]
+            if page["title"] != text
+        ]
+        if len(titles) > 0:
+            return titles[0]
+        return None
