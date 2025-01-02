@@ -1890,7 +1890,9 @@ class MainWindow(QWidget):
             self.lemma_text_field.clear()
             self.lemma_text_field.hide()
             self.editing_lemmas = False
-        self.show_translation()
+            self.show_translation()
+        else:
+            self.show_translation(show_lemmas=False)
 
     def get_personal_translation(self, word=None):
         if not word:
