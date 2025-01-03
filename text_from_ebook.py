@@ -4,7 +4,7 @@ import unicodedata
 
 from bs4 import BeautifulSoup
 from ebooklib import epub
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 from PyQt5.QtWidgets import QFileDialog
 
 
@@ -40,11 +40,10 @@ def epub_to_text(epub_path):
 
 def pdf_to_text(pdf_path):
     reader = PdfReader(pdf_path)
-    pages = []
+    text = ""
     for page in reader.pages:
-        page_text = page.extract_text()
-        pages.append(page_text)
-    return "\n".join(pages)
+        text += page.extract_text()
+    return text
 
 
 def clean_text(text):
