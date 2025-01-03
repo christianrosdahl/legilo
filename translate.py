@@ -8,12 +8,34 @@ import stanza
 from bs4 import BeautifulSoup
 from googletrans import Translator
 
-warnings.simplefilter(
-    action="ignore", category=FutureWarning
-)  # Remove warnings from stanza
-
 from language_code import get_language_code
 from remove_pronunciation_accents import remove_pronunciation_accents
+
+
+# Ignore warnings from and related to stanza
+warnings.filterwarnings(
+    "ignore", category=UserWarning, module="torch._weights_only_unpickler"
+)
+warnings.filterwarnings(
+    "ignore", category=UserWarning, module="stanza.models.common.pretrain"
+)
+warnings.filterwarnings(
+    "ignore",
+    message=(
+        "The saved constituency parser has an old format using Enum, set, "
+        + "unsanitized Transitions.*"
+    ),
+    module="stanza.models.constituency.base_trainer",
+)
+warnings.filterwarnings(
+    "ignore",
+    message=(
+        "The saved classifier has an old format using SimpleNamespace and/or Enum "
+        + "instead of a dict to store config.*"
+    ),
+    module="stanza.models.classifiers.trainer",
+)
+
 
 # Define parts of speech
 PARTS_OF_SPEECH = [
