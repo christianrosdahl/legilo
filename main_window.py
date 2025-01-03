@@ -476,7 +476,7 @@ class MainWindow(QWidget):
 
         look_up_action = QAction("Look up word", self)
         look_up_action.setShortcut(Qt.Key_Up)
-        look_up_action.triggered.connect(self.look_up)
+        look_up_action.triggered.connect(self.on_enter_or_up_arrow_press)
 
         mark_as_known_action = QAction("Mark word as known", self)
         mark_as_known_action.setShortcut(Qt.Key_Down)
@@ -890,21 +890,8 @@ class MainWindow(QWidget):
 
         number_keys = [ord(f"{i}") for i in range(0, 10)]
 
-        if self.editing_personal_trans:
-            if (
-                key == Qt.Key_Return and not modifiers & Qt.ShiftModifier
-            ) or key == Qt.Key_Up:
-                self.update_personal_translation()
-        elif self.editing_lemmas:
-            if (
-                key == Qt.Key_Return and not modifiers & Qt.ShiftModifier
-            ) or key == Qt.Key_Up:
-                self.update_lemmas()
-        elif self.editing_remark:
-            if (
-                key == Qt.Key_Return and not modifiers & Qt.ShiftModifier
-            ) or key == Qt.Key_Up:
-                self.update_remark()
+        if key in [Qt.Key_Up, Qt.Key_Return]:
+            self.on_enter_or_up_arrow_press(key, modifiers)
         else:
             if key in [Qt.Key_Right, Qt.Key_Space]:
                 if modifiers & Qt.ShiftModifier:
@@ -920,24 +907,6 @@ class MainWindow(QWidget):
                     self.show_previous_page()
                 else:
                     self.go_to_previous()
-            elif key in [Qt.Key_Up, Qt.Key_Return]:
-                if modifiers & Qt.ControlModifier:
-                    if key == Qt.Key_Up:
-                        self.main_text_field.scroll_up()
-                    elif key == Qt.Key_Return:
-                        self.show_next_page_and_set_new_to_known()
-                elif modifiers & Qt.ShiftModifier:
-                    self.translation_text_field.scroll_up()
-                elif modifiers & Qt.AltModifier:
-                    self.remark_text_field.scroll_up()
-                else:
-                    if not self.active_looked_up:
-                        if not self.phrase_selection_mode:
-                            self.look_up()
-                        else:  # If in phrase selection mode
-                            self.select_word_num(self.phrase_selection_mode_word)
-                    else:
-                        self.go_to_next()
             elif key == Qt.Key_Down:
                 if modifiers & Qt.ControlModifier:
                     self.main_text_field.scroll_down()
@@ -976,6 +945,38 @@ class MainWindow(QWidget):
                         self.open_external_resource(key_char)
                 except ValueError:
                     pass
+
+    def on_enter_or_up_arrow_press(self, key=None, modifiers=None):
+        if self.editing_text_field():
+            if (
+                modifiers == None
+                or (key == Qt.Key_Return and not modifiers & Qt.ShiftModifier)
+                or key == Qt.Key_Up
+            ):
+                if self.editing_personal_trans:
+                    self.update_personal_translation()
+                elif self.editing_lemmas:
+                    self.update_lemmas()
+                elif self.editing_remark:
+                    self.update_remark()
+        else:
+            if modifiers and modifiers & Qt.ControlModifier:
+                if key == Qt.Key_Up:
+                    self.main_text_field.scroll_up()
+                elif key == Qt.Key_Return:
+                    self.show_next_page_and_set_new_to_known()
+            elif modifiers and modifiers & Qt.ShiftModifier:
+                self.translation_text_field.scroll_up()
+            elif modifiers and modifiers & Qt.AltModifier:
+                self.remark_text_field.scroll_up()
+            else:
+                if not self.active_looked_up:
+                    if not self.phrase_selection_mode:
+                        self.look_up()
+                    else:  # If in phrase selection mode
+                        self.select_word_num(self.phrase_selection_mode_word)
+                else:
+                    self.go_to_next()
 
     def close_without_saving(self):
         reply = QMessageBox.question(
