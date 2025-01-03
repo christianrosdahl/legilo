@@ -141,6 +141,9 @@ class MainWindow(QWidget):
         self.open_page(self.page_index)
 
     def open_page(self, page_index, mark_last_active=True, scroll_to_active=True):
+        if self.editing_text_field():
+            self.interrupt_text_field_edit()
+
         if self.opening_page:
             # Avoid recursion caused by self.page_selector.setCurrentIndex()
             # calling open_page()
@@ -187,6 +190,20 @@ class MainWindow(QWidget):
             self.scroll_to_active_word()
 
         self.opening_page = False
+
+    def interrupt_text_field_edit(self):
+        if self.editing_personal_trans:
+            self.personal_trans_text_field.stop_edit()
+            self.personal_trans_text_field.clear()
+            self.personal_trans_text_field.hide()
+            self.editing_personal_trans = False
+        elif self.editing_lemmas:
+            self.lemma_text_field.stop_edit()
+            self.lemma_text_field.clear()
+            self.lemma_text_field.hide()
+            self.editing_lemmas = False
+        elif self.editing_remark:
+            self.update_remark()
 
     def eventFilter(self, source, event):
         """Event filter to capture key presses"""
