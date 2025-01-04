@@ -40,10 +40,10 @@ def epub_to_text(epub_path):
 
 def pdf_to_text(pdf_path):
     reader = PdfReader(pdf_path)
-    text = ""
+    pages = []
     for page in reader.pages:
-        text += page.extract_text()
-    return text
+        page_text = re.sub(r"\t", " ", page.extract_text())
+    return "\n".join(pages)
 
 
 def clean_text(text):
