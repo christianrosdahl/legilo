@@ -43,6 +43,7 @@ def pdf_to_text(pdf_path):
     pages = []
     for page in reader.pages:
         page_text = re.sub(r"\t", " ", page.extract_text())
+        pages.append(page_text)
     return "\n".join(pages)
 
 
