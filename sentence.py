@@ -1,6 +1,7 @@
 import os
 import ssl
 import urllib
+from urllib.error import URLError, HTTPError
 from urllib.request import Request
 
 import requests
@@ -20,37 +21,46 @@ def get_sentences(word, language, n):
     if " " in word:
         is_word = False
     if language in ["french", "german", "italian", "russian", "spanish"] and is_word:
-        link = (
-            "https://www.online-translator.com/samples/"
-            + get_language_code(language)
-            + "-en/"
-            + word
-        )
-        link = urllib.parse.quote(
-            link,
-            safe="/:",
-        )
-        link = Request(link, headers={"User-Agent": "Mozilla/5.0"})
+        html = None
+        try:
+            link = (
+                "https://www.online-translator.com/samples/"
+                + get_language_code(language)
+                + "-en/"
+                + word
+            )
+            link = urllib.parse.quote(
+                link,
+                safe="/:",
+            )
+            link = Request(link, headers={"User-Agent": "Mozilla/5.0"})
 
-        with urllib.request.urlopen(link) as url:
-            raw_html = url.read()
+            with urllib.request.urlopen(link, timeout=10) as url:
+                raw_html = url.read()
 
-        html = BeautifulSoup(raw_html, "html.parser")
+            html = BeautifulSoup(raw_html, "html.parser")
+
+        except HTTPError as http_err:
+            print(f"HTTP error occurred: {http_err.code} - {http_err.reason}")
+        except URLError as url_err:
+            print(f"URL error occurred: {url_err.reason}")
+        except Exception as general_err:
+            print(f"An unexpected error occurred: {general_err}")
 
         sentences = [""] * n
         sentence_trans = [""] * n
 
-        count = 0
-        for i in html.select("span"):
-            if "class" in i.attrs:
-                # print(i['class'])
-                if "samSource" in i["class"]:
-                    sentences[count] = i.text.strip()
-                elif "samTranslation" in i["class"]:
-                    sentence_trans[count] = i.text.strip()
-                    count += 1
-                    if count >= n:
-                        break
+        if html:
+            count = 0
+            for i in html.select("span"):
+                if "class" in i.attrs:
+                    if "samSource" in i["class"]:
+                        sentences[count] = i.text.strip()
+                    elif "samTranslation" in i["class"]:
+                        sentence_trans[count] = i.text.strip()
+                        count += 1
+                        if count >= n:
+                            break
         return (sentences, sentence_trans)
     else:
         return get_from_glosbe(word, language, n)
@@ -65,13 +75,25 @@ def get_first_sentence(word, language):
 def get_from_glosbe(word, language, n):
     url = "https://glosbe.com/" + get_language_code(language) + "/en/" + word
 
-    response = requests.get(url)
+    response = None
+    try:
+        response = requests.get(url, timeout=10)
+    except requests.exceptions.HTTPError as http_err:
+        print(f"HTTP error occurred: {http_err}")
+    except requests.exceptions.ConnectionError as conn_err:
+        print(f"Connection error occurred: {conn_err}")
+    except requests.exceptions.Timeout as timeout_err:
+        print(f"Timeout error occurred: {timeout_err}")
+    except requests.exceptions.RequestException as req_err:
+        print(f"An error occurred: {req_err}")
+    except Exception as general_err:
+        print(f"An unexpected error occurred: {general_err}")
 
     sentences = [""] * n
     sentence_trans = [""] * n
 
     # Check if the request was successful
-    if response.status_code == 200:
+    if response and response.status_code == 200:
         # Parse the HTML content using BeautifulSoup
         soup = BeautifulSoup(response.content, "html.parser")
 

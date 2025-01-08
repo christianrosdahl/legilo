@@ -253,9 +253,21 @@ class LegiloTranslator:
         lemmas = set()
 
         url = f"https://en.wiktionary.org/wiki/{word}"
-        response = requests.get(url)
+        response = None
+        try:
+            response = requests.get(url, timeout=10)
+        except requests.exceptions.HTTPError as http_err:
+            print(f"HTTP error occurred: {http_err}")
+        except requests.exceptions.ConnectionError as conn_err:
+            print(f"Connection error occurred: {conn_err}")
+        except requests.exceptions.Timeout as timeout_err:
+            print(f"Timeout error occurred: {timeout_err}")
+        except requests.exceptions.RequestException as req_err:
+            print(f"An error occurred: {req_err}")
+        except Exception as general_err:
+            print(f"An unexpected error occurred: {general_err}")
 
-        if response.status_code != 200:
+        if not response or response.status_code != 200:
             return [], lemmas
 
         soup = BeautifulSoup(response.content, "html.parser")
