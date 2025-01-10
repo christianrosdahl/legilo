@@ -1,10 +1,20 @@
+import platform
+
+from PyQt5.QtGui import QFontDatabase
+
+
 def get_styling(config, dark_mode=False):
     font = "Helvetica Neue"  #'Avenir', 'Museo Sans Rounded', 'Bookman', 'Georgia'
-    font_size = 18
     if "font" in config:
         font = config["font"]
+    font = get_available_font(font, default_font="Helvetica")
+
+    font_size = 18
     if "font_size" in config:
         font_size = config["font_size"]
+    side_field_title_font_size = font_size - 4
+    if platform.system() in ["Linux", "Windows"]:
+        font_size -= 6
 
     default_colors = {
         "text_color": "black",
@@ -90,7 +100,7 @@ def get_styling(config, dark_mode=False):
         },
         "side_field_title": {
             "font": font,
-            "size": font_size - 4,
+            "size": side_field_title_font_size,
             "bold": False,
             "italic": False,
         },
@@ -124,3 +134,11 @@ def get_styling(config, dark_mode=False):
     }
 
     return styling
+
+
+def get_available_font(preferred_font, default_font="Helvetica"):
+    available_fonts = QFontDatabase().families()
+    if preferred_font in available_fonts:
+        return preferred_font
+    else:
+        return default_font
