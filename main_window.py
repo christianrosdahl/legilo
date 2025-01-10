@@ -14,7 +14,7 @@ from PyQt5.QtWidgets import (
     QDesktopWidget,
     QHBoxLayout,
     QLabel,
-    QMenuBar,
+    QMainWindow,
     QMessageBox,
     QPushButton,
     QSizePolicy,
@@ -27,8 +27,8 @@ os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = ""
 import pygame  # Play mp3 files from gtts
 from googletrans import Translator
 
-from edit_lemmas_text_field import EditLemmasTextField
 from data_handler import DataHandler
+from edit_lemmas_text_field import EditLemmasTextField
 from language_code import get_language_code
 from sentence import get_first_sentence, get_sentences
 from styling import get_styling
@@ -37,7 +37,7 @@ from translate import LegiloTranslator
 from word_with_article import word_with_article
 
 
-class MainWindow(QWidget):
+class MainWindow(QMainWindow):
     def __init__(self, start_window, data_dir, language, text_path, config, settings):
         super().__init__()
         self.start_window = start_window
@@ -221,9 +221,7 @@ class MainWindow(QWidget):
         return super().eventFilter(source, event)  # Pass the event to the parent class
 
     def closeEvent(self, event):
-        self.main_layout.setMenuBar(None)
-        self.menu_bar.deleteLater()
-        self.menu_bar = None
+        self.menu_bar.clear()
 
         self.handle_active()
         self.quit_and_clean_for_tts()
@@ -254,7 +252,9 @@ class MainWindow(QWidget):
     def setup_layout(self):
         """Define layout for main window"""
         # Main horizontal layout
-        main_layout = QHBoxLayout(self)
+        central_widget = QWidget(self)
+        self.setCentralWidget(central_widget)
+        main_layout = QHBoxLayout(central_widget)
 
         # Left column layout
         left_column_layout = QVBoxLayout()
@@ -375,9 +375,6 @@ class MainWindow(QWidget):
         main_layout.addLayout(right_column_layout, 2)
         main_layout.addItem(right_spacer)
 
-        self.setLayout(main_layout)
-        self.main_layout = main_layout
-
     def add_navigation_bar(self, parent):
         # Navigation row encapsulated in a widget
         navigation_widget = QWidget()
@@ -445,7 +442,8 @@ class MainWindow(QWidget):
         parent.addWidget(navigation_widget)
 
     def add_window_menu(self):
-        menu_bar = QMenuBar(self)
+        menu_bar = self.menuBar()
+        self.menu_bar = menu_bar
 
         file_menu = menu_bar.addMenu("File")
         edit_menu = menu_bar.addMenu("Edit")
@@ -692,8 +690,6 @@ class MainWindow(QWidget):
         external_lookup_menu.addAction(google_lookup_lemma_action)
         external_lookup_menu.addAction(google_images_lookup_lemma_action)
         external_lookup_menu.addAction(wikipedia_lookup_lemma_action)
-
-        self.menu_bar = menu_bar
 
     def show_previous_page(self):
         if self.page_index > 0:
