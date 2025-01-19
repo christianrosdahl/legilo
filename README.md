@@ -18,13 +18,21 @@ When reading a text, you iterate through the new and learning words using the ke
 
 ## Disclaimer
 
-The program has only been tested for macOS, and it is unclear if it will work on other operating systems without further modifications. I made the program for my personal use, with the main focus on getting it to do what it should rather than optimizing the code, and there are no guarantees that it will work well for anyone else. However, you are very welcome to try it out at your own risk.
+The program has mainly been tested on macOS, and is best adapted to this operating system. However, it should be possible to run on Linux and Windows as well, but it's possible that things like font and font size might have to be adapted to look good on these platforms (which can be done by modifying the `config.json` file, see below). I made the program for my personal use, with the main focus on getting it to do what it should rather than optimizing the code, and there are no guarantees that it will work well. However, you are very welcome to try it out at your own risk.
 
 ## Get started
+
+### MacOS / Linux
 
 To run the program, you need a compatible version of Python. The program was tested with Python versions 3.12 and 3.11, so any of those should work, but it is possible that it works with older versions as well. It does not yet work with version 3.13, since one of the packages used is not compatible with that version. You can check your Python version by typing `python3 --version` in the terminal. If you think that you have a suitable Python version, you can skip to the next paragraph. You can install and use a specific Python version locally in the downloaded folder if you have installed [pyenv](https://github.com/pyenv/pyenv) (see the link for installation instructions). When pyenv in installed, you can type `pyenv install 3.12` to install python version 3.12 and then `pyenv local 3.12` when you are in the downloaded folder, before running `./run.sh` as described in the next paragraph, to always use that version in the current folder.
 
 Start by downloading the files, e.g. using `git clone` or clicking the green button "Code" at the top of this page, choosing "Download ZIP" and unzipping the downloaded files. Then navigate to the folder in the terminal (type `cd <path to the folder with the files>`). After that, you type `./run.sh` and press <kbd>⏎ Enter</kbd>. This will activate a Python virtual environment (it is created if it doesn't exist already), and make sure that all necessary dependencies are installed in this virtual environment. After that, the program UI will open up in a window. The first time you run the program for a new language, it can take a while to start. This is due to that it will download some natural language processing models that are used to find the dictionary form (lemma) of words, so that variants of a word can be looked up. You can skip this feature (and thus the downloading of the models) by setting `"use_lemmatizer": false` in `config.json`.
+
+### Windows
+
+Make sure that you have Python version 3.12 installed. You can check what versions are installed by typing `py -0` in the terminal. If not, you can download and install it [from here](https://www.python.org/downloads/).
+
+Start by downloading the files, e.g. using `git clone` or clicking the green button "Code" at the top of this page, choosing "Download ZIP" and unzipping the downloaded files. After that, open the folder and double click the file `run_on_windows.bat`. This will activate a Python virtual environment (it is created if it doesn't exist already), and make sure that all necessary dependencies are installed in this virtual environment. After that, the program UI will open up in a window. The first time you run the program for a new language, it can take a while to start. This is due to that it will download some natural language processing models that are used to find the dictionary form (lemma) of words, so that variants of a word can be looked up. You can skip this feature (and thus the downloading of the models) by setting `"use_lemmatizer": false` in `config.json`.
 
 ## Language and text selection
 
