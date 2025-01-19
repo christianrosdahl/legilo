@@ -2076,6 +2076,12 @@ class MainWindow(QMainWindow):
         """Pronounce using Google's text-to-speech"""
         if not (self.last_pronounced and self.last_pronounced == word):
             tts = gTTS(text=word, lang=get_language_code(language))
+
+            if platform.system() == "Windows":
+                # Quit and reinitialize the mixer (needed to save mp3 in Windows)
+                pygame.mixer.quit()
+                pygame.mixer.init()
+
             tts.save(self.data_dir + "/general/last_text_to_speech.mp3")
             self.last_pronounced = word
         pygame.mixer.music.load(self.data_dir + "/general/last_text_to_speech.mp3")
