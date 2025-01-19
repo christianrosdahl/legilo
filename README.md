@@ -8,9 +8,9 @@ Legilo is a reading tool (in fact, that's the meaning of the name in Esperanto) 
 
 The application allows you to import any text you want in your target language. The program labels all words in the text to one of the following categories: new, learning, known or ignored. The new words are marked with a blue background, the learning words are marked with a yellow background, and the known or ignored words are unmarked.
 
-New words are words that haven't been seen previously in any text. Learning words are words that you have seen in some text before, and looked up, but that you don't consider that you know yet. Known words are words that you have skipped without looking up or that you have marked explicitly as known. Ignored words are words that you consider irrelevant, e.g. names, words in another language or numbers. This category is similar to known words, but the words will be stored in a separate list, without translations, and will not be counted into the sum of your known words (that is shown when closing the program).
+New words are words that haven't been seen previously in any text. Learning words are words that you have seen in some text before, and looked up, but that you don't consider that you know yet. Known words are words that you have skipped without looking up or that you have marked explicitly as known. Ignored words are words that you consider irrelevant, e.g. names, words in another language or numbers. This category is similar to known words, but the words will be stored in a separate list, without translations, and will not be counted into the sum of your known words (that is shown in the bottom left corner of the main window).
 
-When reading a text, you iterate through the new and learning words using the keyboard (see below), or words by clicking them. The current word is marked with an orange background. You can look up a marked word easily or change the label of it using the keyboard as well.
+When reading a text, you iterate through the new and learning words using the keyboard (see below), or select words by clicking them. The current word is marked with an orange background. You can look up a marked word easily or change the label of it using the keyboard as well.
 
 **Language support**: I have tested the app with Spanish, German, French, Italian, Russian, Croatian, and Swedish. However, it should also work well for many other languages. Just add the language you want to learn to the `config.json` file (see "Configuration" below) and try it out!
 
@@ -36,7 +36,7 @@ Start by downloading the files, e.g. using `git clone` or clicking the green but
 
 ## Language and text selection
 
-Choose language by pressing the indicated key (the letter within `[]`) for each language name. Choose whether you want to add a new text or open a previous text by pressing <kbd>N</kbd> or <kbd>O</kbd>. Press <kbd>⏎ Enter</kbd> to confirm your choices. In this start window, you can also choose to activate dark mode by pressing <kbd>D</kbd> and to deactivate text-to-speech pronunciation by pressing <kbd>P</kbd>. Deactivating pronunciation might make lookup of words faster.
+Choose language by pressing the indicated key (the letter or number within `[]`) for each language name. Choose whether you want to add a new text or open a previous text by pressing <kbd>N</kbd> or <kbd>O</kbd>. Press <kbd>⏎ Enter</kbd> to confirm your choices. In this start window, you can also choose to activate dark mode by pressing <kbd>D</kbd> and to deactivate text-to-speech pronunciation by pressing <kbd>P</kbd>. Deactivating pronunciation might make lookup of words faster.
 
 ## New text
 
@@ -50,7 +50,7 @@ Select one of the listed recent texts by pressing the number before it, or press
 
 ## Basic navigation
 
-Most of the keyboard commands below (except for e.g. basic navigation back and forth by the arrow keys) can also be found in the window menu of the reader window. The menu items also contain the corresponding keyboard shortcuts as a reference.
+Most of the keyboard commands below (except for e.g. basic navigation back and forth by the arrow keys) can also be found in the window menu of the main window. The menu items also contain the corresponding keyboard shortcuts as a reference.
 
 - <kbd>→</kbd> / <kbd>Space</kbd>: Mark the next new or learning word. If the currently marked word is new, and hasn't been looked up, it is marked as known when going to the next word. If it has been looked up, it is saved as a learning word (to prevent this, you can explicitly mark it as known by pressing <kbd>↓</kbd>).
 - <kbd>↑</kbd> / <kbd>⏎ Enter</kbd>:
@@ -65,8 +65,8 @@ Most of the keyboard commands below (except for e.g. basic navigation back and f
 - <kbd>⌘ Command</kbd> + <kbd>→</kbd> Show next page.
 - <kbd>⌘ Command</kbd> + <kbd>⏎ Enter</kbd> Mark all new words on current page as known and show next page.
 - <kbd>⌘ Command</kbd> + <kbd>←</kbd> Show previous page.
-- <kbd>I</kbd>: Insert (or edit) your own translation for a looked-up word. Press <kbd>⏎ Enter</kbd> / <kbd>↑</kbd> to save it. If the input is empty, the personal translation is removed.
-- <kbd>U</kbd>: Edit lemmas (associated base forms of the word) and their translations for a looked-up word. An editable text field is enabled where one lemma is listed per line (press <kbd>⇧ Shift</kbd> + <kbd>⏎ Enter</kbd> to make a new line). Each lemma can be associated with a translation by writing `<lemma>: <translation>` in the line of the lemma. If the line doesn't contain a colon, no translation is saved for the corresponding lemma. A suggestion for autocompletion of a line will be shown if available. Press <kbd>⇥ Tab</kbd> to accept the suggestion. If no suggestions is available, a suggestion can be fetched from Wiktionary by pressing <kbd>⇥ Tab</kbd>. Press <kbd>⏎ Enter</kbd> / <kbd>↑</kbd> to save associated lemmas and possible translations.
+- <kbd>I</kbd>: Insert (or edit) your own translation for a looked-up word. Press <kbd>⏎ Enter</kbd> to save it. If the input text field is empty, no personal translation will be saved.
+- <kbd>U</kbd>: Edit lemmas (associated base forms of the word) and their translations for a looked-up word. An editable text field is enabled where one lemma is listed per line (press <kbd>⇧ Shift</kbd> + <kbd>⏎ Enter</kbd> to make a new line). Each lemma can be associated with a translation by writing `<lemma>: <translation>` in the line of the lemma. If the line doesn't contain a colon, no translation is saved for the corresponding lemma. A suggestion for autocompletion of a line will be shown if available. Press <kbd>⇥ Tab</kbd> to accept the suggestion. If no suggestion is available, a suggestion can be fetched from Wiktionary by pressing <kbd>⇥ Tab</kbd>. When typing a colon, the lemma before it will automatically be looked up in Wiktionary and the result (if found) will be shown below the input field, so that you can use it to write your personal lemma translation. Press <kbd>⏎ Enter</kbd> to save associated lemmas and possible translations.
 - <kbd>O</kbd>: Add (or remove) a Google translation for a looked-up word.
 - <kbd>P</kbd>: Pronounce the maked word.
 - <kbd>H</kbd>: Add a translation of a looked-up word, and its translations in English, to your third language (set in `config.json`) in the remark section. Press the key again to remove it.
@@ -87,7 +87,7 @@ Phrase mode allows you to look up and save translations for phrases or expressio
 
 - Press <kbd>E</kbd> to activate or deactivate phrase mode. When phrase mode is active, the word marker will change colors from orange to green.
 - Translate a new phrase:
-  - Alt. 1 (using the keyboard): In phrase mode, use <kbd>→</kbd> / <kbd>←</kbd> to navigate to the first word in the phrase, and press <kbd>⏎ Enter</kbd> / <kbd>↑</kbd> to select it. Repeat the same procedure to select the second word in the phrase. After this, phrase mode will be deactivated and the phrase will be looked up.
+  - Alt. 1 (using the keyboard): In phrase mode, use <kbd>→</kbd> / <kbd>←</kbd> to navigate to the first word in the phrase, and press <kbd>⏎ Enter</kbd> / <kbd>↑</kbd> to select it. Repeat the same procedure to select the last word in the phrase. After this, phrase mode will be deactivated and the phrase will be looked up.
   - Alt. 2 (using the mouse): In phrase mode, click the first and last word in the phrase you want to look up. After this, phrase mode will be deactivated and the phrase will be looked up.
 - See translation for a previously saved phrase:
   - Alt. 1 (using the keyboard): In phrase mode, use <kbd>→</kbd> / <kbd>←</kbd> to navigate to any word in the phrase, and press <kbd>⏎ Enter</kbd> / <kbd>↑</kbd> to select it. Phrase mode will be deactivated and the saved translation for the phrase will be shown.
