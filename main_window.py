@@ -2084,6 +2084,9 @@ class MainWindow(QMainWindow):
 
             tts.save(self.data_dir + "/general/last_text_to_speech.mp3")
             self.last_pronounced = word
+
+        if not pygame.mixer.get_init():
+            pygame.mixer.init()
         pygame.mixer.music.load(self.data_dir + "/general/last_text_to_speech.mp3")
         pygame.mixer.music.play()
         while pygame.mixer.music.get_busy():
