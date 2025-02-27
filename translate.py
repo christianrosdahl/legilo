@@ -272,6 +272,10 @@ class LegiloTranslator:
 
         soup = BeautifulSoup(response.content, "html.parser")
 
+        # Remove all <link> tags, while keeping their content
+        for link_tag in soup.find_all("link"):
+            link_tag.unwrap()
+
         # Find the section for the current language
         language_sections = soup.find_all("div", class_="mw-heading2")
         current_language_section = None
