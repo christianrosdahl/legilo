@@ -235,9 +235,12 @@ class LegiloTranslator:
         return words
 
     def get_google_translation(self, word):
-        trans = self.google_translator.translate(
-            word, src=get_language_code(self.language), dest="en"
-        ).text
+        try:
+            trans = self.google_translator.translate(
+                word, src=get_language_code(self.language), dest="en"
+            ).text
+        except:
+            trans = "[Google Translate error]"
         if trans == word:
             trans = "?"
         results = [
