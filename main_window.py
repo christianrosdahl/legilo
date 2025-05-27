@@ -52,6 +52,8 @@ class MainWindow(QMainWindow):
             language,
             use_lemma=self.config.get("use_lemmatizer"),
             lemmatizer_dir=f"{self.data_dir}/general/stanza",
+            machine_translator=self.config.get("machine_translator"),
+            dest_language=self.config.get("machine_translator_lang"),
         )
 
         # Settings
@@ -66,6 +68,7 @@ class MainWindow(QMainWindow):
             self.short_text_limit = self.config["short_text_limit"]
         if "autoscroll" in self.config:
             self.autoscroll = self.config["autoscroll"]
+        self.machine_trans_sources = ["Google Translate", "GPT"]
 
         # Get text pages
         full_text, active_word_num, page_index, page_size = self.get_text_from_file()
@@ -506,9 +509,9 @@ class MainWindow(QMainWindow):
         edit_remark_action.setShortcut("R")
         edit_remark_action.triggered.connect(self.edit_remark)
 
-        toggle_google_trans_action = QAction("Add/remove Google translation", self)
-        toggle_google_trans_action.setShortcut("O")
-        toggle_google_trans_action.triggered.connect(self.toggle_google_translation)
+        toggle_machine_trans_action = QAction("Add/remove machine translation", self)
+        toggle_machine_trans_action.setShortcut("O")
+        toggle_machine_trans_action.triggered.connect(self.toggle_machine_translation)
 
         add_third_lang_trans_action = QAction(
             "Add/remove third language translation", self
@@ -659,7 +662,7 @@ class MainWindow(QMainWindow):
         translation_menu.addAction(edit_personal_translation_action)
         translation_menu.addAction(edit_lemmas_action)
         translation_menu.addAction(edit_remark_action)
-        translation_menu.addAction(toggle_google_trans_action)
+        translation_menu.addAction(toggle_machine_trans_action)
         translation_menu.addAction(add_third_lang_trans_action)
         translation_menu.addSeparator()
         translation_menu.addAction(ex_sentence_1_action)
@@ -921,7 +924,7 @@ class MainWindow(QMainWindow):
             elif key == ord("R"):
                 self.edit_remark()
             elif key == ord("O"):
-                self.toggle_google_translation()
+                self.toggle_machine_translation()
             elif key in number_keys:
                 self.select_example_sentence(number_keys.index(key))
             elif key == ord("E"):
@@ -1415,7 +1418,7 @@ class MainWindow(QMainWindow):
         self.category_text_field.insert_text(category, style)
 
     def show_translation(
-        self, show_personal_trans=True, show_google_trans=True, show_lemmas=True
+        self, show_personal_trans=True, show_machine_trans=True, show_lemmas=True
     ):
         self.translation_text_field.clear()
         trans = self.active_info["trans"]
@@ -1432,10 +1435,10 @@ class MainWindow(QMainWindow):
             "foreground": self.styling["colors"]["personal_translation_text"],
             "background": self.styling["colors"]["personal_translation_background"],
         }
-        style_google_translate = {
+        style_machine_translation = {
             **style,
-            "foreground": self.styling["colors"]["google_translate_text"],
-            "background": self.styling["colors"]["google_translate_background"],
+            "foreground": self.styling["colors"]["machine_translation_text"],
+            "background": self.styling["colors"]["machine_translation_background"],
         }
         style_definitions = {**style}
         style_synonyms = {
@@ -1475,13 +1478,13 @@ class MainWindow(QMainWindow):
                 self.translation_text_field.insert_text("\n\n", style)
 
         # Show Wiktionary translations
-        google_trans = None
+        machine_trans = None
         for i, item in enumerate(trans):
-            if "source" in item and item["source"] == "Google Translate":
+            if "source" in item and item["source"] in self.machine_trans_sources:
                 if "definitions" in item:
                     definition = item["definitions"][0]
                     if "definition" in definition:
-                        google_trans = definition["definition"]
+                        machine_trans = definition["definition"]
 
             elif "source" in item and item["source"] == "Wiktionary":
                 if "word" in item:
@@ -1537,11 +1540,11 @@ class MainWindow(QMainWindow):
                 if has_more_wiktionary_translations:
                     self.translation_text_field.insert_text("\n\n", style)
 
-        # Show Google translation if available
-        if show_google_trans and google_trans:
+        # Show machine translation if available
+        if show_machine_trans and machine_trans:
             self.translation_text_field.insert_text("\n\n", style, first=True)
             self.translation_text_field.insert_text(
-                google_trans, style_google_translate, first=True
+                machine_trans, style_machine_translation, first=True
             )
 
         # Show personal translation if available
@@ -1892,8 +1895,9 @@ class MainWindow(QMainWindow):
             new_info = self.legilo_translator.get_info(
                 word,
                 is_phrase=is_phrase,
-                include_google_trans=self.has_google_translation(),
+                include_machine_trans=self.has_machine_translation(),
                 word_lemmas=lemmas,
+                machine_trans_item=self.get_machine_translation(),
             )
             for key, value in old_info.items():
                 if not key in new_info:
@@ -1915,33 +1919,41 @@ class MainWindow(QMainWindow):
             return self.data.personal_translations[word]
         return None
 
-    def toggle_google_translation(self):
+    def toggle_machine_translation(self):
         if not self.active_looked_up or self.editing_text_field():
             return
 
-        if self.has_google_translation():
-            self.delete_google_translation()
+        if self.has_machine_translation():
+            self.delete_machine_translation()
         else:
             trans_list = self.active_info["trans"]
             word = self.get_active_word()
-            google_trans = self.legilo_translator.get_google_translation(word)
-            trans_list += google_trans
+            machine_trans = self.legilo_translator.get_machine_translation(word)
+            trans_list += machine_trans
         self.show_translation()
 
-    def has_google_translation(self):
-        """Check if word translations list contains a Google translation"""
+    def has_machine_translation(self):
+        """Check if word translations list contains a machine translation"""
         trans = self.active_info["trans"]
         for item in trans:
-            if "source" in item and item["source"] == "Google Translate":
+            if "source" in item and item["source"] in self.machine_trans_sources:
                 return True
         return False
 
-    def delete_google_translation(self):
-        """Delete Google translation from translations list, if available"""
+    def get_machine_translation(self):
+        """Get machine translation item from translations list, if available"""
+        trans = self.active_info["trans"]
+        for item in trans:
+            if "source" in item and item["source"] in self.machine_trans_sources:
+                return item
+        return False
+
+    def delete_machine_translation(self):
+        """Delete machine translation from translations list, if available"""
         trans = self.active_info["trans"]
         translation_index_to_remove = None
         for i, item in enumerate(trans):
-            if "source" in item and item["source"] == "Google Translate":
+            if "source" in item and item["source"] in self.machine_trans_sources:
                 translation_index_to_remove = i
                 break
         if translation_index_to_remove is not None:

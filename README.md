@@ -67,7 +67,7 @@ Most of the keyboard commands below (except for e.g. basic navigation back and f
 - <kbd>⌘ Command</kbd> + <kbd>←</kbd> Show previous page.
 - <kbd>I</kbd>: Insert (or edit) your own translation for a looked-up word. Press <kbd>⏎ Enter</kbd> to save it. If the input text field is empty, no personal translation will be saved.
 - <kbd>U</kbd>: Edit lemmas (associated base forms of the word) and their translations for a looked-up word. An editable text field is enabled where one lemma is listed per line (press <kbd>⇧ Shift</kbd> + <kbd>⏎ Enter</kbd> to make a new line). Each lemma can be associated with a translation by writing `<lemma>: <translation>` in the line of the lemma. If the line doesn't contain a colon, no translation is saved for the corresponding lemma. A suggestion for autocompletion of a line will be shown if available. Press <kbd>⇥ Tab</kbd> to accept the suggestion. If no suggestion is available, a suggestion can be fetched from Wiktionary by pressing <kbd>⇥ Tab</kbd>. When typing a colon, the lemma before it will automatically be looked up in Wiktionary and the result (if found) will be shown below the input field, so that you can use it to write your personal lemma translation. Press <kbd>⏎ Enter</kbd> to save associated lemmas and possible translations.
-- <kbd>O</kbd>: Add (or remove) a Google translation for a looked-up word.
+- <kbd>O</kbd>: Add (or remove) a machine translation for a looked-up word.
 - <kbd>P</kbd>: Pronounce the maked word.
 - <kbd>H</kbd>: Add a translation of a looked-up word, and its translations in English, to your third language (set in `config.json`) in the remark section. Press the key again to remove it.
 - <kbd>R</kbd>: Edit the remark for a looked-up word. Press <kbd>⏎ Enter</kbd> to save. Use <kbd>⇧ Shift</kbd> + <kbd>⏎ Enter</kbd> if you want to make a new line.
@@ -127,6 +127,8 @@ In the file `config.json`, you can set the following things:
   - `"url"`: Url for the common resource, where `%s` is used as a place holder for the word or lemma to look up.
   - `"open_key"`: The letter key on the keyboard used to open the external resource.
   - `"phrase_word_delimiter"`: The delimiter used instead of space in the URL of the resource when looking up phrases.
+- `"machine_translator"` (can have values `"Google"` or `"GPT"`): Defines the method for machine translation. The default method (`"Google"`) uses Google Translate, and is free. Alternatively, you can use one of OpenAI's GPT models by setting this value to `"GPT"`. This requires an OpenAI API key, that should be exported as an environment variable `OPENAI_API_KEY`. On macOS/Linux, this can be done by typing `export OPENAI_API_KEY="<your API key>"` in the terminal.
+- `"machine_translator_lang"`: Language to translate into for machine translations.
 - `"third_language"`: Extra language for which translations can be added to the remark.
 - `"use_lemmatizer"` (can have values `true` or `false`): Use natural language processing models to find the dictionary form of a word so that it can be looked up. When this is activated, the program will download the models for a language the first time it is used with that language, which might take a few minutes. It might make the program a few seconds slower to start after that as well, since the models have to be loaded.
 - `"font"`: Font to use for all text in the program.

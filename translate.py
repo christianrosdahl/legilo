@@ -8,6 +8,7 @@ import stanza
 from bs4 import BeautifulSoup
 from googletrans import Translator
 
+from gpt_translator import GPTTranslator
 from language_code import get_language_code
 from remove_pronunciation_accents import remove_pronunciation_accents
 
@@ -64,14 +65,26 @@ PARTS_OF_SPEECH = [
 
 
 class LegiloTranslator:
-    def __init__(self, language, use_lemma=True, lemmatizer_dir=None):
-        self.language = language
-        if len(language) > 1:
-            self.language = language.capitalize()
+    def __init__(
+        self,
+        language,
+        use_lemma=True,
+        lemmatizer_dir=None,
+        machine_translator=None,
+        dest_language="English",
+    ):
+        self.language = language.capitalize()
+        self.dest_language = dest_language.capitalize()
+        if not machine_translator:
+            machine_translator == "Google"
+        if machine_translator == "Google":
+            self.google_translator = Translator()
+        elif machine_translator == "GPT":
+            self.gpt_translator = GPTTranslator(self.language, self.dest_language)
         if self.language == "Croatian":
-            self.language = "Serbo-Croatian"
+            self.language = "Serbo-Croatian"  # Used in Wiktionary
         self.use_lemma = use_lemma
-        self.google_translator = Translator()
+        self.machine_translator = machine_translator
         if use_lemma:
             print(
                 "Loading models for finding dictionary forms of words to look up (lemmatizer).\n"
@@ -97,7 +110,14 @@ class LegiloTranslator:
         else:
             self.nlp = None
 
-    def translate(self, word, google_trans="auto", is_phrase=False, lemmas=None):
+    def translate(
+        self,
+        word,
+        machine_trans="auto",
+        is_phrase=False,
+        lemmas=None,
+        machine_trans_item=None,
+    ):
         input_lemmas = lemmas
         lemmas = set()
         word = remove_pronunciation_accents(self.language, word)
@@ -133,15 +153,18 @@ class LegiloTranslator:
         for lemma in lemmas:
             results += self.parse_from_wiktionary(lemma)[0]
 
-        # If the specific form wasn't found in Wiktionary, add traslation of this first.
-        # This is the default behavior, for google_trans == 'auto'.
-        # If google_trans == True, a Google translation is added anyway.
-        # If google_trans == False, no Google translation is added.
+        # If the word wasn't found in Wiktionary, add a machine translation first.
+        # This is the default behavior, for machine_trans == 'auto'.
+        # If machine_trans == True, a machine translation is added anyway.
+        # If machine_trans == False, no machine translation is added.
+        result_sources = self.get_sources_from_results(results)
         if (
-            google_trans == "auto"
-            and word.lower() not in self.get_lookup_words_from_results(results)
-        ) or google_trans == True:
-            results = self.get_google_translation(word) + results
+            machine_trans == "auto" and "Wiktionary" not in result_sources
+        ) or machine_trans == True:
+            if machine_trans_item:
+                results = [machine_trans_item] + results
+            else:
+                results = self.get_machine_translation(word) + results
 
         return results, lemmas
 
@@ -150,17 +173,19 @@ class LegiloTranslator:
         word,
         include_word_info=True,
         include_etymology=True,
-        include_google_trans="auto",
+        include_machine_trans="auto",
         is_phrase=False,
         word_lemmas=None,
+        machine_trans_item=None,
     ):
         """Get word info, including translation, on the format used in Legilo"""
         remark_line_marker = "\u2022 "
         translation, lemmas = self.translate(
             word,
             is_phrase=is_phrase,
-            google_trans=include_google_trans,
+            machine_trans=include_machine_trans,
             lemmas=word_lemmas,
+            machine_trans_item=machine_trans_item,
         )
         wordtypes = set()
         genders = set()
@@ -234,10 +259,19 @@ class LegiloTranslator:
                 words.add(item["word"].lower())
         return words
 
+    def get_sources_from_results(self, results):
+        sources = set()
+        for item in results:
+            if "source" in item:
+                sources.add(item["source"])
+        return sources
+
     def get_google_translation(self, word):
         try:
             trans = self.google_translator.translate(
-                word, src=get_language_code(self.language), dest="en"
+                word,
+                src=get_language_code(self.language),
+                dest=get_language_code(self.dest_language),
             ).text
         except:
             trans = "[Google Translate error]"
@@ -251,6 +285,41 @@ class LegiloTranslator:
             }
         ]
         return results
+
+    def get_gpt_translation(self, word):
+        trans = "?"
+        base_form = word
+        num_words = len(word.split())
+        try:
+            result = self.gpt_translator.translate(word)
+            if "error" in result:
+                trans = result["error"]
+            elif num_words == 1:
+                trans = ", ".join(result["translations"])
+                base_form = result["base_form"]
+                num_words = len(word.split())
+                if num_words == 1 and base_form != word:
+                    trans = base_form + ": " + trans
+            else:
+                trans = result["translation"]
+            if len(trans) == 0:
+                trans = "?"
+        except:
+            trans = "[GPT translator error]"
+        results = [
+            {
+                "word": base_form,
+                "definitions": [{"definition": trans}],
+                "source": "GPT",
+            }
+        ]
+        return results
+
+    def get_machine_translation(self, word):
+        if self.machine_translator == "GPT":
+            return self.get_gpt_translation(word)
+        else:  # self.machine_translator == "Google"
+            return self.get_google_translation(word)
 
     def parse_from_wiktionary(self, word):
         lemmas = set()
