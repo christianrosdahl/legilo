@@ -57,6 +57,12 @@ class DataHandler:
         if word in self.personal_translations:
             del self.personal_translations[word]
 
+    def get_personal_translation(self, word):
+        """Get personal translation for word"""
+        if word in self.personal_translations:
+            return self.personal_translations[word]
+        return False
+
     def remove_word(self, word):
         """Remove word from data"""
         if word in self.ignored_words:

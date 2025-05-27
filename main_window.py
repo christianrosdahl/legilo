@@ -513,6 +513,10 @@ class MainWindow(QMainWindow):
         toggle_machine_trans_action.setShortcut("O")
         toggle_machine_trans_action.triggered.connect(self.toggle_machine_translation)
 
+        use_machine_trans_action = QAction("Use machine translation", self)
+        use_machine_trans_action.setShortcut("K")
+        use_machine_trans_action.triggered.connect(self.use_machine_translation)
+
         add_third_lang_trans_action = QAction(
             "Add/remove third language translation", self
         )
@@ -663,6 +667,7 @@ class MainWindow(QMainWindow):
         translation_menu.addAction(edit_lemmas_action)
         translation_menu.addAction(edit_remark_action)
         translation_menu.addAction(toggle_machine_trans_action)
+        translation_menu.addAction(use_machine_trans_action)
         translation_menu.addAction(add_third_lang_trans_action)
         translation_menu.addSeparator()
         translation_menu.addAction(ex_sentence_1_action)
@@ -1866,9 +1871,6 @@ class MainWindow(QMainWindow):
 
     def update_lemmas(self, stop_editing=True):
         lemma_data = self.lemma_text_field.toPlainText()
-        previous_lemmas = None
-        if "lemmas" in self.active_info:
-            previous_lemmas = self.active_info["lemmas"]
         lemmas = set()
         for line in lemma_data.split("\n"):
             line_parts = line.split(":")
@@ -1885,6 +1887,22 @@ class MainWindow(QMainWindow):
             else:
                 self.data.remove_personal_translation(lemma)
             lemmas.add(lemma)
+        self.set_lemmas_in_active_info(lemmas)
+        if stop_editing:
+            self.lemma_text_field.stop_edit()
+            self.lemma_text_field.clear()
+            self.lemma_text_field.hide()
+            self.editing_lemmas = False
+            self.show_translation()
+        else:
+            self.show_translation(show_lemmas=False)
+
+    def set_lemmas_in_active_info(self, lemmas, keep_previous=False):
+        previous_lemmas = None
+        if "lemmas" in self.active_info:
+            previous_lemmas = self.active_info["lemmas"]
+            if previous_lemmas and keep_previous:
+                lemmas.update(previous_lemmas)
         self.active_info["lemmas"] = lemmas
         if lemmas != previous_lemmas:
             word = self.active_info["dict_word"]
@@ -1897,20 +1915,12 @@ class MainWindow(QMainWindow):
                 is_phrase=is_phrase,
                 include_machine_trans=self.has_machine_translation(),
                 word_lemmas=lemmas,
-                machine_trans_item=self.get_machine_translation(),
+                machine_trans_item=self.get_machine_translation_item(),
             )
             for key, value in old_info.items():
                 if not key in new_info:
                     new_info[key] = value
             self.active_info = new_info
-        if stop_editing:
-            self.lemma_text_field.stop_edit()
-            self.lemma_text_field.clear()
-            self.lemma_text_field.hide()
-            self.editing_lemmas = False
-            self.show_translation()
-        else:
-            self.show_translation(show_lemmas=False)
 
     def get_personal_translation(self, word=None):
         if not word:
@@ -1932,6 +1942,49 @@ class MainWindow(QMainWindow):
             trans_list += machine_trans
         self.show_translation()
 
+    def use_machine_translation(self):
+        if not self.active_looked_up:
+            return
+        machine_trans = self.get_machine_translation()
+        if not machine_trans:
+            return
+        str_parts = machine_trans.split(":")
+        is_lemma_def = len(str_parts) == 2 and len(str_parts[0].split()) == 1
+        if is_lemma_def:
+            lemma = str_parts[0].strip()
+            lemma = unicodedata.normalize("NFC", lemma)
+            trans = str_parts[1].strip()
+            if len(trans) > 0:
+                self.add_to_personal_translation(lemma, trans)
+            self.set_lemmas_in_active_info({lemma}, keep_previous=True)
+        else:
+            word_or_phrase = self.get_active_word_or_phrase()
+            self.add_to_personal_translation(word_or_phrase, machine_trans)
+        self.delete_machine_translation()
+        self.show_translation()
+
+    def add_to_personal_translation(self, word, additional_trans):
+        """
+        Add comma-separated translations defined in the string `additional_trans` to the
+        personal translations of the word `word`.
+        If `word` is a phrase (has spaces), the personal translation is instead replaced
+        with `additional_trans`.
+        """
+        if len(additional_trans) == 0:
+            return
+        old_trans_str = self.data.get_personal_translation(word)
+        is_phrase = len(word.split()) > 1
+        if is_phrase:
+            self.data.add_personal_translation(word, additional_trans)
+            return
+        trans_list = []
+        if old_trans_str:
+            trans_list += old_trans_str.split(", ")
+        trans_list += additional_trans.split(", ")
+        trans_set = set(trans_list)
+        new_trans_str = ", ".join(trans_set)
+        self.data.add_personal_translation(word, new_trans_str)
+
     def has_machine_translation(self):
         """Check if word translations list contains a machine translation"""
         trans = self.active_info["trans"]
@@ -1940,13 +1993,24 @@ class MainWindow(QMainWindow):
                 return True
         return False
 
-    def get_machine_translation(self):
+    def get_machine_translation_item(self):
         """Get machine translation item from translations list, if available"""
         trans = self.active_info["trans"]
         for item in trans:
             if "source" in item and item["source"] in self.machine_trans_sources:
                 return item
         return False
+
+    def get_machine_translation(self):
+        machine_trans_item = self.get_machine_translation_item()
+        if not machine_trans_item:
+            return None
+        if "definitions" in machine_trans_item:
+            definition = machine_trans_item["definitions"][0]
+            if "definition" in definition:
+                machine_trans = definition["definition"]
+                return machine_trans
+        return None
 
     def delete_machine_translation(self):
         """Delete machine translation from translations list, if available"""
