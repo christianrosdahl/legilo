@@ -1937,7 +1937,10 @@ class MainWindow(QMainWindow):
             self.delete_machine_translation()
         else:
             trans_list = self.active_info["trans"]
-            word = self.get_active_word()
+            if self.active_phrase:
+                word = self.active_phrase["phrase_text"]
+            else:
+                word = self.get_active_word()
             machine_trans = self.legilo_translator.get_machine_translation(word)
             trans_list += machine_trans
         self.show_translation()
