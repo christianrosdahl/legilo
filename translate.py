@@ -295,11 +295,17 @@ class LegiloTranslator:
             if "error" in result:
                 trans = result["error"]
             elif num_words == 1:
-                trans = ", ".join(result["translations"])
+                if "translations" in result:
+                    trans = ", ".join(result["translations"])
+                else:
+                    trans = "?"
                 base_form = result["base_form"]
                 num_words = len(word.split())
                 if num_words == 1 and base_form != word:
-                    trans = base_form + ": " + trans
+                    if trans == "?":
+                        trans = base_form
+                    else:
+                        trans = base_form + ": " + trans
             else:
                 trans = result["translation"]
             if len(trans) == 0:

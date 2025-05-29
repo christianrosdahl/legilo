@@ -5,8 +5,8 @@ from openai import OpenAI
 
 class GPTTranslator:
     def __init__(self, src, dest):
-        self.src = src
-        self.dest = dest
+        self.src = src.capitalize()
+        self.dest = dest.capitalize()
         # Create a client using the environment variable
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
@@ -23,8 +23,9 @@ class GPTTranslator:
                 "function": {
                     "name": "translate",
                     "description": (
-                        "Gets the dictionary form of a word in the source language and "
-                        "translates it into the destination language."
+                        f"Gets the dictionary form of a {self.src} word and provides "
+                        f"its common translations into {self.dest}. "
+                        "If the word is unclear, guess the most likely interpretation."
                     ),
                     "parameters": {
                         "type": "object",
@@ -32,16 +33,17 @@ class GPTTranslator:
                             "base_form": {
                                 "type": "string",
                                 "description": (
-                                    "The base (dictionary) form of the word in the "
-                                    "source language."
+                                    "The base (dictionary) form of the word in "
+                                    f"{self.src}."
                                 ),
                             },
                             "translations": {
                                 "type": "array",
                                 "items": {"type": "string"},
                                 "description": (
-                                    "Translations of the base form to the destination "
-                                    "language."
+                                    f"Likely {self.dest} translations of the base "
+                                    f"{self.src} word, even if the word is rare or "
+                                    "has multiple meanings."
                                 ),
                             },
                         },
@@ -58,18 +60,17 @@ class GPTTranslator:
                 "function": {
                     "name": "translate",
                     "description": (
-                        "Translates a text from the source language into the "
-                        "destination language."
+                        f"Translates a phrase or sentence from {self.src} into "
+                        f"{self.dest}."
                     ),
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "translation": {
                                 "type": "string",
-                                "description": (
-                                    "Translation of the text to the "
-                                    "destination language."
-                                ),
+                                "description": f"Accurate and natural-sounding "
+                                f"{self.dest} translation of the original {self.src} "
+                                "sentence.",
                             },
                         },
                         "required": ["translation"],
@@ -82,17 +83,23 @@ class GPTTranslator:
         num_words = len(word.split())
         if num_words == 1:
             tools = self.tools_word
+            temperature = 0.1
+            top_p = 1.0
             message = (
-                f'For the {self.src} word "{word}", give me the corresponding '
-                "dictionary form and tranlations of the dictionary form to "
-                f"{self.dest}."
+                f"Given the {self.src} word {repr(word)}, identify its base "
+                f"(dictionary) form in {self.src} and provide several common "
+                f"translations into {self.dest}. "
+                "If there are multiple possible meanings, list the most likely ones. "
+                "If you are unsure, make a best guess based on similar words."
             )
         else:
             tools = self.tools_phrase
+            temperature = 0.5
+            top_p = 0.9
             message = (
-                f"Translate the following text from {self.src} (source language) to "
-                f'{self.dest} (destination language): "{word}". Answer only with the '
-                "translation."
+                f"Translate the following sentence from {self.src} to {self.dest}: "
+                f"{repr(word)}. Return only the translation, without explanation. Use "
+                f"natural, idiomatic {self.dest}."
             )
         try:
             response = self.client.chat.completions.create(
@@ -105,6 +112,8 @@ class GPTTranslator:
                 ],
                 tools=tools,
                 tool_choice="auto",
+                temperature=temperature,
+                top_p=top_p,
             )
 
             tool_calls = response.choices[0].message.tool_calls
