@@ -310,7 +310,11 @@ class MainWindow(QMainWindow):
 
         # Edit lemma text field
         self.lemma_text_field = EditLemmasTextField(
-            self.styling, "right", "translation", 6
+            self.styling,
+            "right",
+            "translation",
+            6,
+            legilo_translator=self.legilo_translator,
         )
         self.lemma_text_field.colonTyped.connect(
             lambda: self.update_lemmas(stop_editing=False)

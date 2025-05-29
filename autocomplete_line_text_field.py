@@ -17,12 +17,14 @@ class AutocompleteLineTextField(TextField):
         num_lines=None,
         unfocus_on_click=True,
         hide_scrollbar=True,
-        use_wiktionary=False,
+        use_web=False,
+        legilo_translator=None,
     ):
         super().__init__(
             styling, position, styling_key, num_lines, unfocus_on_click, hide_scrollbar
         )
-        self.use_wiktionary = use_wiktionary
+        self.use_web = use_web
+        self.legilo_translator = legilo_translator
         self.suggestions = set()
         self.current_suggestion = ""
         self.block_updates = True  # Flag to prevent recursion
@@ -41,7 +43,7 @@ class AutocompleteLineTextField(TextField):
     def set_suggestions(self, suggestions):
         self.suggestions = suggestions
 
-    def update_suggestion(self, get_from_wiktionary=False):
+    def update_suggestion(self, get_from_web=False):
         if self.block_updates or self.is_dead_key_active:
             return
 
@@ -66,8 +68,13 @@ class AutocompleteLineTextField(TextField):
 
         self.setTextCursor(cursor)
 
-        if self.use_wiktionary and get_from_wiktionary and len(line_before_cursor) > 0:
-            self.add_wiktionary_suggestion(line_before_cursor)
+        if self.use_web and get_from_web and len(line_before_cursor) > 0:
+            if ":" in line_before_cursor:
+                word_to_translate = line_before_cursor.split(":")[0]
+                if len(word_to_translate) > 0:
+                    self.add_translation_suggestion(word_to_translate)
+            else:
+                self.add_wiktionary_suggestion(line_before_cursor)
 
         # Find a matching suggestion
         matching = next(
@@ -129,7 +136,7 @@ class AutocompleteLineTextField(TextField):
                 self.current_suggestion = ""
             else:
                 self.remove_suggestion()
-                self.update_suggestion(get_from_wiktionary=True)
+                self.update_suggestion(get_from_web=True)
         else:
             self.remove_suggestion()
             super().keyPressEvent(event)
@@ -192,3 +199,17 @@ class AutocompleteLineTextField(TextField):
         if len(titles) > 0:
             return titles[0]
         return None
+
+    def add_translation_suggestion(self, word):
+        if not self.legilo_translator:
+            return
+        trans = self.legilo_translator.get_machine_translation(word)[0]
+        if not trans["word"] == word:
+            return
+        if not "definitions" in trans:
+            return
+        definition = trans["definitions"][0]["definition"]
+        if not ":" in definition:
+            definition = word + ": " + definition
+        if not any(suggestion.startswith(word) for suggestion in self.suggestions):
+            self.suggestions.add(definition)
