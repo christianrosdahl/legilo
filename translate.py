@@ -120,8 +120,10 @@ class LegiloTranslator:
     ):
         input_lemmas = lemmas
         lemmas = set()
+        words_parsed_from_wiktionary = set()
         word = remove_pronunciation_accents(self.language, word)
         results, wiktionary_lemmas = self.parse_from_wiktionary(word)
+        words_parsed_from_wiktionary.add(word)
         lemmas |= wiktionary_lemmas
 
         # Handle that nouns must be looked up with capital letter in German
@@ -133,25 +135,35 @@ class LegiloTranslator:
             capitalized_results, wiktionary_lemmas = self.parse_from_wiktionary(
                 capitalized_word
             )
+            words_parsed_from_wiktionary.add(capitalized_word)
             results += capitalized_results
             lemmas |= wiktionary_lemmas
-
-        if self.use_lemma and not is_phrase:
-            lemma = self.get_lemma(word)
-            lookup_words_from_result = self.get_lookup_words_from_results(results)
-            if (
-                lemma.lower() != word.lower()
-                and not lemma.lower() in lookup_words_from_result
-            ):
-                lemmas.add(lemma)
 
         if input_lemmas != None:
             lemmas = input_lemmas
 
         lemmas = {unicodedata.normalize("NFC", lemma) for lemma in lemmas}
-
         for lemma in lemmas:
-            results += self.parse_from_wiktionary(lemma)[0]
+            if lemma not in words_parsed_from_wiktionary:
+                results += self.parse_from_wiktionary(lemma)[0]
+                words_parsed_from_wiktionary.add(lemma)
+
+        # Find lemmas using NLP model
+        if input_lemmas == None and self.use_lemma and not is_phrase:
+            nlp_lemma = self.get_lemma(word).lower()
+            lookup_words_from_result = self.get_lookup_words_from_results(results)
+            if (
+                nlp_lemma not in lemmas
+                and nlp_lemma != word.lower()
+                and nlp_lemma not in lookup_words_from_result
+            ):
+                nlp_lemma = unicodedata.normalize("NFC", nlp_lemma)
+                if nlp_lemma not in words_parsed_from_wiktionary:
+                    wiktionary_res = self.parse_from_wiktionary(nlp_lemma)[0]
+                    words_parsed_from_wiktionary.add(nlp_lemma)
+                if len(wiktionary_res) > 0:
+                    results += wiktionary_res
+                    lemmas.add(nlp_lemma)
 
         # If the word wasn't found in Wiktionary, add a machine translation first.
         # This is the default behavior, for machine_trans == 'auto'.
@@ -161,10 +173,20 @@ class LegiloTranslator:
         if (
             machine_trans == "auto" and "Wiktionary" not in result_sources
         ) or machine_trans == True:
-            if machine_trans_item:
-                results = [machine_trans_item] + results
-            else:
-                results = self.get_machine_translation(word) + results
+            if not machine_trans_item:
+                machine_trans_item = self.get_machine_translation(word)[0]
+            results += [machine_trans_item]
+
+        if input_lemmas == None and machine_trans_item:
+            lemma = self.get_lemma_from_machine_trans(machine_trans_item)
+            if lemma:
+                lemmas.add(lemma)
+
+        lemmas = {unicodedata.normalize("NFC", lemma) for lemma in lemmas}
+        for lemma in lemmas:
+            if lemma not in words_parsed_from_wiktionary:
+                results += self.parse_from_wiktionary(lemma)[0]
+                words_parsed_from_wiktionary.add(lemma)
 
         return results, lemmas
 
@@ -235,6 +257,17 @@ class LegiloTranslator:
         """
         doc = self.nlp(word)
         lemma = doc.sentences[0].words[0].lemma
+        return lemma
+
+    def get_lemma_from_machine_trans(self, machine_trans_item):
+        if not "definitions" in machine_trans_item:
+            return None
+        definition = machine_trans_item["definitions"][0]["definition"]
+        if not ":" in definition:
+            return None
+        lemma = definition.split(":")[0]
+        if len(lemma) == 0:
+            return None
         return lemma
 
     def extract_first_parentheses_content(self, s):
