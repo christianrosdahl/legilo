@@ -1449,12 +1449,22 @@ class MainWindow(QMainWindow):
             "foreground": self.styling["colors"]["machine_translation_text"],
             "background": self.styling["colors"]["machine_translation_background"],
         }
+        style_machine_translation_lemma = {**style_machine_translation, "bold": True}
         style_definitions = {**style}
         style_synonyms = {
             **style,
             "size": self.styling["translation"]["size"] - 2,
             "bold": True,
         }
+
+        # Show personal translation if available
+        if show_personal_trans:
+            personal_trans = self.get_personal_translation()
+            if personal_trans:
+                self.translation_text_field.insert_text(
+                    personal_trans, style_personal_translation
+                )
+                self.translation_text_field.insert_text("\n\n", style)
 
         # Show lemmas and possible personal translations for them
         if show_lemmas:
@@ -1486,16 +1496,31 @@ class MainWindow(QMainWindow):
             if len(lemmas) > 0:
                 self.translation_text_field.insert_text("\n\n", style)
 
-        # Show Wiktionary translations
-        machine_trans = None
-        for i, item in enumerate(trans):
-            if "source" in item and item["source"] in self.machine_trans_sources:
-                if "definitions" in item:
-                    definition = item["definitions"][0]
-                    if "definition" in definition:
-                        machine_trans = definition["definition"]
+        # Show machine translation if available
+        if show_machine_trans:
+            machine_trans = self.get_machine_translation()
+            if machine_trans:
+                lemma = None
+                if ":" in machine_trans:
+                    parts = machine_trans.split(": ")
+                    if len(parts) == 2 and " " not in parts[0]:
+                        lemma = parts[0]
+                        machine_trans = parts[1]
+                if lemma:
+                    self.translation_text_field.insert_text(
+                        lemma, style_machine_translation_lemma
+                    )
+                    self.translation_text_field.insert_text(
+                        ": ", style_machine_translation
+                    )
+                self.translation_text_field.insert_text(
+                    machine_trans, style_machine_translation
+                )
+                self.translation_text_field.insert_text("\n\n", style)
 
-            elif "source" in item and item["source"] == "Wiktionary":
+        # Show Wiktionary translations
+        for i, item in enumerate(trans):
+            if "source" in item and item["source"] == "Wiktionary":
                 if "word" in item:
                     self.translation_text_field.insert_text(item["word"], style_word)
                 if "part_of_speech" in item:
@@ -1548,21 +1573,6 @@ class MainWindow(QMainWindow):
                 )
                 if has_more_wiktionary_translations:
                     self.translation_text_field.insert_text("\n\n", style)
-
-        # Show machine translation if available
-        if show_machine_trans and machine_trans:
-            self.translation_text_field.insert_text("\n\n", style, first=True)
-            self.translation_text_field.insert_text(
-                machine_trans, style_machine_translation, first=True
-            )
-
-        # Show personal translation if available
-        personal_trans = self.get_personal_translation()
-        if show_personal_trans and personal_trans:
-            self.translation_text_field.insert_text("\n\n", style, first=True)
-            self.translation_text_field.insert_text(
-                personal_trans, style_personal_translation, first=True
-            )
 
     def show_remark(self):
         self.remark_text_field.clear()
