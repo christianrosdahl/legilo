@@ -1444,6 +1444,12 @@ class MainWindow(QMainWindow):
             "foreground": self.styling["colors"]["personal_translation_text"],
             "background": self.styling["colors"]["personal_translation_background"],
         }
+        style_lemma_translation = {
+            **style,
+            "foreground": self.styling["colors"]["lemma_text"],
+            "background": self.styling["colors"]["lemma_background"],
+        }
+        style_lemma = {**style_lemma_translation, "bold": True}
         style_machine_translation = {
             **style,
             "foreground": self.styling["colors"]["machine_translation_text"],
@@ -1481,14 +1487,16 @@ class MainWindow(QMainWindow):
 
             count = 0
             for lemma, lemma_trans in lemmas_with_translation.items():
-                self.translation_text_field.insert_text(f"{lemma}", style_word)
-                self.translation_text_field.insert_text(": ", style)
-                self.translation_text_field.insert_text(lemma_trans, style)
+                self.translation_text_field.insert_text(f"{lemma}", style_lemma)
+                self.translation_text_field.insert_text(": ", style_lemma_translation)
+                self.translation_text_field.insert_text(
+                    lemma_trans, style_lemma_translation
+                )
                 if count < len(lemmas) - 1:
                     self.translation_text_field.insert_text(", ", style)
                 count += 1
             for lemma in lemmas_without_translation:
-                self.translation_text_field.insert_text(f"{lemma}", style_word)
+                self.translation_text_field.insert_text(f"{lemma}", style_lemma)
                 if count < len(lemmas) - 1:
                     self.translation_text_field.insert_text(", ", style)
                 count += 1
