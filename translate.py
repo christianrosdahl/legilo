@@ -122,6 +122,7 @@ class LegiloTranslator:
         lemmas = set()
         words_parsed_from_wiktionary = set()
         word = remove_pronunciation_accents(self.language, word)
+        word = unicodedata.normalize("NFC", word)
         results, wiktionary_lemmas = self.parse_from_wiktionary(word)
         words_parsed_from_wiktionary.add(word)
         lemmas |= wiktionary_lemmas
@@ -179,7 +180,7 @@ class LegiloTranslator:
 
         if input_lemmas == None and machine_trans_item:
             lemma = self.get_lemma_from_machine_trans(machine_trans_item)
-            if lemma:
+            if lemma and lemma != word.lower():
                 lemmas.add(lemma)
 
         lemmas = {unicodedata.normalize("NFC", lemma) for lemma in lemmas}
@@ -257,6 +258,7 @@ class LegiloTranslator:
         """
         doc = self.nlp(word)
         lemma = doc.sentences[0].words[0].lemma
+        lemma = unicodedata.normalize("NFC", lemma)
         return lemma
 
     def get_lemma_from_machine_trans(self, machine_trans_item):
@@ -268,6 +270,7 @@ class LegiloTranslator:
         lemma = definition.split(":")[0]
         if len(lemma) == 0:
             return None
+        lemma = unicodedata.normalize("NFC", lemma)
         return lemma
 
     def extract_first_parentheses_content(self, s):
