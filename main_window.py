@@ -1035,11 +1035,16 @@ class MainWindow(QMainWindow):
         self.editing_main_text = False
 
     def line_is_title(self, line):
-        if len(line) > 50:
+        quotation_marks = list("“”„‟«»‹›‘’‚‛′″❝❞❮❯〝〞＂'")
+        dashes = list("‐‑‒–—―−﹘﹣－⸺⸻-")
+        line = line.strip()
+        if len(line) == 0 or len(line) > 50:
             return False
-        if len(line) > 0 and line[-1] == ".":
+        elif line[-1] in [".", ":"]:
             return False
-        if len(line) > 0 and line[0] in ["-", "–", "—"]:
+        elif line[0] in dashes:
+            return False
+        elif line[0] in quotation_marks and line[-1] in quotation_marks:
             return False
         return True
 
