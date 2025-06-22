@@ -27,6 +27,7 @@ os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = ""
 import pygame  # Play mp3 files from gtts
 from googletrans import Translator
 
+from browser_controller import BrowserController
 from data_handler import DataHandler
 from edit_lemmas_text_field import EditLemmasTextField
 from language_code import get_language_code
@@ -55,10 +56,10 @@ class MainWindow(QMainWindow):
             machine_translator=self.config.get("machine_translator"),
             dest_language=self.config.get("machine_translator_lang"),
         )
+        self.browser_controller = BrowserController(open_urls_in_same_tab=True)
 
         # Settings
         self.save_progress = True
-        self.open_urls_in_same_tab = True
         self.page_size = 1800
         self.short_text_limit = 5000
         self.autoscroll = True
@@ -107,7 +108,6 @@ class MainWindow(QMainWindow):
         self.example_sentences = None
         self.remark_without_third_lang = None
         self.last_word_translated_to_thind_lang = None
-        self.has_opened_new_browser_tab = False
         self.scrolling_in_text = False
         self.opening_page = False
         self.do_not_pronounce_next = False
@@ -2425,31 +2425,6 @@ class MainWindow(QMainWindow):
             self.select_word_num(word_num1)
             self.select_word_num(word_num2)
 
-    def open_url(self, url):
-        """Open URL in open tab, only works for macOS"""
-        if (
-            platform.system() == "Darwin"
-            and self.open_urls_in_same_tab
-            and self.has_opened_new_browser_tab
-        ):
-            script = """tell application "Google Chrome"
-                            tell front window
-                                set URL of active tab to "%s"
-                            end tell
-                        end tell """ % url.replace(
-                '"', "%22"
-            )
-            osapipe = os.popen("osascript", "w")
-            if osapipe is None:
-                return False
-
-            osapipe.write(script)
-            rc = osapipe.close()
-            return not rc
-        else:  # Open URL in new tab
-            webbrowser.open(url)
-            self.has_opened_new_browser_tab = True
-
     def open_external_resource(self, pressed_key, lemma=False):
         if self.editing_text_field():
             return
@@ -2500,7 +2475,7 @@ class MainWindow(QMainWindow):
 
         if lookup_text:
             url = url_parts[0] + lookup_text + url_parts[1]
-            self.open_url(url)
+            self.browser_controller.open_url(url)
 
 
 class SideFieldTitle(QLabel):
