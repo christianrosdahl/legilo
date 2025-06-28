@@ -50,7 +50,7 @@ Select one of the listed recent texts by pressing the number before it, or press
 
 ## Basic navigation
 
-Most of the keyboard commands below (except for e.g. basic navigation back and forth by the arrow keys) can also be found in the window menu of the main window. The menu items also contain the corresponding keyboard shortcuts as a reference.
+Most of the keyboard commands below can also be found in the window menu of the main window. The menu items also contain the corresponding keyboard shortcuts as a reference. The keyboard shortcuts can be changed (and additional shortcuts can be added) by modifying the file `keybindings.json`. Note that when specifying the shortcuts in `keybindings.json`, `"Ctrl"` corresponds to <kbd>⌘ Command</kbd> for macOS.
 
 - <kbd>→</kbd> / <kbd>Space</kbd>: Mark the next new or learning word. If the currently marked word is new, and hasn't been looked up, it is marked as known when going to the next word. If it has been looked up, it is saved as a learning word (to prevent this, you can explicitly mark it as known by pressing <kbd>↓</kbd>).
 - <kbd>↑</kbd> / <kbd>⏎ Enter</kbd>:
@@ -68,15 +68,15 @@ Most of the keyboard commands below (except for e.g. basic navigation back and f
 - <kbd>I</kbd>: Insert (or edit) your own translation for a looked-up word. Press <kbd>⏎ Enter</kbd> to save it. If the input text field is empty, no personal translation will be saved.
 - <kbd>U</kbd>: Edit lemmas (associated base forms of the word) and their translations for a looked-up word. An editable text field is enabled where one lemma is listed per line (press <kbd>⇧ Shift</kbd> + <kbd>⏎ Enter</kbd> to make a new line). Each lemma can be associated with a translation by writing `<lemma>: <translation>` in the line of the lemma. If the line doesn't contain a colon, no translation is saved for the corresponding lemma. A suggestion for autocompletion of a line will be shown if available. Press <kbd>⇥ Tab</kbd> to accept the suggestion. If no suggestion is available, a suggestion can be fetched by pressing <kbd>⇥ Tab</kbd>. If the line doesn't contain a colon, a suggestion of auto-completion of the word is fetched from Wiktionary. If the line does contain a colon, a machine translation is fetched and shown as suggestion (if available). When typing a colon, the lemma before it will automatically be looked up in Wiktionary and the result (if found) will be shown below the input field, so that you can use it to write your personal lemma translation. Press <kbd>⏎ Enter</kbd> to save associated lemmas and possible translations.
 - <kbd>O</kbd>: Add (or remove) a machine translation for a looked-up word.
-- <kbd>K</kbd>: Add the machine translation to the personal translation of the looked-up word or the corresponding lemma (in the latter case, the lemma is automatically associated with the looked-up word).
+- <kbd>Y</kbd>: Add the machine translation to the personal translation of the looked-up word or the corresponding lemma (in the latter case, the lemma is automatically associated with the looked-up word).
 - <kbd>P</kbd>: Pronounce the maked word.
 - <kbd>H</kbd>: Add a translation of a looked-up word, and its translations in English, to your third language (set in `config.json`) in the remark section. Press the key again to remove it.
 - <kbd>R</kbd>: Edit the remark for a looked-up word. Press <kbd>⏎ Enter</kbd> to save. Use <kbd>⇧ Shift</kbd> + <kbd>⏎ Enter</kbd> if you want to make a new line.
+- <kbd>A</kbd>: Look up the sentence containing the marked word as a phrase (see "Phrase mode" below).
 - <kbd>1</kbd>-<kbd>9</kbd>: Select and show different example sentences for the looked-up word. Pressing <kbd>9</kbd> will use the current sentence in the text and its Google translation as example sentence. Press <kbd>0</kbd> to not show any example sentence at all.
 - <kbd>⌘ Command</kbd> + <kbd>↓</kbd> / <kbd>⌘ Command</kbd> + <kbd>↑</kbd>: Scroll the text.
 - <kbd>⇧ Shift</kbd> + <kbd>↓</kbd> / <kbd>⇧ Shift</kbd> + <kbd>↑</kbd>: Scroll the translation.
 - <kbd>⌥ Option</kbd> + <kbd>↓</kbd> / <kbd>⌥ Option</kbd> + <kbd>↑</kbd>: Scroll the remark.
-- <kbd>A</kbd>: Look up the sentence containing the marked word as a phrase (see "Phrase mode" below).
 - <kbd>⌘ Command</kbd> + <kbd>W</kbd>: Save all data and close the text window. You will get back to the start window where you can select another text or close the program by repeating the command. Clicking the close button in the upper corner of the window has the same effect as this command.
 - <kbd>⌘ Command</kbd> + <kbd>E</kbd>: Edit the opened text.
 
@@ -99,9 +99,9 @@ Phrase mode allows you to look up and save translations for phrases or expressio
 
 ## External resources
 
-In `config.json`, you can add external resources, such as different dictionaries, verb conjugators or search engines, that open an URL containing the marked word in a browser when pressing a letter key on the keyboard. If the translation for the word is open and contains a lemma form (e.g. the infinitive for a conjugated verb or the singular nominative for a noun form), you can instead look up the lemma form in the same resource by pressing <kbd>⇧ Shift</kbd> + the chosen letter.
+In `config.json`, you can add external resources, such as different dictionaries, verb conjugators or search engines, that open an URL containing the marked word in a browser when pressing a key on the keyboard (or when selecting it in the "External Resources" menu). If the translation for the word is open and contains a lemma form (e.g. the infinitive for a conjugated verb or the singular nominative for a noun form), you can instead look up the lemma form in the same resource by pressing <kbd>⇧ Shift</kbd> + the chosen keyboard key.
 
-As default in the `config.json` file, the following resources are added:
+As default in the `config.json` file, the following resources are added with the preceding letter as keyboard shortcut:
 
 - <kbd>W</kbd> Wiktionary
 - <kbd>G</kbd> Google
@@ -110,6 +110,8 @@ As default in the `config.json` file, the following resources are added:
 - <kbd>L</kbd> Look up in some language-specific dictionary
 - <kbd>V</kbd> Some language-specific verb conjugator (for most languages)
 - <kbd>C</kbd> Context Reverso (for most languages)
+
+See "Configuration" below for instructions about how to add new external resources.
 
 ## Saving, exporting word lists or closing without saving
 
@@ -125,8 +127,8 @@ In the file `config.json`, you can set the following things:
   - `"<language name>"`: Name of the language.
     - `"external_resources"`: External resources specific to the language in question. Formatted as `"common_external_resources"` (see below).
 - `"common_external_resources"`: Settings for exteral resources that are common to all languages.
-  - `"url"`: Url for the common resource, where `%s` is used as a place holder for the word or lemma to look up.
-  - `"open_key"`: The letter key on the keyboard used to open the external resource.
+  - `"url"`: URL for the common resource, where `%s` is used as a place holder for the word or lemma to look up.
+  - `"resource_name"`: Name of the resource that can be used to connect a keyboard shortcut to it, by adding this name and the corresponding shortcut to `keybindings.json`.
   - `"phrase_word_delimiter"`: The delimiter used instead of space in the URL of the resource when looking up phrases.
 - `"machine_translator"` (can have values `"Google"` or `"GPT"`): Defines the method for machine translation. The default method (`"Google"`) uses Google Translate, and is free. Alternatively, you can use one of OpenAI's GPT models by setting this value to `"GPT"`. This requires an OpenAI API key, that should be exported as an environment variable `OPENAI_API_KEY`. On macOS/Linux, this can be done by typing `export OPENAI_API_KEY="<your API key>"` in the terminal.
 - `"machine_translator_lang"`: Language to translate into for machine translations.

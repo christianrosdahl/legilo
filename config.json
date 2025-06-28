@@ -4,17 +4,17 @@
       "external_resources": [
         {
           "url": "https://en.wiktionary.org/wiki/%s#Serbo-Croatian",
-          "open_key": "w",
+          "resource_name": "Wiktionary",
           "phrase_word_delimiter": "_"
         },
         {
           "url": "https://glosbe.com/hr/en/%s",
-          "open_key": "l",
+          "resource_name": "Language-specific dictionary",
           "phrase_word_delimiter": "%20"
         },
         {
           "url": "https://www.verbix.com/webverbix/go.php?T1=%s&Submit=Go&D1=204&H1=204",
-          "open_key": "v"
+          "resource_name": "Verb conjugation"
         }
       ]
     },
@@ -22,22 +22,22 @@
       "external_resources": [
         {
           "url": "https://en.wiktionary.org/wiki/%s#French",
-          "open_key": "w",
+          "resource_name": "Wiktionary",
           "phrase_word_delimiter": "_"
         },
         {
           "url": "https://www.collinsdictionary.com/dictionary/french-english/%s",
-          "open_key": "l",
+          "resource_name": "Language-specific dictionary",
           "phrase_word_delimiter": "+"
         },
         {
           "url": "https://context.reverso.net/translation/french-swedish/%s",
-          "open_key": "c",
+          "resource_name": "Context Reverso",
           "phrase_word_delimiter": "+"
         },
         {
           "url": "https://leconjugueur.lefigaro.fr/conjugaison/verbe/%s",
-          "open_key": "v"
+          "resource_name": "Verb conjugation"
         }
       ]
     },
@@ -45,22 +45,22 @@
       "external_resources": [
         {
           "url": "https://en.wiktionary.org/wiki/%s#German",
-          "open_key": "w",
+          "resource_name": "Wiktionary",
           "phrase_word_delimiter": "_"
         },
         {
           "url": "https://www.collinsdictionary.com/dictionary/german-english/%s",
-          "open_key": "l",
+          "resource_name": "Language-specific dictionary",
           "phrase_word_delimiter": "+"
         },
         {
           "url": "https://context.reverso.net/translation/german-swedish/%s",
-          "open_key": "c",
+          "resource_name": "Context Reverso",
           "phrase_word_delimiter": "+"
         },
         {
           "url": "https://www.verbformen.de/konjugation/?w=%s",
-          "open_key": "v"
+          "resource_name": "Verb conjugation"
         }
       ]
     },
@@ -68,22 +68,22 @@
       "external_resources": [
         {
           "url": "https://en.wiktionary.org/wiki/%s#Italian",
-          "open_key": "w",
+          "resource_name": "Wiktionary",
           "phrase_word_delimiter": "_"
         },
         {
           "url": "https://www.collinsdictionary.com/dictionary/italian-english/%s",
-          "open_key": "l",
+          "resource_name": "Language-specific dictionary",
           "phrase_word_delimiter": "+"
         },
         {
           "url": "https://context.reverso.net/translation/italian-swedish/%s",
-          "open_key": "c",
+          "resource_name": "Context Reverso",
           "phrase_word_delimiter": "+"
         },
         {
           "url": "https://www.italian-verbs.com/italian-verbs/conjugation.php?parola=%s",
-          "open_key": "v"
+          "resource_name": "Verb conjugation"
         }
       ]
     },
@@ -91,22 +91,22 @@
       "external_resources": [
         {
           "url": "https://en.wiktionary.org/wiki/%s#Russian",
-          "open_key": "w",
+          "resource_name": "Wiktionary",
           "phrase_word_delimiter": "_"
         },
         {
           "url": "https://en.openrussian.org/ru?search=%s",
-          "open_key": "l",
+          "resource_name": "Language-specific dictionary",
           "phrase_word_delimiter": "+"
         },
         {
           "url": "https://context.reverso.net/translation/russian-english/%s",
-          "open_key": "c",
+          "resource_name": "Context Reverso",
           "phrase_word_delimiter": "+"
         },
         {
           "url": "https://conjugator.reverso.net/conjugation-russian-verb-%s.html",
-          "open_key": "v"
+          "resource_name": "Verb conjugation"
         }
       ]
     },
@@ -114,22 +114,22 @@
       "external_resources": [
         {
           "url": "https://en.wiktionary.org/wiki/%s#Spanish",
-          "open_key": "w",
+          "resource_name": "Wiktionary",
           "phrase_word_delimiter": "_"
         },
         {
           "url": "https://www.spanishdict.com/translate/%s",
-          "open_key": "l",
+          "resource_name": "Language-specific dictionary",
           "phrase_word_delimiter": "%20"
         },
         {
           "url": "https://context.reverso.net/translation/spanish-swedish/%s",
-          "open_key": "c",
+          "resource_name": "Context Reverso",
           "phrase_word_delimiter": "+"
         },
         {
           "url": "https://www.spanishdict.com/conjugate/%s",
-          "open_key": "v"
+          "resource_name": "Verb conjugation"
         }
       ]
     },
@@ -137,22 +137,22 @@
       "external_resources": [
         {
           "url": "https://en.wiktionary.org/wiki/%s#Swedish",
-          "open_key": "w",
+          "resource_name": "Wiktionary",
           "phrase_word_delimiter": "_"
         },
         {
           "url": "https://svenska.se/so/?sok=%s&pz=1",
-          "open_key": "l",
+          "resource_name": "Language-specific dictionary",
           "phrase_word_delimiter": "+"
         },
         {
           "url": "https://context.reverso.net/translation/swedish-english/%s",
-          "open_key": "c",
+          "resource_name": "Context Reverso",
           "phrase_word_delimiter": "+"
         },
         {
           "url": "https://sv.bab.la/verb/svensk/%s",
-          "open_key": "v"
+          "resource_name": "Verb conjugation"
         }
       ]
     }
@@ -160,17 +160,17 @@
   "common_external_resources": [
     {
       "url": "https://www.google.com/search?q=%s",
-      "open_key": "g",
+      "resource_name": "Google",
       "phrase_word_delimiter": "+"
     },
     {
       "url": "https://www.google.com/search?q=%s&tbm=isch",
-      "open_key": "f",
+      "resource_name": "Google Images",
       "phrase_word_delimiter": "+"
     },
     {
       "url": "https://en.wikipedia.org/wiki/%s",
-      "open_key": "q",
+      "resource_name": "Wikipedia",
       "phrase_word_delimiter": "_"
     }
   ],
