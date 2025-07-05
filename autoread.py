@@ -16,7 +16,12 @@ def autoread(url):
             if first_line == title:
                 # Remove the first line (title) from text
                 lines = lines[1:]
-                text = "\n".join(lines).lstrip()
+            lines_new = []
+            for line in reversed(lines):
+                if line not in lines_new:
+                    lines_new.insert(0, line)
+            text = "\n".join(lines_new).lstrip()
+
     else:
         print("Failed to download the webpage.")
         return "The content could not be fetched", ""
