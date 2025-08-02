@@ -463,6 +463,8 @@ class MainWindow(QMainWindow):
             "Phrases": self.menu_bar.addMenu("Phrases"),
         }
 
+        added_actions = []
+
         def create_action(text, callback):
             open_lemma_action = False
             text_parts = text.split()
@@ -488,7 +490,10 @@ class MainWindow(QMainWindow):
                 if text is None:
                     menu.addSeparator()
                 else:
-                    menu.addAction(create_action(text, callback))
+                    action = create_action(text, callback)
+                    if not action.text() in added_actions:
+                        added_actions.append(action.text())
+                        menu.addAction(action)
 
         # Actions per menu
         file_actions = [
