@@ -367,9 +367,10 @@ class LegiloTranslator:
         lemmas = set()
 
         url = f"https://en.wiktionary.org/wiki/{word}"
+        headers = {"User-Agent": "Legilo (https://github.com/christianrosdahl/legilo)"}
         response = None
         try:
-            response = requests.get(url, timeout=10)
+            response = requests.get(url, headers=headers, timeout=10)
         except requests.exceptions.HTTPError as http_err:
             print(f"HTTP error occurred: {http_err}")
         except requests.exceptions.ConnectionError as conn_err:
