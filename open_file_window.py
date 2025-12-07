@@ -32,7 +32,13 @@ class OpenFileWindow(GeneralWindow):
         self.title_text.insert_text(
             "Select text to open:", styling=self.styling["main_text"]
         )
+        self.select_last_opened()
         self.show_options()
+
+    def select_last_opened(self):
+        if len(self.titles_and_paths) > 0:
+            self.selected = str(1)
+            (self.title, self.file_path) = self.titles_and_paths[0]
 
     def on_key_press(self, event):
         if event.key() in [Qt.Key_Return, Qt.Key_Enter]:
