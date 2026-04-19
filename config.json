@@ -64,6 +64,24 @@
         }
       ]
     },
+    "greek": {
+      "external_resources": [
+        {
+          "url": "https://en.wiktionary.org/wiki/%s#Greek",
+          "resource_name": "Wiktionary",
+          "phrase_word_delimiter": "_"
+        },
+        {
+          "url": "https://glosbe.com/el/en/%s",
+          "resource_name": "Language-specific dictionary",
+          "phrase_word_delimiter": "%20"
+        },
+        {
+          "url": "https://cooljugator.com/gr/%s",
+          "resource_name": "Verb conjugation"
+        }
+      ]
+    },
     "italian": {
       "external_resources": [
         {

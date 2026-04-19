@@ -85,7 +85,9 @@ class LegiloTranslator:
             self.language = "Serbo-Croatian"  # Used in Wiktionary
         self.use_lemma = use_lemma
         self.machine_translator = machine_translator
-        if use_lemma:
+        if self.language == "Greek":
+            self.use_lemma = False  # Didn't get the lemmatizer to work for Greek
+        if self.use_lemma:
             print(
                 "Loading models for finding dictionary forms of words to look up (lemmatizer).\n"
                 + "This might take a while, especially the first time for a new language, "
