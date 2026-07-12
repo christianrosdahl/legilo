@@ -860,7 +860,7 @@ class MainWindow(QMainWindow):
         self.editing_main_text = False
 
     def line_is_title(self, line):
-        quotation_marks = list("“”„‟«»‹›‘’‚‛′″❝❞❮❯〝〞＂'")
+        quotation_marks = list("“”„‟«»‹›‘’‚‛′″❝❞❮❯〝〞＂'" + '"')
         dashes = list("‐‑‒–—―−﹘﹣－⸺⸻-")
         line = line.strip()
         if len(line) == 0 or len(line) > 50:
@@ -1132,7 +1132,7 @@ class MainWindow(QMainWindow):
             self.get_word(word_num) for word_num in range(word_num1, word_num2 + 1)
         ]
         info["phrase_words"] = phrase_words
-        (sentence, sentence_trans) = get_first_sentence(phrase, self.language)
+        sentence, sentence_trans = get_first_sentence(phrase, self.language)
         if len(sentence) > 0:
             info["sentence"] = sentence
             info["sentence_trans"] = sentence_trans
@@ -1161,7 +1161,7 @@ class MainWindow(QMainWindow):
         known_without_info = category == "known" and not self.data.known_words[word]
         if category in ["new", "ignored"] or known_without_info:
             info = self.legilo_translator.get_info(word)
-            (sentence, sentence_trans) = get_first_sentence(word, self.language)
+            sentence, sentence_trans = get_first_sentence(word, self.language)
             if len(sentence) > 0:
                 info["sentence"] = sentence
                 info["sentence_trans"] = sentence_trans
@@ -2050,7 +2050,7 @@ class MainWindow(QMainWindow):
             word = self.get_active_word()
         examples = self.example_sentences
         if not examples or word != examples["word"]:
-            (sentences, sentences_trans) = get_sentences(word, self.language, 8)
+            sentences, sentences_trans = get_sentences(word, self.language, 8)
             examples = {
                 "word": word,
                 "sentences": sentences,
