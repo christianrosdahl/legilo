@@ -7,8 +7,10 @@ class GPTTranslator:
     def __init__(self, src, dest):
         self.src = src.capitalize()
         self.dest = dest.capitalize()
+
         # Create a client using the environment variable
         api_key = os.getenv("OPENAI_API_KEY")
+
         if not api_key:
             raise EnvironmentError(
                 "Please set the OPENAI_API_KEY environment variable."
@@ -23,9 +25,10 @@ class GPTTranslator:
                 "function": {
                     "name": "translate",
                     "description": (
-                        f"Gets the dictionary form of a {self.src} word and provides "
-                        f"its common translations into {self.dest}. "
-                        "If the word is unclear, guess the most likely interpretation."
+                        f"Identify the dictionary (base) form of a {self.src} "
+                        f"word and provide its common translations into "
+                        f"{self.dest}. If the word is ambiguous, provide "
+                        "translations for its most likely meanings."
                     ),
                     "parameters": {
                         "type": "object",
@@ -33,17 +36,20 @@ class GPTTranslator:
                             "base_form": {
                                 "type": "string",
                                 "description": (
-                                    "The base (dictionary) form of the word in "
-                                    f"{self.src}."
+                                    f"The dictionary/base form of the word "
+                                    f"in {self.src}. For nouns, use the "
+                                    "dictionary form. For verbs, use the "
+                                    "infinitive or equivalent dictionary form."
                                 ),
                             },
                             "translations": {
                                 "type": "array",
                                 "items": {"type": "string"},
                                 "description": (
-                                    f"Likely {self.dest} translations of the base "
-                                    f"{self.src} word, even if the word is rare or "
-                                    "has multiple meanings."
+                                    f"Common {self.dest} translations of "
+                                    f"the {self.src} word. Include the most "
+                                    "relevant translations for its different "
+                                    "common meanings."
                                 ),
                             },
                         },
@@ -60,17 +66,19 @@ class GPTTranslator:
                 "function": {
                     "name": "translate",
                     "description": (
-                        f"Translates a phrase or sentence from {self.src} into "
-                        f"{self.dest}."
+                        f"Translate a phrase or sentence from {self.src} "
+                        f"into natural, idiomatic {self.dest}."
                     ),
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "translation": {
                                 "type": "string",
-                                "description": f"Accurate and natural-sounding "
-                                f"{self.dest} translation of the original {self.src} "
-                                "sentence.",
+                                "description": (
+                                    f"An accurate and natural-sounding "
+                                    f"{self.dest} translation of the original "
+                                    f"{self.src} sentence."
+                                ),
                             },
                         },
                         "required": ["translation"],
@@ -81,29 +89,34 @@ class GPTTranslator:
 
     def translate(self, word: str):
         num_words = len(word.split())
+
         if num_words == 1:
             tools = self.tools_word
-            temperature = 0.1
-            top_p = 1.0
+
             message = (
-                f"Given the {self.src} word {repr(word)}, identify its base "
-                f"(dictionary) form in {self.src} and provide several common "
-                f"translations into {self.dest}. "
-                "If there are multiple possible meanings, list the most likely ones. "
-                "If you are unsure, make a best guess based on similar words."
+                f"Given the {self.src} word {repr(word)}, identify its "
+                f"dictionary (base) form in {self.src} and provide several "
+                f"common translations into {self.dest}. "
+                "If there are multiple common meanings, include the most "
+                "relevant translations. "
+                "If the input is an inflected form, identify its base form. "
+                "If the word is ambiguous, make the most likely "
+                "interpretation based on the spelling and morphology."
             )
+
         else:
             tools = self.tools_phrase
-            temperature = 0.5
-            top_p = 0.9
+
             message = (
-                f"Translate the following sentence from {self.src} to {self.dest}: "
-                f"{repr(word)}. Return only the translation, without explanation. Use "
-                f"natural, idiomatic {self.dest}."
+                f"Translate the following {self.src} phrase or sentence "
+                f"into {self.dest}: {repr(word)}. "
+                f"Use natural, idiomatic {self.dest}. "
+                "Return only the translation."
             )
+
         try:
             response = self.client.chat.completions.create(
-                model="gpt-4o",
+                model="gpt-5.4-mini",
                 messages=[
                     {
                         "role": "user",
@@ -111,16 +124,16 @@ class GPTTranslator:
                     }
                 ],
                 tools=tools,
-                tool_choice="auto",
-                temperature=temperature,
-                top_p=top_p,
+                tool_choice="required",
             )
 
             tool_calls = response.choices[0].message.tool_calls
+
             if not tool_calls:
                 return {"error": "No tool call returned."}
 
             arguments = json.loads(tool_calls[0].function.arguments)
+
             return arguments
 
         except Exception as e:
